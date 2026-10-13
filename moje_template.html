@@ -27,6 +27,7 @@ a.btn{text-decoration:none}
 .chip.on{background:var(--or);border-color:var(--or);color:#fff}
 .chip b.soon{position:absolute;top:-8px;left:-6px;min-width:16px;height:16px;border-radius:8px;background:var(--ye);color:#000;font:700 10px/16px system-ui;padding:0 4px;border:1px solid #fff}.chip i.nb{position:absolute;top:-8px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#FF6600;color:#fff;font:700 10px/16px system-ui;font-style:normal;padding:0 4px;border:1px solid #fff}
 .tsw{display:flex;gap:8px;margin-bottom:8px}.tsw button{flex:1;position:relative;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:10px;padding:10px;font-size:17px;font-weight:800}
+.tsw.sub button{font-size:14px;padding:8px}.tsw.sub button.on{background:#b3261e;border-color:#b3261e}
 .tsw button.on{background:var(--or);border-color:var(--or);color:#fff}.tsw small{font-size:12px;font-weight:600;opacity:.85}
 .tsw b.soon{position:absolute;top:-7px;left:-5px;min-width:18px;height:18px;border-radius:9px;background:var(--ye);color:#000;font:700 11px/18px system-ui;padding:0 4px;border:1px solid #fff}
 .tsw i.nb{position:absolute;top:-7px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:#FF6600;color:#fff;font:700 11px/18px system-ui;font-style:normal;padding:0 4px;border:1px solid #fff}
@@ -132,7 +133,7 @@ nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-r
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.5.0';
+const APP_VER = '1.6.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -514,6 +515,7 @@ function teraz() {
 }
 // ===== BUST: BUST-y moich modeli (od dodania do MOJE, bez WIN po nich) — filtr po kroku, na którym model gra teraz =====
 function gapTxt(r) { const b = r.bl; return b.length >= 2 ? ` · poprzedni BUST ${b[b.length - 1][1] - b[b.length - 2][1]} cykli wcześniej` : ' · pierwszy BUST modelu'; }
+let bsub = lsGet('moje_v1_bsub', 'gra') === 'czekaj' ? 'czekaj' : 'gra';
 let bks = (() => { try { const v = JSON.parse(lsGet('moje_v1_bks', '[]')); return Array.isArray(v) ? v : []; } catch (e) { return []; } })();   // [] = wszystkie kroki
 function bustBadges(L) {
   const now = L.filter(it => it.d === 1).length, soon = [...new Set(L.map(it => it.d).filter(d => d >= 2 && d <= 3))].sort();
@@ -527,9 +529,16 @@ function busty() {
     <div class="hint" style="margin:-4px 0 10px">Moje modele po BUST-cie (512 zł bez trafienia), aż do pierwszego WIN.</div>`;
   if (!A.length) h += '<div class="empty">Brak BUST-ów w moich modelach — żaden nie przegrał kroku 8 bez późniejszego WIN.</div>';
   else if (!L.length) h += '<div class="empty">Na wybranych krokach nie ma BUST-ów.</div>';
-  else for (const [nm, f] of [['🟧 GRA NA NASTĘPNYM WIERSZU', it => it.d === 1], ['🟨 ZA 2–3 WIERSZE', it => it.d >= 2 && it.d <= 3], ['🟥 CZEKA', it => !(it.d >= 1 && it.d <= 3)]]) {
-    const G = L.filter(f); if (G.length) h += sec(nm, '', G, { extra: it => `${it.d === 1 ? '' : shortPh(it) + '<br>'}<span class="neg">BUST Nr ${fmtN(it.r.lbr + 1)}</span>${gapTxt(it.r)}${it.gone ? ' · usunięty z MOJE' : ''}` });
-  }
+  else {
+    // podzakładki jak w MOJE: DO GRY (TRIGGER był — zakład ustawiony) · CZEKAJĄ (na STEP / TRIGGER)
+    const GR = L.filter(it => it.d >= 1), CZ = L.filter(it => !(it.d >= 1));
+    h += `<div class="tsw sub"><button class="${bsub === 'gra' ? 'on' : ''}" data-bsub="gra">▶ DO GRY <small>· ${GR.length}</small>${bustBadges(GR)}</button><button class="${bsub === 'czekaj' ? 'on' : ''}" data-bsub="czekaj">⏸ CZEKAJĄ <small>· ${CZ.length}</small></button></div>`;
+    const SEC = bsub === 'gra' ? [['🟧 GRAJ NA NASTĘPNYM WIERSZU', it => it.d === 1], ['🟨 ZA CHWILĘ', it => it.d >= 2]] : [['🟥 CZEKAJĄ NA STEP / TRIGGER', it => true]];
+    const B = bsub === 'gra' ? GR : CZ;
+    if (!B.length) h += `<div class="empty">${bsub === 'gra' ? 'Żaden model po BUST-cie nie ma teraz ustawionego zakładu — zobacz CZEKAJĄ.' : 'Wszystkie modele po BUST-cie są w DO GRY.'}</div>`;
+    for (const [nm, f] of SEC) {
+    const G = B.filter(f); if (G.length) h += sec(nm, '', G, { extra: it => `${it.d === 1 ? '' : shortPh(it) + '<br>'}<span class="neg">BUST Nr ${fmtN(it.r.lbr + 1)}</span>${gapTxt(it.r)}${it.gone ? ' · usunięty z MOJE' : ''}` });
+  } }
   // historia: wszystkie BUST-y moich modeli od dodania i co było po nich
   const H = [];
   items.forEach(it => { if (it.t !== only) return; const st = it.gone ? it.brow : it.g.start || 0;
@@ -648,6 +657,7 @@ document.addEventListener('click', e => {
   if (q('.btf')) return;   // pola formularza zakładu — nie otwieraj modelu
   if ((b = q('[data-delbet]'))) { e.stopPropagation(); return delBet(bets[+b.dataset.delbet]); }
   if ((b = q('[data-untrack]'))) { const it = items.find(x => x.uid === sel); if (it) untrack(it); return; }
+  if ((b = q('[data-bsub]'))) { bsub = b.dataset.bsub; lsSet('moje_v1_bsub', bsub); return render(); }
   if ((b = q('[data-bk]'))) { const k = +b.dataset.bk; bks = !k ? [] : bks.includes(k) ? bks.filter(x => x !== k) : [...bks, k].sort(); lsSet('moje_v1_bks', JSON.stringify(bks)); return render(); }
   if ((b = q('[data-u2]'))) return go('model', b.dataset.u2);
   if ((b = q('[data-go]'))) return go(b.dataset.go);
