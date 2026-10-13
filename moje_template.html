@@ -26,6 +26,23 @@ a.btn{text-decoration:none}
 .chip{position:relative;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:16px;padding:5px 11px;font-size:13px;font-weight:600}
 .chip.on{background:var(--or);border-color:var(--or);color:#fff}
 .chip b.soon{position:absolute;top:-8px;left:-6px;min-width:16px;height:16px;border-radius:8px;background:var(--ye);color:#000;font:700 10px/16px system-ui;padding:0 4px;border:1px solid #fff}.chip i.nb{position:absolute;top:-8px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#FF6600;color:#fff;font:700 10px/16px system-ui;font-style:normal;padding:0 4px;border:1px solid #fff}
+.tsw{display:flex;gap:8px;margin-bottom:8px}.tsw button{flex:1;position:relative;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:10px;padding:10px;font-size:17px;font-weight:800}
+.tsw button.on{background:var(--or);border-color:var(--or);color:#fff}.tsw small{font-size:12px;font-weight:600;opacity:.85}
+.tsw b.soon{position:absolute;top:-7px;left:-5px;min-width:18px;height:18px;border-radius:9px;background:var(--ye);color:#000;font:700 11px/18px system-ui;padding:0 4px;border:1px solid #fff}
+.tsw i.nb{position:absolute;top:-7px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:#FF6600;color:#fff;font:700 11px/18px system-ui;font-style:normal;padding:0 4px;border:1px solid #fff}
+.sec{background:var(--pan);border:1px solid var(--bd);border-radius:11px;padding:6px 8px;margin-bottom:10px}
+.sec .sh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:800;font-size:14px;padding:4px 2px 6px;cursor:pointer;position:relative}
+.sec .sh .m{color:var(--mu);font-size:11.5px;font-weight:500;text-align:right}
+.sec.snow{border-color:var(--or);box-shadow:0 0 0 1px var(--or) inset}.sec.ssoon{border-color:#8a7a20}.sec.sbust{border-color:#8a1f1f}
+.sec.link{cursor:pointer}.sec .sh b.soon,.sec .sh i.nb{position:static;display:inline-block;margin-left:6px;min-width:18px;height:18px;border-radius:9px;font:700 11px/18px system-ui;text-align:center;padding:0 4px}
+.sec .sh b.soon{background:var(--ye);color:#000}.sec .sh i.nb{background:#FF6600;color:#fff;font-style:normal}
+.sec .none{color:var(--mu);font-size:12.5px;padding:2px 4px 6px}
+.sec .kh{color:var(--mu);font-size:12px;font-weight:700;margin:8px 2px 4px;border-bottom:1px solid var(--bd);padding-bottom:2px}
+details.sec>summary{list-style:none}details.sec>summary::-webkit-details-marker{display:none}details.sec>summary .m::after{content:' ▾'}details.sec[open]>summary .m::after{content:' ▴'}
+.rw{background:var(--card);border-left:4px solid #2e75b6;border-radius:8px;padding:6px 8px;margin-bottom:5px;cursor:pointer}
+.rw.Sp{border-left-color:#7030a0}.rw.B{border-left-color:#b3261e}.rw.now{background:#3a2a1c}
+.rw .l1{display:flex;align-items:center;gap:6px;font-size:14px}.rw .l1 .sp{flex:1}.rw .l1 .zl{min-width:52px;text-align:right}.rw .l1 .btn{padding:3px 9px}.rw .l1 .ok{font-weight:800;padding:0 6px}
+.rw .l2{color:var(--mu);font-size:12px;margin-top:2px}.rw.now .l2{color:#ffd0a8}.rw .bdg{margin-right:0}
 .flt{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
 /* wpis kodów */
 .kod{background:var(--pan);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin-bottom:8px}
@@ -92,8 +109,8 @@ table.rows tr.nx td{background:#ff6600;color:#fff;font-weight:800}
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--pan);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom);z-index:20}
 nav button{flex:1;background:none;border:0;color:var(--mu);padding:12px 2px;font-size:13px;font-weight:700;position:relative}
 nav button.on{color:var(--or2)}
-nav b.soon,.grp b.soon{position:absolute;top:3px;left:calc(50% - 46px);min-width:16px;height:16px;border-radius:8px;background:var(--ye);color:#000;font:700 10px/16px system-ui;padding:0 4px;border:1px solid #fff}
-nav i.nb{position:absolute;top:3px;left:calc(50% + 30px);min-width:16px;height:16px;border-radius:8px;background:#FF6600;color:#fff;font:700 10px/16px system-ui;font-style:normal;padding:0 4px;border:1px solid #fff}
+nav b.soon,.grp b.soon{position:absolute;top:3px;left:2px;min-width:16px;height:16px;border-radius:8px;background:var(--ye);color:#000;font:700 10px/16px system-ui;padding:0 4px;border:1px solid #fff}
+nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-radius:8px;background:#FF6600;color:#fff;font:700 10px/16px system-ui;font-style:normal;padding:0 4px;border:1px solid #fff}
 .toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:#000d;color:#fff;padding:8px 14px;border-radius:9px;font-size:13px;z-index:70;max-width:92vw}
 .respop{position:fixed;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);z-index:60;width:min(94vw,560px);border-radius:12px;padding:10px 14px;color:#fff;box-shadow:0 8px 30px #000a;cursor:pointer}
 .respop.win{background:#1f8a4c}.respop.loss{background:#b3261e}.respop.nil{background:#2b3245}
@@ -112,7 +129,7 @@ nav i.nb{position:absolute;top:3px;left:calc(50% + 30px);min-width:16px;height:1
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.3.0';
+const APP_VER = '1.4.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -379,6 +396,7 @@ function saveBet(it, row, step, stake) {   // zapis do MOJE ZAKŁADY aplikacji �
   const key = BTK(it.t, it.s, it.tg), a = jget(key);
   a.push({ m: it.gone ? it.m.slice(0, it.s.nf) : it.g.m, id: it.g.id, row, step, stake, t: Date.now(), my: 1 });
   if (!lsSet(key, JSON.stringify(a))) { alert('BŁĄD zapisu pamięci telefonu!'); return; }
+  formU = null;
   toast(`Zapisano zakład ${esc(it.label)}: Nr ${fmtN(row + 1)} · k${step} · ${stake} zł`); reload();
 }
 // formularz zakładu jak w SZUKAJ: Nr wiersza · krok · postawione zł (domyślnie wiersz zakładu modelu, bieżący krok i jego stawka)
@@ -409,7 +427,7 @@ function phaseTxt(it) {
 }
 
 // ===== EKRANY =====
-let view = 'teraz', sel = null, only = lsGet('moje_v1_only', '');
+let view = 'teraz', sel = null, only = lsGet('moje_v1_only', 't50'); if (!TABS[only]) only = 't50';   // wybrana tabela (T50 / T60) — każda ma swój ekran
 function reload() { Object.keys(TABS).forEach(loadCodes); _lab.clear(); gather(); render(); }
 function kodBox(t) {
   const T = TABS[t], L = syncLog(t), last = L[L.length - 1], n = D[t].n, age = last ? Date.now() - last.t : 0;
@@ -435,18 +453,58 @@ function card(it) {
     ${r.ph === 2 && it.d <= 3 && it.grp !== 'done' ? (saved ? '<div class="row2"><span class="pos">✓ zakład zapisany</span></div>' : betForm(it)) : ''}</div>`;
 }
 const GRP = [['now', '🟧 GRAJ TERAZ', 'zakład na następnym wierszu'], ['soon', '🟨 ZA 2–3 WIERSZE', 'TRIGGER był, zakład za chwilę'], ['bust', '🟥 BUST', 'przegrany krok 8 — do pierwszego WIN po nim'], ['wait', '🟦 W GRZE', 'czeka na STEP / TRIGGER']];
+// ---- przełącznik tabeli: T50 | T60 (duże przyciski ze znaczkami) ----
+function tabSwitch(f) {
+  return `<div class="tsw">${Object.keys(TABS).map(t => { const L = items.filter(it => it.t === t && (f ? f(it) : it.grp !== 'done'));
+    return `<button class="${only === t ? 'on' : ''}" data-only="${t}">${TABS[t].name} <small>· ${L.length}</small>${bustBadges(L.filter(it => it.grp !== 'done'))}</button>`; }).join('')}</div>`;
+}
+// ---- jeden model = jeden zwarty wiersz: aplikacja · model · krok · stawka, pod spodem co się dzieje ----
+let formU = null;   // otwarty formularz zakładu (uid)
+function shortPh(it) {
+  const r = it.r, m = it.m;
+  if (r.ph === 2) return it.d === 1 ? `<b>GRAJ ${it.tg} · Nr ${fmtN(r.wz + 1)}</b>` : `zakład na Nr ${fmtN(r.wz + 1)} · za ${it.d} wiersze`;
+  if (r.ph === 1) return r.st === 1 ? `STEP był · czeka na STEP2` : `STEP był · czeka na TRIGGER${TN(m) > 1 ? ` ${r.tc + 1}/${TN(m)}` : ''}`;
+  return `czeka na STEP${m[0] === 'S' && m[2] > 1 && r.cnt ? ` (${r.cnt}/${m[2]})` : ''}`;
+}
+function row(it, extra) {
+  const r = it.r, pend = betsOf(it).filter(x => x.res === 'pend'), saved = r.ph === 2 && pend.some(x => x.b.row === r.wz), canBet = r.ph === 2 && it.d <= 3 && it.grp !== 'done';
+  return `<div class="rw ${it.s.cls}${it.d === 1 && it.grp !== 'done' ? ' now' : ''}" data-u="${esc(it.uid)}">
+    <div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b>${it.tg !== 'x1x' ? `<span class="mu">${it.tg}</span>` : ''}<span class="sp"></span>${it.grp === 'done' ? '' : `<span class="kk">k${r.bs + 1}</span><b class="zl">${ST[r.bs]} zł</b>`}
+    ${canBet ? (saved ? '<span class="pos ok">✓</span>' : `<button class="btn sm ${it.d === 1 ? 'pri' : ''}" data-fo="${esc(it.uid)}">💰</button>`) : ''}</div>
+    <div class="l2">${extra != null ? extra : shortPh(it)}${pend.length ? ` · <span style="color:var(--bl)">● postawiony k${pend[pend.length - 1].b.step} ${pend[pend.length - 1].b.stake} zł</span>` : ''}</div>
+    ${formU === it.uid && canBet ? betForm(it) : ''}</div>`;
+}
+function sec(title, sub, L, opt) {
+  opt = opt || {};
+  const body = L.length ? L.map(it => row(it, opt.extra ? opt.extra(it) : null)).join('') : `<div class="none">${opt.empty || 'nic'}</div>`;
+  const head = `<span>${title}${L.length ? ` · ${L.length}` : ''}</span><span class="m">${sub}</span>`;
+  return opt.fold ? `<details class="sec ${opt.cls || ''}"${opt.open ? ' open' : ''}><summary class="sh">${head}</summary>${body}</details>` : `<div class="sec ${opt.cls || ''}"><div class="sh">${head}</div>${body}</div>`;
+}
+const byApp = (a, b) => SRC.indexOf(a.s) - SRC.indexOf(b.s) || b.r.bs - a.r.bs || (a.g.id > b.g.id ? 1 : -1);
 function teraz() {
-  let h = kodBox('t50') + kodBox('t60');
-  const L = items.filter(it => !only || it.t === only);
-  h += `<div class="flt">${[['', 'wszystkie'], ['t50', 'T50'], ['t60', 'T60']].map(([v, l]) => `<button class="chip ${only === v ? 'on' : ''}" data-only="${v}">${l} · ${items.filter(it => (!v || it.t === v) && it.grp !== 'done').length}</button>`).join('')}</div>`;
-  if (!items.length) return h + `<div class="empty">Brak modeli w MOJE.<br><br>W SZUKAJ, SZUKAJ+ albo SZUKAJ BUST przytrzymaj kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>.<br>Model pojawi się tutaj razem z modelami z innych aplikacji.</div>`;
-  for (const [g, t, sub] of GRP) {
-    const G = L.filter(it => it.grp === g).sort((a, b) => (a.d || 99) - (b.d || 99) || b.r.bs - a.r.bs);
-    if (!G.length && g !== 'now') continue;
-    h += `<div class="grp"><span>${t} · ${G.length}</span><span class="m">${sub}</span></div>` + (G.length ? G.map(card).join('') : '<div class="empty" style="padding:8px">Teraz nic — żaden model nie gra na następnym wierszu.</div>');
+  const t = only, n = D[t].n;
+  let h = tabSwitch() + kodBox(t);
+  const L = items.filter(it => it.t === t);
+  if (!items.length) return h + `<div class="empty">Brak modeli w MOJE.<br><br>W SZUKAJ, SZUKAJ+ albo SZUKAJ BUST przytrzymaj kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>.</div>`;
+  const act = L.filter(it => it.grp !== 'done'), now = act.filter(it => it.d === 1).sort(byApp);
+  const sum = now.reduce((a, it) => a + ST[it.r.bs], 0);
+  // 1. CO GRAM NA NASTĘPNYM WIERSZU
+  h += sec(`🟧 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, now.length ? `razem ${fmtN(sum)} zł` : '', now, { cls: 'snow', empty: `Na Nr ${fmtN(n + 1)} żaden mój model nie gra — wpisz kod, gdy padnie.` });
+  // 2. ZA CHWILĘ (TRIGGER już był)
+  const soon = act.filter(it => it.d >= 2).sort((a, b) => a.d - b.d || byApp(a, b));
+  if (soon.length) h += sec('🟨 ZA CHWILĘ', 'TRIGGER już był', soon, { cls: 'ssoon' });
+  // 3. CZEKAJĄ — zwinięte, pogrupowane po kroku (od najwyższego)
+  const wait = act.filter(it => !it.d && it.grp !== 'bust');
+  if (wait.length) {
+    let w = '';
+    for (let k = 8; k >= 1; k--) { const G = wait.filter(it => it.r.bs + 1 === k).sort(byApp); if (G.length) w += `<div class="kh">k${k} · ${ST[k - 1]} zł · ${G.length}</div>` + G.map(it => row(it)).join(''); }
+    h += `<details class="sec swait"><summary class="sh"><span>🟦 CZEKAJĄ · ${wait.length}</span><span class="m">rozwiń</span></summary>${w}</details>`;
   }
+  // 4. BUST i ZAKOŃCZONE — tylko skrót
+  const bu = act.filter(it => it.grp === 'bust');
+  if (bu.length) h += `<div class="sec sbust link" data-go="bust"><div class="sh"><span>🟥 PO BUST · ${bu.length}${bustBadges(bu)}</span><span class="m">zakładka BUST ›</span></div></div>`;
   const Z = L.filter(it => it.grp === 'done');
-  if (Z.length) h += `<details><summary>✅ ZAKOŃCZONE · ${Z.length} (WIN albo BUST i WIN po nim)</summary>${Z.map(card).join('')}</details>`;
+  if (Z.length) h += sec('✅ ZAKOŃCZONE', 'WIN — możesz usunąć z MOJE', Z, { fold: 1, cls: 'sdone', extra: it => `${it.res.win ? `WIN k${it.res.k}` : 'BUST, potem WIN'} · Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}` });
   return h;
 }
 // ===== BUST: BUST-y moich modeli (od dodania do MOJE, bez WIN po nich) — filtr po kroku, na którym model gra teraz =====
@@ -457,20 +515,19 @@ function bustBadges(L) {
   return (soon.length ? `<b class="soon">${soon.join(',')}</b>` : '') + (now ? `<i class="nb">${now}</i>` : '');
 }
 function busty() {
-  const A = items.filter(it => it.grp === 'bust' && (!only || it.t === only));
+  const A = items.filter(it => it.grp === 'bust' && it.t === only);
   const L = A.filter(it => !bks.length || bks.includes(it.r.bs + 1)).sort((a, b) => (a.d || 99) - (b.d || 99) || b.r.lbr - a.r.lbr);
-  let h = `<div class="flt">${[['', 'wszystkie'], ['t50', 'T50'], ['t60', 'T60']].map(([v, l]) => `<button class="chip ${only === v ? 'on' : ''}" data-only="${v}">${l}</button>`).join('')}</div>
-    <div class="flt"><span class="mu" style="font-size:12px;align-self:center">krok:</span><button class="chip ${!bks.length ? 'on' : ''}" data-bk="0">wszystkie · ${A.length}</button>
+  let h = tabSwitch(it => it.grp === 'bust') + `<div class="flt"><span class="mu" style="font-size:12px;align-self:center">krok:</span><button class="chip ${!bks.length ? 'on' : ''}" data-bk="0">wszystkie · ${A.length}</button>
     ${ST.map((z, i) => { const k = i + 1, G = A.filter(it => it.r.bs + 1 === k); return `<button class="chip ${bks.includes(k) ? 'on' : ''}" data-bk="${k}">k${k} ${z} zł · ${G.length}${bustBadges(G)}</button>`; }).join('')}</div>
-    <div class="hint" style="margin:-4px 0 10px">BUST-y moich modeli (przegrany krok 8, 512 zł) od dodania do MOJE — dopóki po BUST-cie nie było WIN. Zostają też po usunięciu modelu z MOJE. Krok = na którym model gra teraz po BUST-cie.</div>`;
+    <div class="hint" style="margin:-4px 0 10px">Moje modele po BUST-cie (512 zł bez trafienia), aż do pierwszego WIN.</div>`;
   if (!A.length) h += '<div class="empty">Brak BUST-ów w moich modelach — żaden nie przegrał kroku 8 bez późniejszego WIN.</div>';
   else if (!L.length) h += '<div class="empty">Na wybranych krokach nie ma BUST-ów.</div>';
   else for (const [nm, f] of [['🟧 GRA NA NASTĘPNYM WIERSZU', it => it.d === 1], ['🟨 ZA 2–3 WIERSZE', it => it.d >= 2 && it.d <= 3], ['🟥 CZEKA', it => !(it.d >= 1 && it.d <= 3)]]) {
-    const G = L.filter(f); if (G.length) h += `<div class="grp"><span>${nm} · ${G.length}</span></div>` + G.map(card).join('');
+    const G = L.filter(f); if (G.length) h += sec(nm, '', G, { extra: it => `${shortPh(it)}<br><span class="neg">BUST Nr ${fmtN(it.r.lbr + 1)}</span>${gapTxt(it.r)}${it.gone ? ' · usunięty z MOJE' : ''}` });
   }
   // historia: wszystkie BUST-y moich modeli od dodania i co było po nich
   const H = [];
-  items.forEach(it => { if (only && it.t !== only) return; const st = it.gone ? it.brow : it.g.start || 0;
+  items.forEach(it => { if (it.t !== only) return; const st = it.gone ? it.brow : it.g.start || 0;
     it.r.bl.forEach(([row, c], j) => { if (row < st) return; const nx = it.r.ev.find(e => e[0] > row); H.push({ it, row, c, nx, prev: j ? c - it.r.bl[j - 1][1] : null }); }); });
   H.sort((a, b) => b.it.t.localeCompare(a.it.t) || b.row - a.row);
   if (H.length) h += `<details><summary>📜 Historia BUST-ów moich modeli · ${H.length} (co było po BUST-cie)</summary>
@@ -479,11 +536,10 @@ function busty() {
   return h;
 }
 function zaklady() {
-  const L = bets.filter(x => !only || x.t === only).sort((a, b) => b.b.t - a.b.t);
+  const L = bets.filter(x => x.t === only).sort((a, b) => b.b.t - a.b.t);
   const done = L.filter(x => x.res === 'win' || x.res === 'lost'), put = done.reduce((a, x) => a + x.b.stake, 0), res = done.reduce((a, x) => a + betVal(x), 0);
   const day = new Date(); day.setHours(0, 0, 0, 0); const today = done.filter(x => x.b.t >= day.getTime()).reduce((a, x) => a + betVal(x), 0);
-  let h = `<div class="flt">${[['', 'wszystkie'], ['t50', 'T50'], ['t60', 'T60']].map(([v, l]) => `<button class="chip ${only === v ? 'on' : ''}" data-only="${v}">${l}</button>`).join('')}</div>
-    <div class="sum"><div><b>${zl(res)}</b>wynik razem</div><div><b>${fmtN(put)} zł</b>postawione (rozliczone)</div><div><b>${zl(today)}</b>dziś</div></div>
+  let h = tabSwitch() + `<div class="sum"><div><b>${zl(res)}</b>wynik razem</div><div><b>${fmtN(put)} zł</b>postawione (rozliczone)</div><div><b>${zl(today)}</b>dziś</div></div>
     <div class="hint" style="margin:-4px 0 10px">WIN = +2 × stawka (kurs 3,0), przegrana = −stawka. Zakłady zapisane tutaj albo w aplikacjach SZUKAJ.</div>`;
   if (!L.length) return h + '<div class="empty">Brak zapisanych zakładów. Na karcie „GRAJ TERAZ” dotknij <b>💰 Zapisz zakład</b>.</div>';
   return h + L.map((x, i) => `<div class="bt ${x.res}" data-bi="${bets.indexOf(x)}"><span class="bdg ${x.s.cls}">${x.s.a}${x.t.slice(1)}</span><div>${esc(x.b.id)}${x.tg !== 'x1x' ? ' · ' + x.tg : ''} · Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł<div class="mu" style="font-size:11px">zapisany ${ago(x.b.t)} (${when(x.b.t)})</div></div>
@@ -583,13 +639,14 @@ document.addEventListener('click', e => {
   if ((b = q('[data-exp]'))) { const [t, i] = b.dataset.exp.split(':'); return exportFile(t, +i); }
   if ((b = q('[data-only]'))) { only = b.dataset.only; lsSet('moje_v1_only', only); return render(); }
   if ((b = q('[data-bsave]'))) { const it = items.find(x => x.uid === b.dataset.bsave), f = b.closest('.btf'); if (it) saveBet(it, +f.querySelector('.fNr').value - 1, +f.querySelector('.fK').value, +f.querySelector('.fZl').value); return; }
+  if ((b = q('[data-fo]'))) { formU = formU === b.dataset.fo ? null : b.dataset.fo; return render(); }
   if (q('.btf')) return;   // pola formularza zakładu — nie otwieraj modelu
   if ((b = q('[data-delbet]'))) { e.stopPropagation(); return delBet(bets[+b.dataset.delbet]); }
   if ((b = q('[data-untrack]'))) { const it = items.find(x => x.uid === sel); if (it) untrack(it); return; }
   if ((b = q('[data-bk]'))) { const k = +b.dataset.bk; bks = !k ? [] : bks.includes(k) ? bks.filter(x => x !== k) : [...bks, k].sort(); lsSet('moje_v1_bks', JSON.stringify(bks)); return render(); }
   if ((b = q('[data-u2]'))) return go('model', b.dataset.u2);
   if ((b = q('[data-go]'))) return go(b.dataset.go);
-  if ((b = q('.mc[data-u]'))) return go('model', b.dataset.u);
+  if ((b = q('.mc[data-u],.rw[data-u]'))) return go('model', b.dataset.u);
   if ((b = q('.bt[data-bi]'))) { const x = bets[+b.dataset.bi]; if (x && x.it) go('model', x.it.uid); else toast('Tego modelu nie ma już w MOJE'); }
 });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id && e.target.id.startsWith('in_')) { const t = e.target.id.slice(3); addCode(t, e.target.value.trim()); } });
