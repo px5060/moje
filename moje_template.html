@@ -51,6 +51,9 @@ a.btn{text-decoration:none}
 .mc .st{margin-top:4px;font-size:13.5px}
 .mc .big{font-size:16px;font-weight:800;color:#fff}
 .mc .bet{margin-top:5px;font-size:12.5px;color:var(--bl)}
+.btf{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;margin-top:7px}.btf label{display:flex;flex-direction:column;font-size:10.5px;color:var(--mu);gap:2px}
+.btf input{width:58px;padding:6px;border-radius:7px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font-size:15px;font-weight:700}.btf .fNr{width:84px}.btf .fZl{width:70px}
+.btf button{flex:1;min-width:120px;padding:8px}.btf.wide button{font-size:14px}
 .mc .row2{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .bdg{display:inline-block;border-radius:5px;padding:1px 6px;font-size:11px;font-weight:800;color:#fff;margin-right:4px;vertical-align:1px}
 .bdg.S{background:#2e75b6}.bdg.Sp{background:#7030a0}.bdg.B{background:#b3261e}
@@ -107,7 +110,7 @@ nav i.nb{position:absolute;top:3px;left:calc(50% + 30px);min-width:16px;height:1
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.1.0';
+const APP_VER = '1.2.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -368,13 +371,18 @@ function betRes(x) {
 }
 const betVal = x => x.res === 'win' ? 2 * x.b.stake : x.res === 'lost' ? -x.b.stake : 0;
 const betsOf = it => bets.filter(x => x.uid === it.uid);
-function saveBet(it) {   // zapis do MOJE ZAKŁADY aplikacji źródłowej (ten sam format) — widać go też tam
-  const r = it.r; if (r.ph !== 2) return;
-  if (betsOf(it).some(x => x.b.row === r.wz)) { toast('Ten zakład jest już zapisany'); return; }
+function saveBet(it, row, step, stake) {   // zapis do MOJE ZAKŁADY aplikacji źródłowej (ten sam format) — widać go też tam
+  if (!(row >= 0) || !(step >= 1 && step <= 8) || !(stake > 0)) { toast('Podaj Nr wiersza, krok 1–8 i kwotę w zł'); return; }
+  if (betsOf(it).some(x => x.b.row === row) && !confirm(`Na Nr ${fmtN(row + 1)} jest już zapisany zakład ${it.g.id}. Zapisać jeszcze jeden?`)) return;
   const key = BTK(it.t, it.s, it.tg), a = jget(key);
-  a.push({ m: it.gone ? it.m.slice(0, it.s.nf) : it.g.m, id: it.g.id, row: r.wz, step: r.bs + 1, stake: ST[r.bs], t: Date.now(), my: 1 });
+  a.push({ m: it.gone ? it.m.slice(0, it.s.nf) : it.g.m, id: it.g.id, row, step, stake, t: Date.now(), my: 1 });
   if (!lsSet(key, JSON.stringify(a))) { alert('BŁĄD zapisu pamięci telefonu!'); return; }
-  toast(`Zapisano zakład ${esc(it.label)}: Nr ${fmtN(r.wz + 1)} · k${r.bs + 1} · ${ST[r.bs]} zł`); reload();
+  toast(`Zapisano zakład ${esc(it.label)}: Nr ${fmtN(row + 1)} · k${step} · ${stake} zł`); reload();
+}
+// formularz zakładu jak w SZUKAJ: Nr wiersza · krok · postawione zł (domyślnie wiersz zakładu modelu, bieżący krok i jego stawka)
+function betForm(it, wide) {
+  const r = it.r, n = D[it.t].n, dn = r.ph === 2 ? r.wz + 1 : n + 1, dk = r.bs + 1;
+  return `<div class="btf${wide ? ' wide' : ''}"><label>Nr wiersza<input class="fNr" type="number" inputmode="numeric" value="${dn}"></label><label>krok<input class="fK" type="number" inputmode="numeric" min="1" max="8" value="${dk}"></label><label>postawione zł<input class="fZl" type="number" inputmode="numeric" min="1" value="${ST[dk - 1]}"></label><button class="btn sm ${it.d === 1 ? 'pri' : 'ok'}" data-bsave="${esc(it.uid)}">💰 Zapisz zakład</button></div>`;
 }
 function delBet(x) {
   if (!confirm(`Usunąć zapis zakładu ${x.b.id} (Nr ${fmtN(x.b.row + 1)}, ${x.b.stake} zł)?`)) return;
@@ -422,7 +430,7 @@ function card(it) {
   return `<div class="mc ${cls}" data-u="${esc(it.uid)}"><div class="h"><span class="id">${srcBdg(it)}${esc(it.g.id)}${it.tg !== 'x1x' ? ` <span class="mu">${it.tg}</span>` : ''}</span><span class="mu">${esc(it.s.name)} ${TABS[it.t].name}</span></div>
     <div class="rule">${esc(ruleTxt(it.m))}</div><div class="st">${st}</div>
     ${pend.map(x => `<div class="bet">● POSTAWIONY: Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł — czeka na wynik</div>`).join('')}
-    ${r.ph === 2 && it.d <= 3 && it.grp !== 'done' ? `<div class="row2">${saved ? '<span class="pos">✓ zakład zapisany</span>' : `<button class="btn sm ${it.d === 1 ? 'pri' : ''}" data-bet="${esc(it.uid)}">💰 Zapisz zakład: Nr ${fmtN(r.wz + 1)} · k${r.bs + 1} · ${ST[r.bs]} zł</button>`}</div>` : ''}</div>`;
+    ${r.ph === 2 && it.d <= 3 && it.grp !== 'done' ? (saved ? '<div class="row2"><span class="pos">✓ zakład zapisany</span></div>' : betForm(it)) : ''}</div>`;
 }
 const GRP = [['now', '🟧 GRAJ TERAZ', 'zakład na następnym wierszu'], ['soon', '🟨 ZA 2–3 WIERSZE', 'TRIGGER był, zakład za chwilę'], ['bust', '🟥 BUST', 'przegrany krok 8 — do pierwszego WIN po nim'], ['wait', '🟦 W GRZE', 'czeka na STEP / TRIGGER']];
 function teraz() {
@@ -479,7 +487,7 @@ function model() {
     ${it.grp === 'bust' ? `<div class="neg" style="margin-top:4px">BUST w Nr ${fmtN(r.lbr + 1)} — od niego jeszcze bez WIN</div>` : ''}
     ${it.res ? `<div style="margin-top:4px">Moja gra: ${it.res.win ? `✔ WIN k${it.res.k}` : '✖ BUST'} w Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}</div>` : ''}
     ${it.gone ? '' : `<div class="hint">Śledzę od Nr ${fmtN((it.g.start || 0) + 1)} (wejście na k${it.g.s0 || 1})${it.g.t ? ` · dodany ${ago(it.g.t)}` : ''}</div>`}
-    ${r.ph === 2 && !betsOf(it).some(x => x.b.row === r.wz) ? `<button class="btn wide ${it.d === 1 ? 'pri' : ''}" data-bet="${esc(it.uid)}">💰 Zapisz zakład: Nr ${fmtN(r.wz + 1)} · k${r.bs + 1} · ${ST[r.bs]} zł</button>` : ''}</div>`;
+    <div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (możesz zmienić Nr, krok i kwotę):</div>${betForm(it, 1)}</div>`;
   h += `<div class="box"><h4>Jak gra ten model</h4><ol>
     <li><b>STEP</b>: czekam, aż wypadnie ${esc(stepTxt(m))}.</li>
     ${m[6] ? `<li><b>STEP2</b>: potem czekam na układ ${esc(m[6])}.</li>` : ''}
@@ -540,7 +548,8 @@ document.addEventListener('click', e => {
   if ((b = q('[data-undob]'))) return undoBatch(b.dataset.undob);
   if ((b = q('[data-exp]'))) { const [t, i] = b.dataset.exp.split(':'); return exportFile(t, +i); }
   if ((b = q('[data-only]'))) { only = b.dataset.only; lsSet('moje_v1_only', only); return render(); }
-  if ((b = q('[data-bet]'))) { e.stopPropagation(); const it = items.find(x => x.uid === b.dataset.bet); if (it) saveBet(it); return; }
+  if ((b = q('[data-bsave]'))) { const it = items.find(x => x.uid === b.dataset.bsave), f = b.closest('.btf'); if (it) saveBet(it, +f.querySelector('.fNr').value - 1, +f.querySelector('.fK').value, +f.querySelector('.fZl').value); return; }
+  if (q('.btf')) return;   // pola formularza zakładu — nie otwieraj modelu
   if ((b = q('[data-delbet]'))) { e.stopPropagation(); return delBet(bets[+b.dataset.delbet]); }
   if ((b = q('[data-untrack]'))) { const it = items.find(x => x.uid === sel); if (it) untrack(it); return; }
   if ((b = q('[data-go]'))) return go(b.dataset.go);
@@ -548,6 +557,11 @@ document.addEventListener('click', e => {
   if ((b = q('.bt[data-bi]'))) { const x = bets[+b.dataset.bi]; if (x && x.it) go('model', x.it.uid); else toast('Tego modelu nie ma już w MOJE'); }
 });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id && e.target.id.startsWith('in_')) { const t = e.target.id.slice(3); addCode(t, e.target.value.trim()); } });
+document.addEventListener('input', e => {   // formularz zakładu: zmiana kroku → stawka tego kroku (dopóki kwoty nie zmieniono ręcznie)
+  const c = e.target.classList; if (!c) return;
+  if (c.contains('fZl')) e.target.dataset.ed = '1';
+  if (c.contains('fK')) { const z = e.target.closest('.btf').querySelector('.fZl'), k = +e.target.value; if (!z.dataset.ed && k >= 1 && k <= 8) z.value = ST[k - 1]; }
+});
 document.addEventListener('input', e => {   // 3 cyfry → od razu dodaj
   const t = e.target.id && e.target.id.startsWith('in_') ? e.target.id.slice(3) : null; if (!t) return;
   e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
