@@ -102,11 +102,12 @@ nav i.nb{position:absolute;top:3px;left:calc(50% + 30px);min-width:16px;height:1
 <nav>
   <button data-v="teraz" class="on" id="navT">TERAZ</button>
   <button data-v="zak" id="navZ">ZAKŁADY</button>
+  <button data-v="dane">KODY</button>
   <button data-v="pom">POMOC</button>
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.0.0';
+const APP_VER = '1.1.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -123,7 +124,7 @@ const lsSet = (k, v) => { try { localStorage.setItem(k, v); return true; } catch
 const jget = k => { try { const v = JSON.parse(lsGet(k, '[]')); return Array.isArray(v) ? v : []; } catch (e) { return []; } };
 const fmtN = n => n.toLocaleString('pl');
 const zl = v => `<span class="${v > 0 ? 'pos' : v < 0 ? 'neg' : ''}">${v > 0 ? '+' : v < 0 ? '−' : ''}${fmtN(Math.abs(v))} zł</span>`;
-function toast(t) { const o = document.createElement('div'); o.className = 'toast'; o.innerHTML = t; document.body.appendChild(o); setTimeout(() => o.remove(), 2600); }
+function toast(t) { document.querySelectorAll('.toast').forEach(x => x.remove()); const o = document.createElement('div'); o.className = 'toast'; o.innerHTML = t; document.body.appendChild(o); setTimeout(() => o.remove(), 2600); }
 
 // ---- czas słowami: „przed chwilą”, „5 minut temu”, „2 dni temu” ----
 function pl(n, f) { const a = n % 10, b = n % 100; return n === 1 ? f[0] : a >= 2 && a <= 4 && (b < 12 || b > 14) ? f[1] : f[2]; }
@@ -165,6 +166,84 @@ function addCode(t, c) {
   reload();
   resultPop(t, row, c, before);
 }
+// ===== KODY: wklejanie kilku naraz, import pliku, eksport (nazwy i format jak w RAZEM: PIKOFF / TRÓJKA — appki na PC je wychwytują) =====
+function srcTxt(e) { return e.here === 1 ? ', wpisany tutaj' : e.here === 2 ? `, z pliku ${esc(e.f || '')}` : e.here === 3 ? ', wklejony tutaj' : ', wpisany w innej aplikacji — tu zauważony'; }
+const IMPK = t => 'moje_v1_lastimp_' + t, EXPK = t => 'moje_v1_lastexp_' + t;
+function jobj(k) { try { const v = JSON.parse(lsGet(k, 'null')); return v && typeof v === 'object' ? v : null; } catch (e) { return null; } }
+function appendBatch(t, arr, how, f) {   // dopisz kody na koniec (czytaj-zmień-zapisz), zapisz w dzienniku i jako ostatni import (do cofnięcia)
+  const from = D[t].n;
+  if (!lsSet(TABS[t].key, readAdded(t) + arr.join(''))) { alert('BŁĄD zapisu pamięci telefonu!'); return false; }
+  const now = Date.now(), L = jget(LOGK(t));
+  arr.forEach((c, i) => L.push({ n: from + i + 1, c, t: now, here: how, f }));
+  lsSet(LOGK(t), JSON.stringify(L.slice(-300)));
+  lsSet(IMPK(t), JSON.stringify({ from, to: from + arr.length, f: f || '', how, t: now, tail: arr.join('') }));
+  reload(); return true;
+}
+function normCodes(raw) { return raw.map(x => String(x == null ? '' : x).trim()).map(x => /^\d{1,3}(\.0+)?$/.test(x) ? String(parseInt(x, 10)).padStart(3, '0') : x); }
+function importFile(t, text, fname) {   // pełny ciąg od Nr 1 (eksport RAZEM / PIKOFF / TRÓJKA / SZUKAJ / MOJE) — dopisuje tylko nowe kody
+  let raw = null, kind = '';
+  try { const d = JSON.parse(text); raw = Array.isArray(d) ? d : d && d.codes; kind = d && !Array.isArray(d) ? (d.kind || d.app || d.source || '') : 'lista'; }
+  catch (e) { raw = String(text).match(/\d{3}/g) || []; kind = 'tekst'; }
+  if (!Array.isArray(raw) || !raw.length) { alert(`${fname}: w pliku nie ma listy kodów (codes).`); return; }
+  const arr = normCodes(raw), AL = TABS[t].alph, bad = arr.findIndex(c => !AL.includes(c));
+  if (bad >= 0) { alert(`${fname}: kod „${arr[bad]}” w Nr ${bad + 1} nie pasuje do ${TABS[t].name}. Może to plik drugiej tabeli? Nic nie zmieniono.`); return; }
+  const n = D[t].n, m = Math.min(arr.length, n);
+  for (let i = 0; i < m; i++) if (arr[i] !== code(t, i)) { alert(`${fname}: różnica w Nr ${fmtN(i + 1)} — plik ${arr[i]}, MOJE ${code(t, i)}.\nTo chyba plik innej tabeli albo innego ciągu. Nic nie zmieniono.`); return; }
+  if (arr.length <= n) { alert(`${fname} (${fmtN(arr.length)} kodów${kind ? ', ' + kind : ''}) jest zgodny, ale nie ma nowych kodów.\nMOJE ma ${fmtN(n)}. Nic nie zmieniono.`); return; }
+  const add = arr.slice(n);
+  if (!confirm(`Import do ${TABS[t].name}: ${fname}\n${kind ? 'rodzaj: ' + kind + ' · ' : ''}${fmtN(arr.length)} kodów, zgodny w Nr 1–${fmtN(n)}.\n\nDopisać ${add.length} nowych kodów (Nr ${fmtN(n + 1)}–${fmtN(arr.length)})?\nTrafią też do RAZEM i SZUKAJ.`)) return;
+  if (appendBatch(t, add, 2, fname)) toast(`${TABS[t].name}: +${add.length} kodów z pliku, teraz Nr ${fmtN(D[t].n)}`);
+}
+function pasteCodes(t) {   // kilka nowych kodów naraz (dopisywane na koniec, w kolejności)
+  const ta = $('pa_' + t), arr = String(ta.value).match(/\d+/g) || [];
+  if (!arr.length) { toast('Wklej albo wpisz kody, np. 010 110 001'); return; }
+  const bad = arr.find(c => !validCode(t, c));
+  if (bad) { toast(`Zły kod „${esc(bad)}” — ${t === 't50' ? 'T50: trzy cyfry 0/1' : 'T60: pierwsza 0–3, potem dwie 0/1'}`); return; }
+  const n = D[t].n;
+  if (!confirm(`${TABS[t].name}: dopisać ${arr.length} kod(ów) jako Nr ${fmtN(n + 1)}–${fmtN(n + arr.length)}?\n${arr.join(' ')}`)) return;
+  if (appendBatch(t, arr, 3, '')) { ta.value = ''; toast(`${TABS[t].name}: dopisano ${arr.length}, teraz Nr ${fmtN(D[t].n)}`); }
+}
+function lastBatch(t) {   // ostatni import / wklejenie — można cofnąć, dopóki to wciąż koniec ciągu
+  const b = jobj(IMPK(t)); if (!b || !(b.to > b.from) || b.to !== D[t].n) return null;
+  const a = readAdded(t), k = (b.to - b.from) * 3;
+  return a.length >= k && a.slice(-k) === b.tail ? b : null;
+}
+function undoBatch(t) {
+  const b = lastBatch(t); if (!b) { toast('Nie ma czego cofnąć'); return; }
+  if (!confirm(`Cofnąć ${b.how === 2 ? 'import ' + b.f : 'wklejenie'}: ${b.to - b.from} kodów (Nr ${fmtN(b.from + 1)}–${fmtN(b.to)})?\nZnikną we wszystkich aplikacjach.`)) return;
+  lsSet(TABS[t].key, readAdded(t).slice(0, -(b.to - b.from) * 3)); lsSet(IMPK(t), 'null'); reload(); toast(`Cofnięto ${b.to - b.from} kodów`);
+}
+function stamp() { const d = new Date(), p = x => String(x).padStart(2, '0'); return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`; }
+const EXPF = {   // te same nazwy i pola co eksport RAZEM / PIKOFF / TRÓJKA
+  t50: [{ nm: 'TRÓJKA', file: (s, n) => `v13_${s}_${n}kod.json`, pay: (c, d) => ({ app: 'v13_troika', source: 'MOJE', version: APP_VER, saved: d, n: c.length, codes: c }) }],
+  t60: [{ nm: 'PIKOFF', file: (s, n) => `xx1_pikoff_${s}_n${n}.json`, pay: (c, d) => ({ kind: 'xx1_pikoff', app: 'T60 RAZEM', source: 'MOJE', version: APP_VER, table: 'Tabela60off5678', created: d, n: c.length, seed_n: 12542, codes: c }) },
+        { nm: 'TRÓJKA', file: (s, n) => `trojka_xx1_v13_${s}_${n}kod.json`, pay: (c, d) => ({ codes: c, version: APP_VER, kind: 'trojka_xx1_v13', source: 'MOJE', saved: d, n: c.length }) }],
+};
+function exportFile(t, i) {
+  const E = EXPF[t][i], c = []; for (let k = 0; k < D[t].n; k++) c.push(code(t, k));
+  const name = E.file(stamp(), c.length), a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(E.pay(c, new Date().toISOString()), null, 1)], { type: 'application/json' }));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  const x = jobj(EXPK(t)) || {}; x[E.nm] = { t: Date.now(), n: c.length, f: name }; lsSet(EXPK(t), JSON.stringify(x));
+  toast(`Zapisano ${name}`); render();
+}
+function daneBox(t) {
+  const T = TABS[t], b = lastBatch(t), ex = jobj(EXPK(t)) || {}, imp = jobj(IMPK(t));
+  return kodBox(t) + `<div class="box" style="margin-top:-4px">
+    <h4>${T.name} · wpisz / wklej kilka kodów naraz</h4>
+    <textarea id="pa_${t}" rows="2" inputmode="numeric" placeholder="np. ${t === 't50' ? '010 110 001' : '210 001 300'} — dopiszą się jako Nr ${fmtN(D[t].n + 1)}, ${fmtN(D[t].n + 2)}…" style="width:100%;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:8px;font-size:16px;letter-spacing:2px"></textarea>
+    <button class="btn pri wide" data-paste="${t}">Dopisz kody</button>
+    <h4 style="margin-top:12px">Import pliku</h4>
+    <div class="hint" style="margin:0 0 6px">Eksport z RAZEM, PIKOFF, TRÓJKI, SZUKAJ albo MOJE (.json, pełny ciąg od Nr 1) albo plik tekstowy z kodami. Sprawdzam zgodność od Nr 1 i dopisuję tylko nowe kody.</div>
+    <label class="btn wide" style="cursor:pointer">⬆ Wybierz plik ${T.name}<input type="file" data-imp="${t}" accept=".json,.txt,.csv,application/json,text/plain" style="display:none"></label>
+    ${imp && imp.t ? `<div class="hint">Ostatnio: ${imp.how === 2 ? 'import ' + esc(imp.f) : 'wklejenie'} · +${imp.to - imp.from} kodów · ${ago(imp.t)} (${when(imp.t)})</div>` : ''}
+    ${b ? `<button class="btn wide" data-undob="${t}" style="color:var(--rd)">↶ Cofnij ${b.how === 2 ? 'ten import' : 'to wklejenie'} (${b.to - b.from} kodów, Nr ${fmtN(b.from + 1)}–${fmtN(b.to)})</button>` : ''}
+    <h4 style="margin-top:12px">Eksport (nazwy jak w RAZEM — appki na PC je wychwytują)</h4>
+    ${EXPF[t].map((E, i) => { const x = ex[E.nm]; return `<button class="btn wide" data-exp="${t}:${i}">⬇ ${E.nm} · ${E.file('RRRRMMDD_GGMM', D[t].n)}</button>
+      <div class="hint">${x ? `ostatni: ${ago(x.t)} (${when(x.t)}) · ${fmtN(x.n)} kodów${D[t].n > x.n ? ` · <b style="color:var(--ye)">od tego czasu +${D[t].n - x.n} kodów</b>` : ' · aktualny'}` : 'jeszcze nie eksportowano z MOJE'}</div>`; }).join('')}
+  </div>`;
+}
+function dane() { return daneBox('t50') + daneBox('t60') + '<div class="hint">Kody są wspólne z RAZEM i SZUKAJ: to, co tu dopiszesz, zaimportujesz albo cofniesz, od razu widać we wszystkich aplikacjach.</div>'; }
 function undoCode(t) {
   const a = readAdded(t); if (!a.length) { toast('Brak dopisanych kodów do cofnięcia'); return; }
   if (!confirm(`Cofnąć ostatni kod ${a.slice(-3)} (Nr ${fmtN(D[t].n)}) w ${TABS[t].name}?\nZniknie we wszystkich aplikacjach (RAZEM, SZUKAJ…).`)) return;
@@ -327,7 +406,7 @@ function kodBox(t) {
   const prev = []; for (let i = Math.max(0, n - 8); i < n; i++) prev.push(`<b>${code(t, i)}</b>`);
   return `<div class="kod"><div class="kh"><b>${T.name}</b><span class="src">${fmtN(n)} kodów</span></div>
     <div class="last">Ostatni kod: <b>Nr ${fmtN(n)}</b> = <span class="c">${code(t, n - 1)}</span> ·
-    ${last ? `<span class="when ${age > 864e5 ? 'vold' : age > 3 * 36e5 ? 'old' : ''}">${ago(last.t)}</span> <span class="src">(${when(last.t)}${last.here ? ', wpisany tutaj' : ', wpisany w innej aplikacji — tu zauważony'})</span>`
+    ${last ? `<span class="when ${age > 864e5 ? 'vold' : age > 3 * 36e5 ? 'old' : ''}">${ago(last.t)}</span> <span class="src">(${when(last.t)}${srcTxt(last)})</span>`
       : '<span class="src">kod z bazy (bez dopisanych kodów)</span>'}</div>
     <div class="erow"><input id="in_${t}" inputmode="numeric" maxlength="3" placeholder="kod Nr ${fmtN(n + 1)}" autocomplete="off"><button class="btn pri" data-add="${t}">Dodaj</button><button class="btn" data-undo="${t}" title="cofnij ostatni">↶</button></div>
     <div class="prev">ostatnie: ${prev.join('')}</div></div>`;
@@ -432,7 +511,7 @@ function pomoc() {
   return `<div class="box"><h4>Co tu jest</h4>MOJE zbiera modele, które grasz, ze wszystkich aplikacji: <span class="bdg S">S</span>SZUKAJ, <span class="bdg Sp">S+</span>SZUKAJ+, <span class="bdg B">B</span>SZUKAJ BUST — dla T50 i T60. Liczba przy znaczku = tabela (S50, S+60…).</div>
     <div class="box"><h4>Grupy na ekranie TERAZ</h4>🟧 <b>GRAJ TERAZ</b> — zakład na następnym wierszu (kwota i krok na karcie).<br>🟨 <b>ZA 2–3 WIERSZE</b> — TRIGGER już był, zakład za chwilę.<br>🟥 <b>BUST</b> — model przegrał krok 8 (512 zł); znika po pierwszym WIN.<br>🟦 <b>W GRZE</b> — czeka na STEP albo TRIGGER.<br>✅ <b>ZAKOŃCZONE</b> — po WIN (rozwiń na dole).</div>
     <div class="box"><h4>Znaczki na TERAZ</h4><b style="background:#FF6600;color:#fff;border-radius:8px;padding:0 5px">2</b> pomarańczowy = ile modeli gra na następnym wierszu.<br><b style="background:#FFD700;color:#000;border-radius:8px;padding:0 5px">2,3</b> żółty = za ile wierszy grają kolejne.</div>
-    <div class="box"><h4>Kody</h4>Kody są wspólne z RAZEM i SZUKAJ — wpisany tu kod jest od razu we wszystkich aplikacjach (i odwrotnie). Przy każdej tabeli widać ostatni kod i <b>kiedy</b> go wpisano. Gdy kod wpisano w innej aplikacji, MOJE pokazuje, kiedy go tu zauważyło (przy otwarciu).</div>
+    <div class="box"><h4>Kody</h4>Kody są wspólne z RAZEM i SZUKAJ — wpisany tu kod jest od razu we wszystkich aplikacjach (i odwrotnie). Przy każdej tabeli widać ostatni kod i <b>kiedy</b> go wpisano. Gdy kod wpisano w innej aplikacji, MOJE pokazuje, kiedy go tu zauważyło (przy otwarciu).<br>Zakładka <b>KODY</b>: kilka kodów naraz, import pliku (z cofnięciem całego importu) i eksport z nazwami jak w RAZEM — T50: TRÓJKA <b>v13_…kod.json</b>, T60: <b>xx1_pikoff_…json</b> i <b>trojka_xx1_v13_…kod.json</b>, żeby appki na PC je wychwyciły.</div>
     <div class="box"><h4>Zakłady</h4>„💰 Zapisz zakład” zapisuje zakład w MOJE ZAKŁADY aplikacji, z której jest model — widać go tu i tam. Wynik liczy się sam po wpisaniu kodu.</div>
     <div class="box"><h4>Dodawanie modeli</h4>W aplikacji SZUKAJ przytrzymaj kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. Aplikacja doda model i otworzy go tutaj.</div>
     <div class="hint">MOJE ${APP_VER}</div>`;
@@ -446,8 +525,8 @@ function render() {
   $('navT').innerHTML = `TERAZ${soon.length ? `<b class="soon">${soon.join(',')}</b>` : ''}${now ? `<i class="nb">${now}</i>` : ''}`;
   const pend = bets.filter(x => x.res === 'pend').length;
   $('navZ').innerHTML = `ZAKŁADY${pend ? `<i class="nb">${pend}</i>` : ''}`;
-  const ae = document.activeElement, keep = ae && ae.id && ae.id.startsWith('in_') ? [ae.id, ae.value] : null;
-  $('main').innerHTML = view === 'teraz' ? teraz() : view === 'zak' ? zaklady() : view === 'model' ? model() : pomoc();
+  const ae = document.activeElement, keep = ae && ae.id && /^(in|pa)_/.test(ae.id) ? [ae.id, ae.value] : null;
+  $('main').innerHTML = view === 'teraz' ? teraz() : view === 'zak' ? zaklady() : view === 'model' ? model() : view === 'dane' ? dane() : pomoc();
   if (keep && $(keep[0])) { $(keep[0]).value = keep[1]; $(keep[0]).focus(); }
 }
 function go(v, u) { view = v; sel = u || null; render(); window.scrollTo(0, 0); }
@@ -457,6 +536,9 @@ document.addEventListener('click', e => {
   if ((b = q('nav button'))) return go(b.dataset.v);
   if ((b = q('[data-add]'))) { const t = b.dataset.add, i = $('in_' + t); addCode(t, i.value.trim()); return; }
   if ((b = q('[data-undo]'))) return undoCode(b.dataset.undo);
+  if ((b = q('[data-paste]'))) return pasteCodes(b.dataset.paste);
+  if ((b = q('[data-undob]'))) return undoBatch(b.dataset.undob);
+  if ((b = q('[data-exp]'))) { const [t, i] = b.dataset.exp.split(':'); return exportFile(t, +i); }
   if ((b = q('[data-only]'))) { only = b.dataset.only; lsSet('moje_v1_only', only); return render(); }
   if ((b = q('[data-bet]'))) { e.stopPropagation(); const it = items.find(x => x.uid === b.dataset.bet); if (it) saveBet(it); return; }
   if ((b = q('[data-delbet]'))) { e.stopPropagation(); return delBet(bets[+b.dataset.delbet]); }
@@ -471,9 +553,13 @@ document.addEventListener('input', e => {   // 3 cyfry → od razu dodaj
   e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
   if (e.target.value.length === 3 && validCode(t, e.target.value)) addCode(t, e.target.value);
 });
+document.addEventListener('change', e => {
+  const t = e.target.dataset && e.target.dataset.imp, f = t && e.target.files && e.target.files[0]; if (!f) return;
+  const fr = new FileReader(); fr.onload = () => { e.target.value = ''; importFile(t, String(fr.result), f.name); }; fr.readAsText(f);
+});
 window.addEventListener('storage', () => reload());
 document.addEventListener('visibilitychange', () => { if (!document.hidden) reload(); });
-setInterval(() => { if (!document.hidden && !(document.activeElement && document.activeElement.tagName === 'INPUT')) render(); }, 30000);
+setInterval(() => { if (!document.hidden && !(document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName))) render(); }, 30000);
 reload();
 // ?open=<t>~<app>~<cel>~<model> — z aplikacji SZUKAJ („⇢ Gram — dodaj do MOJE”): od razu ekran modelu
 (() => { const u = new URLSearchParams(location.search).get('open'); if (!u) return;
