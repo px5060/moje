@@ -25,6 +25,7 @@ a.btn{text-decoration:none}
 .hint{color:var(--mu);font-size:11.5px;margin-top:4px}
 .chip{position:relative;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:16px;padding:5px 11px;font-size:13px;font-weight:600}
 .chip.on{background:var(--or);border-color:var(--or);color:#fff}
+.chip b.soon{position:absolute;top:-8px;left:-6px;min-width:16px;height:16px;border-radius:8px;background:var(--ye);color:#000;font:700 10px/16px system-ui;padding:0 4px;border:1px solid #fff}.chip i.nb{position:absolute;top:-8px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#FF6600;color:#fff;font:700 10px/16px system-ui;font-style:normal;padding:0 4px;border:1px solid #fff}
 .flt{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
 /* wpis kodów */
 .kod{background:var(--pan);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin-bottom:8px}
@@ -51,6 +52,9 @@ a.btn{text-decoration:none}
 .mc .st{margin-top:4px;font-size:13.5px}
 .mc .big{font-size:16px;font-weight:800;color:#fff}
 .mc .bet{margin-top:5px;font-size:12.5px;color:var(--bl)}
+.btf{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;margin-top:7px}.btf label{display:flex;flex-direction:column;font-size:10.5px;color:var(--mu);gap:2px}
+.btf input{width:58px;padding:6px;border-radius:7px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font-size:15px;font-weight:700}.btf .fNr{width:84px}.btf .fZl{width:70px}
+.btf button{flex:1;min-width:120px;padding:8px}.btf.wide button{font-size:14px}
 .mc .row2{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .bdg{display:inline-block;border-radius:5px;padding:1px 6px;font-size:11px;font-weight:800;color:#fff;margin-right:4px;vertical-align:1px}
 .bdg.S{background:#2e75b6}.bdg.Sp{background:#7030a0}.bdg.B{background:#b3261e}
@@ -86,7 +90,7 @@ table.rows tr.k4 td,table.rows tr.k5 td{background:#3a2a1c}table.rows tr.k3 td,t
 table.rows tr.nx td{background:#ff6600;color:#fff;font-weight:800}
 .back{margin-bottom:8px}
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--pan);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom);z-index:20}
-nav button{flex:1;background:none;border:0;color:var(--mu);padding:12px 4px;font-size:14px;font-weight:700;position:relative}
+nav button{flex:1;background:none;border:0;color:var(--mu);padding:12px 2px;font-size:13px;font-weight:700;position:relative}
 nav button.on{color:var(--or2)}
 nav b.soon,.grp b.soon{position:absolute;top:3px;left:calc(50% - 46px);min-width:16px;height:16px;border-radius:8px;background:var(--ye);color:#000;font:700 10px/16px system-ui;padding:0 4px;border:1px solid #fff}
 nav i.nb{position:absolute;top:3px;left:calc(50% + 30px);min-width:16px;height:16px;border-radius:8px;background:#FF6600;color:#fff;font:700 10px/16px system-ui;font-style:normal;padding:0 4px;border:1px solid #fff}
@@ -101,13 +105,14 @@ nav i.nb{position:absolute;top:3px;left:calc(50% + 30px);min-width:16px;height:1
 <main id="main"></main>
 <nav>
   <button data-v="teraz" class="on" id="navT">TERAZ</button>
+  <button data-v="bust" id="navB">BUST</button>
   <button data-v="zak" id="navZ">ZAKŁADY</button>
   <button data-v="dane">KODY</button>
   <button data-v="pom">POMOC</button>
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.1.0';
+const APP_VER = '1.3.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -368,13 +373,18 @@ function betRes(x) {
 }
 const betVal = x => x.res === 'win' ? 2 * x.b.stake : x.res === 'lost' ? -x.b.stake : 0;
 const betsOf = it => bets.filter(x => x.uid === it.uid);
-function saveBet(it) {   // zapis do MOJE ZAKŁADY aplikacji źródłowej (ten sam format) — widać go też tam
-  const r = it.r; if (r.ph !== 2) return;
-  if (betsOf(it).some(x => x.b.row === r.wz)) { toast('Ten zakład jest już zapisany'); return; }
+function saveBet(it, row, step, stake) {   // zapis do MOJE ZAKŁADY aplikacji źródłowej (ten sam format) — widać go też tam
+  if (!(row >= 0) || !(step >= 1 && step <= 8) || !(stake > 0)) { toast('Podaj Nr wiersza, krok 1–8 i kwotę w zł'); return; }
+  if (betsOf(it).some(x => x.b.row === row) && !confirm(`Na Nr ${fmtN(row + 1)} jest już zapisany zakład ${it.g.id}. Zapisać jeszcze jeden?`)) return;
   const key = BTK(it.t, it.s, it.tg), a = jget(key);
-  a.push({ m: it.gone ? it.m.slice(0, it.s.nf) : it.g.m, id: it.g.id, row: r.wz, step: r.bs + 1, stake: ST[r.bs], t: Date.now(), my: 1 });
+  a.push({ m: it.gone ? it.m.slice(0, it.s.nf) : it.g.m, id: it.g.id, row, step, stake, t: Date.now(), my: 1 });
   if (!lsSet(key, JSON.stringify(a))) { alert('BŁĄD zapisu pamięci telefonu!'); return; }
-  toast(`Zapisano zakład ${esc(it.label)}: Nr ${fmtN(r.wz + 1)} · k${r.bs + 1} · ${ST[r.bs]} zł`); reload();
+  toast(`Zapisano zakład ${esc(it.label)}: Nr ${fmtN(row + 1)} · k${step} · ${stake} zł`); reload();
+}
+// formularz zakładu jak w SZUKAJ: Nr wiersza · krok · postawione zł (domyślnie wiersz zakładu modelu, bieżący krok i jego stawka)
+function betForm(it, wide) {
+  const r = it.r, n = D[it.t].n, dn = r.ph === 2 ? r.wz + 1 : n + 1, dk = r.bs + 1;
+  return `<div class="btf${wide ? ' wide' : ''}"><label>Nr wiersza<input class="fNr" type="number" inputmode="numeric" value="${dn}"></label><label>krok<input class="fK" type="number" inputmode="numeric" min="1" max="8" value="${dk}"></label><label>postawione zł<input class="fZl" type="number" inputmode="numeric" min="1" value="${ST[dk - 1]}"></label><button class="btn sm ${it.d === 1 ? 'pri' : 'ok'}" data-bsave="${esc(it.uid)}">💰 Zapisz zakład</button></div>`;
 }
 function delBet(x) {
   if (!confirm(`Usunąć zapis zakładu ${x.b.id} (Nr ${fmtN(x.b.row + 1)}, ${x.b.stake} zł)?`)) return;
@@ -416,13 +426,13 @@ function card(it) {
   const r = it.r, pend = betsOf(it).filter(x => x.res === 'pend'), saved = r.ph === 2 && pend.some(x => x.b.row === r.wz);
   let st = '';
   if (it.grp === 'done') st = `${it.res.win ? `✔ WIN na <span class="kk">k${it.res.k}</span>` : '✖ BUST (512 zł bez trafienia), potem WIN'} w Nr ${fmtN(it.res.row + 1)} · od wejścia ${zl(it.res.pnl)}`;
-  else if (it.grp === 'bust') st = `<b class="neg">BUST w Nr ${fmtN(r.lbr + 1)}</b> · od BUST-u bez WIN${it.gone ? ' · <span class="mu">model usunięty z MOJE</span>' : ''}<br>${phaseTxt(it)}`;
+  else if (it.grp === 'bust') st = `<b class="neg">BUST w Nr ${fmtN(r.lbr + 1)}</b> · od BUST-u bez WIN${gapTxt(r)}${it.gone ? ' · <span class="mu">model usunięty z MOJE</span>' : ''}<br>${phaseTxt(it)}`;
   else st = phaseTxt(it);
   const cls = it.grp === 'done' ? (it.res.win ? 'done' : 'donel') : it.grp === 'bust' && it.d === 1 ? 'bust now' : it.grp;
   return `<div class="mc ${cls}" data-u="${esc(it.uid)}"><div class="h"><span class="id">${srcBdg(it)}${esc(it.g.id)}${it.tg !== 'x1x' ? ` <span class="mu">${it.tg}</span>` : ''}</span><span class="mu">${esc(it.s.name)} ${TABS[it.t].name}</span></div>
     <div class="rule">${esc(ruleTxt(it.m))}</div><div class="st">${st}</div>
     ${pend.map(x => `<div class="bet">● POSTAWIONY: Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł — czeka na wynik</div>`).join('')}
-    ${r.ph === 2 && it.d <= 3 && it.grp !== 'done' ? `<div class="row2">${saved ? '<span class="pos">✓ zakład zapisany</span>' : `<button class="btn sm ${it.d === 1 ? 'pri' : ''}" data-bet="${esc(it.uid)}">💰 Zapisz zakład: Nr ${fmtN(r.wz + 1)} · k${r.bs + 1} · ${ST[r.bs]} zł</button>`}</div>` : ''}</div>`;
+    ${r.ph === 2 && it.d <= 3 && it.grp !== 'done' ? (saved ? '<div class="row2"><span class="pos">✓ zakład zapisany</span></div>' : betForm(it)) : ''}</div>`;
 }
 const GRP = [['now', '🟧 GRAJ TERAZ', 'zakład na następnym wierszu'], ['soon', '🟨 ZA 2–3 WIERSZE', 'TRIGGER był, zakład za chwilę'], ['bust', '🟥 BUST', 'przegrany krok 8 — do pierwszego WIN po nim'], ['wait', '🟦 W GRZE', 'czeka na STEP / TRIGGER']];
 function teraz() {
@@ -437,6 +447,35 @@ function teraz() {
   }
   const Z = L.filter(it => it.grp === 'done');
   if (Z.length) h += `<details><summary>✅ ZAKOŃCZONE · ${Z.length} (WIN albo BUST i WIN po nim)</summary>${Z.map(card).join('')}</details>`;
+  return h;
+}
+// ===== BUST: BUST-y moich modeli (od dodania do MOJE, bez WIN po nich) — filtr po kroku, na którym model gra teraz =====
+function gapTxt(r) { const b = r.bl; return b.length >= 2 ? ` · poprzedni BUST ${b[b.length - 1][1] - b[b.length - 2][1]} cykli wcześniej` : ' · pierwszy BUST modelu'; }
+let bks = (() => { try { const v = JSON.parse(lsGet('moje_v1_bks', '[]')); return Array.isArray(v) ? v : []; } catch (e) { return []; } })();   // [] = wszystkie kroki
+function bustBadges(L) {
+  const now = L.filter(it => it.d === 1).length, soon = [...new Set(L.map(it => it.d).filter(d => d >= 2 && d <= 3))].sort();
+  return (soon.length ? `<b class="soon">${soon.join(',')}</b>` : '') + (now ? `<i class="nb">${now}</i>` : '');
+}
+function busty() {
+  const A = items.filter(it => it.grp === 'bust' && (!only || it.t === only));
+  const L = A.filter(it => !bks.length || bks.includes(it.r.bs + 1)).sort((a, b) => (a.d || 99) - (b.d || 99) || b.r.lbr - a.r.lbr);
+  let h = `<div class="flt">${[['', 'wszystkie'], ['t50', 'T50'], ['t60', 'T60']].map(([v, l]) => `<button class="chip ${only === v ? 'on' : ''}" data-only="${v}">${l}</button>`).join('')}</div>
+    <div class="flt"><span class="mu" style="font-size:12px;align-self:center">krok:</span><button class="chip ${!bks.length ? 'on' : ''}" data-bk="0">wszystkie · ${A.length}</button>
+    ${ST.map((z, i) => { const k = i + 1, G = A.filter(it => it.r.bs + 1 === k); return `<button class="chip ${bks.includes(k) ? 'on' : ''}" data-bk="${k}">k${k} ${z} zł · ${G.length}${bustBadges(G)}</button>`; }).join('')}</div>
+    <div class="hint" style="margin:-4px 0 10px">BUST-y moich modeli (przegrany krok 8, 512 zł) od dodania do MOJE — dopóki po BUST-cie nie było WIN. Zostają też po usunięciu modelu z MOJE. Krok = na którym model gra teraz po BUST-cie.</div>`;
+  if (!A.length) h += '<div class="empty">Brak BUST-ów w moich modelach — żaden nie przegrał kroku 8 bez późniejszego WIN.</div>';
+  else if (!L.length) h += '<div class="empty">Na wybranych krokach nie ma BUST-ów.</div>';
+  else for (const [nm, f] of [['🟧 GRA NA NASTĘPNYM WIERSZU', it => it.d === 1], ['🟨 ZA 2–3 WIERSZE', it => it.d >= 2 && it.d <= 3], ['🟥 CZEKA', it => !(it.d >= 1 && it.d <= 3)]]) {
+    const G = L.filter(f); if (G.length) h += `<div class="grp"><span>${nm} · ${G.length}</span></div>` + G.map(card).join('');
+  }
+  // historia: wszystkie BUST-y moich modeli od dodania i co było po nich
+  const H = [];
+  items.forEach(it => { if (only && it.t !== only) return; const st = it.gone ? it.brow : it.g.start || 0;
+    it.r.bl.forEach(([row, c], j) => { if (row < st) return; const nx = it.r.ev.find(e => e[0] > row); H.push({ it, row, c, nx, prev: j ? c - it.r.bl[j - 1][1] : null }); }); });
+  H.sort((a, b) => b.it.t.localeCompare(a.it.t) || b.row - a.row);
+  if (H.length) h += `<details><summary>📜 Historia BUST-ów moich modeli · ${H.length} (co było po BUST-cie)</summary>
+    ${H.map(x => `<div class="bt ${x.nx ? (x.nx[1] === 1 ? 'win' : 'lost') : 'pend'}" data-u2="${esc(x.it.uid)}">${srcBdg(x.it)}<div>${esc(x.it.g.id)} · BUST Nr ${fmtN(x.row + 1)}<div class="mu" style="font-size:11px">${x.prev != null ? `poprzedni BUST ${x.prev} cykli wcześniej` : 'pierwszy BUST modelu'}</div></div>
+      <div class="r">${!x.nx ? `<span style="color:var(--or2)">trwa · k${x.it.r.bs + 1}</span>` : x.nx[1] === 1 ? `<span class="pos">potem WIN k${x.nx[2]}</span>` : '<span class="neg">potem znowu BUST</span>'}</div></div>`).join('')}</details>`;
   return h;
 }
 function zaklady() {
@@ -473,13 +512,13 @@ function model() {
   const it = items.find(x => x.uid === sel);
   if (!it) { view = 'teraz'; return teraz(); }
   const m = it.m, r = it.r, C = D[it.t], lab = labOf(it), n = C.n, cyc = r.nw + r.nbu;
-  let h = `<button class="btn back" data-go="teraz">← wróć</button>
+  let h = `<button class="btn back" data-go="${back}">← wróć</button>
     <div class="box" style="border-color:var(--or)"><div class="h" style="display:flex;justify-content:space-between"><b style="font-size:17px">${srcBdg(it)}${esc(it.g.id)}</b><span class="mu">${esc(it.s.name)} ${TABS[it.t].name} · cel ${it.tg}</span></div>
     <div class="rule mu" style="font-size:12px;margin:3px 0 6px">${esc(ruleTxt(m))}</div><div style="font-size:14.5px">Teraz: ${phaseTxt(it)}</div>
     ${it.grp === 'bust' ? `<div class="neg" style="margin-top:4px">BUST w Nr ${fmtN(r.lbr + 1)} — od niego jeszcze bez WIN</div>` : ''}
     ${it.res ? `<div style="margin-top:4px">Moja gra: ${it.res.win ? `✔ WIN k${it.res.k}` : '✖ BUST'} w Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}</div>` : ''}
     ${it.gone ? '' : `<div class="hint">Śledzę od Nr ${fmtN((it.g.start || 0) + 1)} (wejście na k${it.g.s0 || 1})${it.g.t ? ` · dodany ${ago(it.g.t)}` : ''}</div>`}
-    ${r.ph === 2 && !betsOf(it).some(x => x.b.row === r.wz) ? `<button class="btn wide ${it.d === 1 ? 'pri' : ''}" data-bet="${esc(it.uid)}">💰 Zapisz zakład: Nr ${fmtN(r.wz + 1)} · k${r.bs + 1} · ${ST[r.bs]} zł</button>` : ''}</div>`;
+    <div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (możesz zmienić Nr, krok i kwotę):</div>${betForm(it, 1)}</div>`;
   h += `<div class="box"><h4>Jak gra ten model</h4><ol>
     <li><b>STEP</b>: czekam, aż wypadnie ${esc(stepTxt(m))}.</li>
     ${m[6] ? `<li><b>STEP2</b>: potem czekam na układ ${esc(m[6])}.</li>` : ''}
@@ -510,6 +549,7 @@ function model() {
 function pomoc() {
   return `<div class="box"><h4>Co tu jest</h4>MOJE zbiera modele, które grasz, ze wszystkich aplikacji: <span class="bdg S">S</span>SZUKAJ, <span class="bdg Sp">S+</span>SZUKAJ+, <span class="bdg B">B</span>SZUKAJ BUST — dla T50 i T60. Liczba przy znaczku = tabela (S50, S+60…).</div>
     <div class="box"><h4>Grupy na ekranie TERAZ</h4>🟧 <b>GRAJ TERAZ</b> — zakład na następnym wierszu (kwota i krok na karcie).<br>🟨 <b>ZA 2–3 WIERSZE</b> — TRIGGER już był, zakład za chwilę.<br>🟥 <b>BUST</b> — model przegrał krok 8 (512 zł); znika po pierwszym WIN.<br>🟦 <b>W GRZE</b> — czeka na STEP albo TRIGGER.<br>✅ <b>ZAKOŃCZONE</b> — po WIN (rozwiń na dole).</div>
+    <div class="box"><h4>Zakładka BUST</h4>BUST-y moich modeli od dodania do MOJE (przegrany krok 8), dopóki po nich nie było WIN — także po usunięciu modelu z MOJE. Filtr <b>krok:</b> = krok, na którym model gra teraz po BUST-cie (można wybrać kilka). Przy każdym widać, ile cykli wcześniej był poprzedni BUST. Na dole <b>Historia</b>: wszystkie BUST-y moich modeli i co było potem (WIN na kroku / znowu BUST / trwa).</div>
     <div class="box"><h4>Znaczki na TERAZ</h4><b style="background:#FF6600;color:#fff;border-radius:8px;padding:0 5px">2</b> pomarańczowy = ile modeli gra na następnym wierszu.<br><b style="background:#FFD700;color:#000;border-radius:8px;padding:0 5px">2,3</b> żółty = za ile wierszy grają kolejne.</div>
     <div class="box"><h4>Kody</h4>Kody są wspólne z RAZEM i SZUKAJ — wpisany tu kod jest od razu we wszystkich aplikacjach (i odwrotnie). Przy każdej tabeli widać ostatni kod i <b>kiedy</b> go wpisano. Gdy kod wpisano w innej aplikacji, MOJE pokazuje, kiedy go tu zauważyło (przy otwarciu).<br>Zakładka <b>KODY</b>: kilka kodów naraz, import pliku (z cofnięciem całego importu) i eksport z nazwami jak w RAZEM — T50: TRÓJKA <b>v13_…kod.json</b>, T60: <b>xx1_pikoff_…json</b> i <b>trojka_xx1_v13_…kod.json</b>, żeby appki na PC je wychwyciły.</div>
     <div class="box"><h4>Zakłady</h4>„💰 Zapisz zakład” zapisuje zakład w MOJE ZAKŁADY aplikacji, z której jest model — widać go tu i tam. Wynik liczy się sam po wpisaniu kodu.</div>
@@ -518,18 +558,20 @@ function pomoc() {
 }
 function render() {
   $('ver').textContent = APP_VER;
-  const v = view === 'model' ? 'teraz' : view;
+  const v = view === 'model' ? back : view;
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   const act = items.filter(it => it.grp !== 'done' && it.r.ph === 2), now = act.filter(it => it.d === 1).length;
   const soon = [...new Set(act.map(it => it.d).filter(d => d >= 2 && d <= 3))].sort();
   $('navT').innerHTML = `TERAZ${soon.length ? `<b class="soon">${soon.join(',')}</b>` : ''}${now ? `<i class="nb">${now}</i>` : ''}`;
   const pend = bets.filter(x => x.res === 'pend').length;
+  $('navB').innerHTML = `BUST${bustBadges(items.filter(it => it.grp === 'bust'))}`;
   $('navZ').innerHTML = `ZAKŁADY${pend ? `<i class="nb">${pend}</i>` : ''}`;
   const ae = document.activeElement, keep = ae && ae.id && /^(in|pa)_/.test(ae.id) ? [ae.id, ae.value] : null;
-  $('main').innerHTML = view === 'teraz' ? teraz() : view === 'zak' ? zaklady() : view === 'model' ? model() : view === 'dane' ? dane() : pomoc();
+  $('main').innerHTML = view === 'teraz' ? teraz() : view === 'zak' ? zaklady() : view === 'bust' ? busty() : view === 'model' ? model() : view === 'dane' ? dane() : pomoc();
   if (keep && $(keep[0])) { $(keep[0]).value = keep[1]; $(keep[0]).focus(); }
 }
-function go(v, u) { view = v; sel = u || null; render(); window.scrollTo(0, 0); }
+let back = 'teraz';
+function go(v, u) { if (v === 'model' && view !== 'model') back = view; view = v; sel = u || null; render(); window.scrollTo(0, 0); }
 document.addEventListener('click', e => {
   const q = s => e.target.closest(s);
   let b;
@@ -540,14 +582,22 @@ document.addEventListener('click', e => {
   if ((b = q('[data-undob]'))) return undoBatch(b.dataset.undob);
   if ((b = q('[data-exp]'))) { const [t, i] = b.dataset.exp.split(':'); return exportFile(t, +i); }
   if ((b = q('[data-only]'))) { only = b.dataset.only; lsSet('moje_v1_only', only); return render(); }
-  if ((b = q('[data-bet]'))) { e.stopPropagation(); const it = items.find(x => x.uid === b.dataset.bet); if (it) saveBet(it); return; }
+  if ((b = q('[data-bsave]'))) { const it = items.find(x => x.uid === b.dataset.bsave), f = b.closest('.btf'); if (it) saveBet(it, +f.querySelector('.fNr').value - 1, +f.querySelector('.fK').value, +f.querySelector('.fZl').value); return; }
+  if (q('.btf')) return;   // pola formularza zakładu — nie otwieraj modelu
   if ((b = q('[data-delbet]'))) { e.stopPropagation(); return delBet(bets[+b.dataset.delbet]); }
   if ((b = q('[data-untrack]'))) { const it = items.find(x => x.uid === sel); if (it) untrack(it); return; }
+  if ((b = q('[data-bk]'))) { const k = +b.dataset.bk; bks = !k ? [] : bks.includes(k) ? bks.filter(x => x !== k) : [...bks, k].sort(); lsSet('moje_v1_bks', JSON.stringify(bks)); return render(); }
+  if ((b = q('[data-u2]'))) return go('model', b.dataset.u2);
   if ((b = q('[data-go]'))) return go(b.dataset.go);
   if ((b = q('.mc[data-u]'))) return go('model', b.dataset.u);
   if ((b = q('.bt[data-bi]'))) { const x = bets[+b.dataset.bi]; if (x && x.it) go('model', x.it.uid); else toast('Tego modelu nie ma już w MOJE'); }
 });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id && e.target.id.startsWith('in_')) { const t = e.target.id.slice(3); addCode(t, e.target.value.trim()); } });
+document.addEventListener('input', e => {   // formularz zakładu: zmiana kroku → stawka tego kroku (dopóki kwoty nie zmieniono ręcznie)
+  const c = e.target.classList; if (!c) return;
+  if (c.contains('fZl')) e.target.dataset.ed = '1';
+  if (c.contains('fK')) { const z = e.target.closest('.btf').querySelector('.fZl'), k = +e.target.value; if (!z.dataset.ed && k >= 1 && k <= 8) z.value = ST[k - 1]; }
+});
 document.addEventListener('input', e => {   // 3 cyfry → od razu dodaj
   const t = e.target.id && e.target.id.startsWith('in_') ? e.target.id.slice(3) : null; if (!t) return;
   e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
