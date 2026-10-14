@@ -16,7 +16,7 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Zmiana „dla wszystkich SZUKAJ” = SZUKAJ 50/60 + SZUKAJ+ 50/60 (+ BUST 50/60, jeśli funkcja tam istnieje).
 - Test przed PR: Playwright z Chromium (`/opt/pw-browsers/chromium`), sprawdzić brak błędów JS i wynik na danych.
 - Adresy: `https://px5060.github.io/<repo>/`. Kody wspólne z RAZEM (`t50razem_v1_added` / `t60razem_v1_added`).
-- **T60 RAZEM gra tylko xx1**: usunięte tabele TOP5 i TOP7 (BET x1x), zakładka SZUKAJ w T60 RAZEM tylko modele BET xx1.
+- **T60 RAZEM: przełącznik „BET xx1 ⇄ / x1x”** — na xx1 widać PIKOFF, BUST, TRÓJKA, MIX3, SZUKAJ (tylko modele BET xx1); na x1x tylko TOP5 i TOP7.
 - RAZEM: T50 = repo `all50` (src + build.py → `index.html`, `pages/t50razem/` kopiowane do repo `t50razem`), T60 = repo `all60` (sam `index.html`, appki jako JSON w `APPS = […]`).
 
 ## Model i gra
