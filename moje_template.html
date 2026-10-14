@@ -133,13 +133,13 @@ nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-r
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.8.1';
+const APP_VER = '1.10.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
   { a: 'S', cls: 'S', name: 'SZUKAJ', pfx: '_szukaj_v1_', nf: 5, url: { t50: '/szukaj50/', t60: '/szukaj60/' } },
   { a: 'S+', cls: 'Sp', name: 'SZUKAJ+', pfx: '_szukajp_v1_', nf: 7, url: { t50: '/szukaj50plus/', t60: '/szukaj60plus/' } },
-  { a: 'B', cls: 'B', name: 'SZUKAJ BUST', pfx: '_szbust_v1_', nf: 5, url: { t50: '/szukajbust50/', t60: '/szukajbust60/' } },
+  { a: 'L', cls: 'B', name: 'SZUKAJ LOST', pfx: '_szbust_v1_', nf: 5, url: { t50: '/szukajbust50/', t60: '/szukajbust60/' } },
 ];
 const ST = [8, 8, 16, 32, 64, 128, 256, 512], CUM = [8, 16, 32, 64, 128, 256, 512, 1024];
 const TPOS = { x1x: 1, xx1: 2, '1xx': 0 };
@@ -597,25 +597,25 @@ function bustBadges(L) {
   return (soon.length ? `<b class="soon">${soon.join(',')}</b>` : '') + (now ? `<i class="nb">${now}</i>` : '');
 }
 function busty() {
-  const isB = it => it.s.a === 'B', all = items.filter(it => it.inBust && it.t === only), A = all.filter(it => bsrc === 'B' ? isB(it) : !isB(it));
+  const isB = it => it.s.a === 'L', all = items.filter(it => it.inBust && it.t === only), A = all.filter(it => bsrc === 'B' ? isB(it) : !isB(it));
   const L = A.filter(it => !bks.length || bks.includes(it.r.bs + 1)).sort((a, b) => (a.d || 99) - (b.d || 99) || b.r.lbr - a.r.lbr);
   const nB = all.filter(isB), nM = all.filter(it => !isB(it));
-  let h = tabSwitch(it => it.inBust) + `<div class="tsw sub src"><button class="${bsrc !== 'B' ? 'on' : ''}" data-bsrc="M">💥 MOJE MODELE <small>· ${nM.length}</small>${bustBadges(nM)}</button><button class="${bsrc === 'B' ? 'on' : ''}" data-bsrc="B">🅱 SZUKAJ BUST <small>· ${nB.length}</small>${bustBadges(nB)}</button></div>
+  let h = tabSwitch(it => it.inBust) + `<div class="tsw sub src"><button class="${bsrc !== 'B' ? 'on' : ''}" data-bsrc="M">💥 MOJE MODELE <small>· ${nM.length}</small>${bustBadges(nM)}</button><button class="${bsrc === 'B' ? 'on' : ''}" data-bsrc="B">🔻 SZUKAJ LOST <small>· ${nB.length}</small>${bustBadges(nB)}</button></div>
     <div class="flt"><span class="mu" style="font-size:12px;align-self:center">krok:</span><button class="chip ${!bks.length ? 'on' : ''}" data-bk="0">wszystkie · ${A.length}</button>
     ${ST.map((z, i) => { const k = i + 1, G = A.filter(it => it.r.bs + 1 === k); return `<button class="chip ${bks.includes(k) ? 'on' : ''}" data-bk="${k}">k${k} ${z} zł · ${G.length}${bustBadges(G)}</button>`; }).join('')}</div>
     <div class="hint" style="margin:-4px 0 10px">${bsrc === 'B' ? 'BUST-y modeli z aplikacji SZUKAJ BUST' : 'BUST-y moich modeli z SZUKAJ, SZUKAJ+ i RAZEM'} (krok 8, 512 zł bez trafienia) — aż do pierwszego WIN. W ZAKOŃCZONE są też.</div>`;
   if (!A.length) h += '<div class="empty">Brak BUST-ów w moich modelach — żaden nie przegrał kroku 8 bez późniejszego WIN.</div>';
   else if (!L.length) h += '<div class="empty">Na wybranych krokach nie ma BUST-ów.</div>';
   else {
-    // podzakładki jak w MOJE: DO GRY (TRIGGER był — zakład ustawiony) · CZEKAJĄ (na STEP / TRIGGER)
-    const GR = L.filter(it => it.d >= 1), CZ = L.filter(it => !(it.d >= 1));
-    h += `<div class="tsw sub"><button class="${bsub === 'gra' ? 'on' : ''}" data-bsub="gra">▶ DO GRY <small>· ${GR.length}</small>${bustBadges(GR)}</button><button class="${bsub === 'czekaj' ? 'on' : ''}" data-bsub="czekaj">⏸ CZEKAJĄ <small>· ${CZ.length}</small></button></div>`;
-    const SEC = bsub === 'gra' ? [['🟧 GRAJ NA NASTĘPNYM WIERSZU', it => it.d === 1], ['🟨 ZA CHWILĘ', it => it.d >= 2]] : [['🟥 CZEKAJĄ NA STEP / TRIGGER', it => true]];
-    const B = bsub === 'gra' ? GR : CZ;
-    if (!B.length) h += `<div class="empty">${bsub === 'gra' ? 'Żaden model po BUST-cie nie ma teraz ustawionego zakładu — zobacz CZEKAJĄ.' : 'Wszystkie modele po BUST-cie są w DO GRY.'}</div>`;
-    for (const [nm, f] of SEC) {
-    const G = B.filter(f); if (G.length) h += sec(nm, '', G, { extra: it => it.rz ? `${it.d === 1 ? '' : shortPh(it) + '<br>'}<span class="neg">BUST / LOSS Nr ${fmtN(it.res.i + 1)}</span> · od dodania do MOJE` : `${it.d === 1 ? '' : shortPh(it) + '<br>'}<span class="neg">BUST Nr ${fmtN(it.r.lbr + 1)}</span>${gapTxt(it.r)}${it.gone ? ' · usunięty z MOJE' : ''}` });
-  } }
+    // ta sama droga co na TERAZ: 🟦 CZEKAJĄ → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ (kolejne kroki po BUST-cie, do WIN)
+    const n = D[only].n, ex = it => it.rz ? `${it.d === 1 ? '' : shortPh(it) + '<br>'}<span class="neg">BUST / LOSS Nr ${fmtN(it.res.i + 1)}</span>` : `${it.d === 1 ? '' : shortPh(it) + '<br>'}<span class="neg">BUST Nr ${fmtN(it.r.lbr + 1)}</span>${gapTxt(it.r)}${it.gone ? ' · usunięty z MOJE' : ''}`;
+    const now = L.filter(it => it.d === 1).sort(byApp), soon = L.filter(it => it.d >= 2).sort((a, b) => a.d - b.d || byApp(a, b)), wait = L.filter(it => !(it.d >= 1));
+    h += sec(`🟧 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, now.length ? `razem ${fmtN(now.reduce((a, it) => a + (it.rz ? it.r.stake : ST[it.r.bs]), 0))} zł` : '', now, { cls: 'snow', empty: `Na Nr ${fmtN(n + 1)} żaden model po BUST-cie nie gra.`, extra: ex });
+    if (soon.length) h += sec('🟨 ZA CHWILĘ', 'TRIGGER już był', soon, { cls: 'ssoon', extra: ex });
+    if (wait.length) { let w = '';
+      for (let k = 8; k >= 1; k--) { const G = wait.filter(it => it.r.bs + 1 === k).sort(byApp); if (G.length) w += `<div class="kh">k${k} · ${ST[k - 1]} zł · ${G.length}</div>` + G.map(it => row(it, ex(it))).join(''); }
+      h += `<details class="sec swait" open><summary class="sh"><span>🟦 CZEKAJĄ · ${wait.length}</span><span class="m">na STEP / TRIGGER</span></summary>${w}</details>`; }
+  }
   // historia: wszystkie BUST-y moich modeli od dodania i co było po nich
   const H = [];
   items.forEach(it => { if (it.t !== only || (bsrc === 'B') !== isB(it)) return; const st = it.gone ? it.brow : it.g.start || 0;
@@ -710,7 +710,7 @@ function model() {
   return h;
 }
 function pomoc() {
-  return `<div class="box"><h4>Co tu jest</h4>MOJE zbiera modele, które grasz, ze wszystkich aplikacji: <span class="bdg R">R</span>RAZEM (MOJE GRY z RAZEM 50 i 60 — stan liczy sama appka RAZEM, wczytuje się kilka sekund), <span class="bdg S">S</span>SZUKAJ, <span class="bdg Sp">S+</span>SZUKAJ+, <span class="bdg B">B</span>SZUKAJ BUST — dla T50 i T60. Liczba przy znaczku = tabela (S50, S+60…).</div>
+  return `<div class="box"><h4>Co tu jest</h4>MOJE zbiera modele, które grasz, ze wszystkich aplikacji: <span class="bdg R">R</span>RAZEM (MOJE GRY z RAZEM 50 i 60 — stan liczy sama appka RAZEM, wczytuje się kilka sekund), <span class="bdg S">S</span>SZUKAJ, <span class="bdg Sp">S+</span>SZUKAJ+, <span class="bdg B">L</span>SZUKAJ BUST — dla T50 i T60. Liczba przy znaczku = tabela (S50, S+60…).</div>
     <div class="box"><h4>Grupy na ekranie TERAZ</h4>🟧 <b>GRAJ TERAZ</b> — zakład na następnym wierszu (kwota i krok na karcie).<br>🟨 <b>ZA 2–3 WIERSZE</b> — TRIGGER już był, zakład za chwilę.<br>🟥 <b>BUST</b> — model przegrał krok 8 (512 zł); znika po pierwszym WIN.<br>🟦 <b>W GRZE</b> — czeka na STEP albo TRIGGER.<br>✅ <b>ZAKOŃCZONE</b> — po WIN (rozwiń na dole).</div>
     <div class="box"><h4>Zakładka BUST</h4>BUST-y moich modeli od dodania do MOJE (przegrany krok 8), dopóki po nich nie było WIN — także po usunięciu modelu z MOJE. Filtr <b>krok:</b> = krok, na którym model gra teraz po BUST-cie (można wybrać kilka). Przy każdym widać, ile cykli wcześniej był poprzedni BUST. Na dole <b>Historia</b>: wszystkie BUST-y moich modeli i co było potem (WIN na kroku / znowu BUST / trwa).</div>
     <div class="box"><h4>Znaczki na TERAZ</h4><b style="background:#FF6600;color:#fff;border-radius:8px;padding:0 5px">2</b> pomarańczowy = ile modeli gra na następnym wierszu.<br><b style="background:#FFD700;color:#000;border-radius:8px;padding:0 5px">2,3</b> żółty = za ile wierszy grają kolejne.</div>
@@ -782,6 +782,23 @@ reload();
   history.replaceState(null, '', location.pathname);
   if (items.some(x => x.uid === u)) go('model', u); else toast('Model jeszcze nie jest w MOJE'); })();
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('moje-sw.js').catch(() => {});
+</script>
+<script>
+"use strict";
+// ===== napisy na ekranie: BUST → LOST (tylko to, co widać; dane, zapisy i obliczenia bez zmian) =====
+function LOSTIFY(doc, keepNames) {   // keepNames: zostaw nazwę tabeli / modeli „BUST” z RAZEM T60 (2 = też sam napis „BUST”, np. zakładka tabeli)
+  try {
+    if (!doc || doc.__lost) return; doc.__lost = 1;
+    const RX = keepNames ? /\bBUST\b(?! 012| ODM| ·| [A-Z]\d[A-Z0-9])|\bbusty\b|\bBusty\b/g : /\bBUST\b|\bbusty\b|\bBusty\b/g;
+    const keep = v => keepNames === 2 && /^\s*BUST\s*$/.test(v);
+    const fix = n => { const pa = n.parentNode; if (pa && /^(SCRIPT|STYLE|TEXTAREA)$/.test(pa.nodeName)) return; const v = n.nodeValue; if (!v || !/BUST|usty/.test(v) || keep(v)) return; const f = v.replace(RX, m => m === 'BUST' ? 'LOST' : m === 'busty' ? 'losty' : 'Losty'); if (f !== v) n.nodeValue = f; };
+    const walk = r => { if (r.nodeType === 3) return fix(r); if (r.nodeType !== 1 || /^(SCRIPT|STYLE|TEXTAREA)$/.test(r.nodeName)) return; const w = doc.createTreeWalker(r, 4); let n; while ((n = w.nextNode())) fix(n); };
+    const root = doc.body || doc.documentElement; walk(root);
+    new doc.defaultView.MutationObserver(ms => ms.forEach(m => m.type === 'characterData' ? fix(m.target) : m.addedNodes.forEach(walk)))
+      .observe(root, { childList: true, subtree: true, characterData: true });
+  } catch (e) {}
+}
+LOSTIFY(document, true);
 </script>
 </body>
 </html>
