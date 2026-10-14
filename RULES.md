@@ -62,3 +62,10 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Poza tym przyciskiem aplikacji źródłowych **nie zmieniamy** pod MOJE.
 - W aplikacji MOJE: po WIN model wraca do CZEKAJĄ / ZA CHWILĘ / GRAJ TERAZ; po BUST jest w zakładce BUST do pierwszego WIN. Modele z RAZEM 50/60 też (stan liczy RAZEM w ukrytej ramce).
 - Wpis kodów w MOJE: przy każdej tabeli ostatni kod i kiedy wpisany („5 minut temu”, „2 dni temu”).
+
+## Kolejność stanów w MOJE (aplikacja MOJE)
+
+- Model po dodaniu: 🟦 CZEKAJĄ (na STEP / TRIGGER) → 🟨 ZA CHWILĘ (TRIGGER był) → 🟧 GRAJ TERAZ (zakład na następnym wierszu).
+- Przegrany krok (np. k2 nie wszedł) → model wraca do CZEKAJĄ → ZA CHWILĘ → GRAJ TERAZ na kolejnym kroku (do k8).
+- **WIN → ✅ ZAKOŃCZONE** (koniec gry modelu).
+- **BUST (przegrany k8) → zakładka BUST** (biało-czerwona ramka; DO GRY / CZEKAJĄ) aż do pierwszego WIN, potem ZAKOŃCZONE.
