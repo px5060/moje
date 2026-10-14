@@ -133,7 +133,7 @@ nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-r
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.8.0';
+const APP_VER = '1.7.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -413,8 +413,8 @@ function rzItems(t) {   // modele z MOJE GRY appki RAZEM → wiersze MOJE (krok,
   M.list().forEach(g => {
     let c = null, res = null, after = null, soon = { lvl: 0, txt: '' };
     try { c = [].concat(...rzT(w, t, g.k).cards(() => {}).map(z => z.cards)).find(x => (x.mid || x.id) === g.id) || null; } catch (e) {}
-    let from = g.start, nw = 0, nb = 0;
-    for (let j = 0; j < 400; j++) { let x = null; try { x = M.track(g.k, g.id, from); } catch (e) {} if (!x || !(x.i >= from)) break; res = x; if (x.win) nw++; else nb++; from = x.i + 1; }
+    try { res = M.track(g.k, g.id, g.start); } catch (e) {}
+    if (res && !res.win) try { after = M.track(g.k, g.id, res.i + 1); } catch (e) {}
     try { if (c) soon = w.wgSoon(c, N); } catch (e) {}
     const L = c ? c.lines : [], act = L.find(l => l.p === 1) || L.find(l => l.p === 4) || L.find(l => l.p === 3) || L[0] || null;
     const tx = act ? `${act.txt || ''} · ${act.sub || ''}` : '';
@@ -425,8 +425,7 @@ function rzItems(t) {   // modele z MOJE GRY appki RAZEM → wiersze MOJE (krok,
     const lab = M.lab(g.k), it = { rz: 1, t, k: g.k, s: RZS, tg: 'x1x', c, res, after, soon, act, lab,
       g: { id: `${lab} ${g.id}`, rid: g.id, start: g.start, t: g.t }, uid: `${t}~R~${g.k}~${g.id}`, label: `R${t.slice(1)}·${lab} ${g.id}`,
       r: { bs: step - 1, stake, ph: d ? 2 : 0, wz: d ? N + d - 1 : -1, bl: [], ev: [], lbr: res ? res.i : -1 }, d };
-    it.grp = res && !res.win ? 'bust' : d === 1 ? 'now' : d >= 2 && d <= 3 ? 'soon' : 'wait';
-    it.cnt = { w: nw, b: nb }; it.lastTxt = res && res.win ? `ostatnio ✔ WIN · Nr ${fmtN(res.i + 1)}` : '';
+    it.grp = res ? (res.win || after ? 'done' : 'bust') : d === 1 ? 'now' : d >= 2 && d <= 3 ? 'soon' : 'wait';
     out.push(it);
   });
   return out;
@@ -446,11 +445,9 @@ function rzBets(t, byUid) {
 function classify(it) {
   const r = it.r, n = D[it.t].n, st = it.g.start || 0;
   it.first = r.ev.find(e => e[0] >= st) || null;
-  const S = r.ev.filter(e => e[0] >= st), la = S[S.length - 1];   // wyniki od dodania; po WIN model gra dalej (wraca do CZEKA / ZA CHWILĘ / GRAJ)
-  it.cnt = { w: S.filter(e => e[1] === 1).length, b: S.filter(e => e[1] === 2).length };
-  it.lastTxt = la && la[1] === 1 ? `ostatnio ✔ WIN k${la[2]} · Nr ${fmtN(la[0] + 1)}` : '';
   it.d = r.ph === 2 ? r.wz + 1 - n : 0;   // 1 = gra na następnym wierszu
   if (it.gone || r.sinceB === 0) it.grp = 'bust';   // ostatni zakończony cykl to BUST (też sprzed dodania do MOJE) → zakładka BUST, nie TERAZ
+  else if (it.first) it.grp = 'done';
   else it.grp = it.d === 1 ? 'now' : it.d >= 2 && it.d <= 3 ? 'soon' : 'wait';
   if (it.first) { const paid = k => ST.slice((it.g.s0 || 1) - 1, k).reduce((a, b) => a + b, 0), [row, lt, k] = it.first; it.res = { win: lt === 1, row, k, pnl: lt === 1 ? 3 * ST[k - 1] - paid(k) : -paid(8) }; }
 }
@@ -550,7 +547,7 @@ function row(it, extra) {
     ${bnow ? `<div class="graj">GRAJ Nr ${fmtN(r.wz + 1)} · k${r.bs + 1} · ${stk} zł${it.rz ? '' : ' na ' + it.tg}</div>` : ''}
     <div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b>${it.tg !== 'x1x' ? `<span class="mu">${it.tg}</span>` : ''}<span class="sp"></span>${it.grp === 'done' ? '' : `<span class="kk">k${r.bs + 1}</span><b class="zl">${stk} zł</b>`}
     ${canBet ? (saved ? '<span class="pos ok">✓</span>' : `<button class="btn sm ${it.d === 1 ? 'pri' : ''}" data-fo="${esc(it.uid)}">💰</button>`) : ''}</div>
-    <div class="l2">${extra != null ? extra : shortPh(it)}${!bu && it.lastTxt ? ` · <span class="pos">${it.lastTxt}</span>` : ''}${pend.length ? ` · <span style="color:var(--bl)">● postawiony k${pend[pend.length - 1].b.step} ${pend[pend.length - 1].b.stake} zł</span>` : ''}</div>
+    <div class="l2">${extra != null ? extra : shortPh(it)}${pend.length ? ` · <span style="color:var(--bl)">● postawiony k${pend[pend.length - 1].b.step} ${pend[pend.length - 1].b.stake} zł</span>` : ''}</div>
     ${formU === it.uid && canBet ? betForm(it) : ''}</div>`;
 }
 function sec(title, sub, L, opt) {
@@ -584,6 +581,8 @@ function teraz() {
   // 4. BUST i ZAKOŃCZONE — tylko skrót
   const bu = act.filter(it => it.grp === 'bust');
   if (bu.length) h += `<div class="sec sbust link" data-go="bust"><div class="sh"><span>🟥 PO BUST · ${bu.length}${bustBadges(bu)}</span><span class="m">zakładka BUST ›</span></div></div>`;
+  const Z = L.filter(it => it.grp === 'done');
+  if (Z.length) h += sec('✅ ZAKOŃCZONE', 'WIN — możesz usunąć z MOJE', Z, { fold: 1, cls: 'sdone', extra: it => it.rz ? `${it.res.win ? '✔ WIN' : '✖ BUST / LOSS, potem WIN'} · Nr ${fmtN((it.res.win ? it.res.i : it.after.i) + 1)}` : `${it.res.win ? `WIN k${it.res.k}` : 'BUST, potem WIN'} · Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}` });
   return h;
 }
 // ===== BUST: BUST-y moich modeli (od dodania do MOJE, bez WIN po nich) — filtr po kroku, na którym model gra teraz =====
@@ -657,7 +656,7 @@ function rzModel(it) {
     <div class="box" style="border-color:var(--or)"><div style="display:flex;justify-content:space-between"><b style="font-size:17px"><span class="bdg R">R${it.t.slice(1)}</span>${esc(it.g.id)}</b><span class="mu">RAZEM ${TABS[it.t].name} · ${esc(it.lab)}</span></div>
     ${c ? `<div class="mu" style="font-size:12px;margin:3px 0 6px">${esc(c.rule || '')}</div>` : '<div class="neg">Nie ma karty tego modelu w RAZEM.</div>'}
     <div style="font-size:14.5px">Teraz: ${shortPh(it)}</div>
-    ${it.cnt.w + it.cnt.b ? `<div style="margin-top:4px">Od dodania: <span class="pos">${it.cnt.w} WIN</span> · <span class="neg">${it.cnt.b} BUST / LOSS</span> · ostatni ${it.res.win ? '✔ WIN' : '✖ BUST / LOSS'} w Nr ${fmtN(it.res.i + 1)}</div>` : ''}
+    ${it.res ? `<div style="margin-top:4px">Od dodania: ${it.res.win ? '✔ WIN' : '✖ BUST / LOSS'} w Nr ${fmtN(it.res.i + 1)}${it.after ? ` · potem WIN w Nr ${fmtN(it.after.i + 1)}` : ''}</div>` : ''}
     <div class="hint">Śledzę od Nr ${fmtN((it.g.start || 0) + 1)}${it.g.t ? ` · dodany ${ago(it.g.t)}` : ''}</div>
     <div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (trafi do MOJE ZAKŁADY w RAZEM):</div>${betForm(it, 1)}</div>
     ${c ? `<div class="box"><h4>Co pokazuje RAZEM</h4>${(c.meta || []).map(m => `<div class="mu" style="font-size:12px">${esc(m)}</div>`).join('')}
@@ -675,7 +674,7 @@ function model() {
     <div class="box" style="border-color:var(--or)"><div class="h" style="display:flex;justify-content:space-between"><b style="font-size:17px">${srcBdg(it)}${esc(it.g.id)}</b><span class="mu">${esc(it.s.name)} ${TABS[it.t].name} · cel ${it.tg}</span></div>
     <div class="rule mu" style="font-size:12px;margin:3px 0 6px">${esc(ruleTxt(m))}</div><div style="font-size:14.5px">Teraz: ${phaseTxt(it)}</div>
     ${it.grp === 'bust' ? `<div class="neg" style="margin-top:4px">BUST w Nr ${fmtN(r.lbr + 1)} — od niego jeszcze bez WIN</div>` : ''}
-    ${it.cnt.w + it.cnt.b ? `<div style="margin-top:4px">Od dodania: <span class="pos">${it.cnt.w} WIN</span> · <span class="neg">${it.cnt.b} BUST</span>${it.lastTxt ? ' · ' + it.lastTxt : ''} — model gra dalej</div>` : ''}
+    ${it.res ? `<div style="margin-top:4px">Moja gra: ${it.res.win ? `✔ WIN k${it.res.k}` : '✖ BUST'} w Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}</div>` : ''}
     ${it.gone ? '' : `<div class="hint">Śledzę od Nr ${fmtN((it.g.start || 0) + 1)} (wejście na k${it.g.s0 || 1})${it.g.t ? ` · dodany ${ago(it.g.t)}` : ''}</div>`}
     <div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (możesz zmienić Nr, krok i kwotę):</div>${betForm(it, 1)}</div>`;
   h += `<div class="box"><h4>Jak gra ten model</h4><ol>
