@@ -126,14 +126,14 @@ nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-r
 <main id="main"></main>
 <nav>
   <button data-v="teraz" class="on" id="navT">TERAZ</button>
-  <button data-v="bust" id="navB">BUST</button>
+  <button data-v="bust" id="navB">LOST</button>
   <button data-v="zak" id="navZ">ZAKŁADY</button>
   <button data-v="dane">KODY</button>
   <button data-v="pom">POMOC</button>
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.10.1';
+const APP_VER = '1.11.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -658,14 +658,16 @@ const LT = (it, K, A, B, i) => {
   return '';
 };
 function rzModel(it) {
+  let rows = []; try { rows = it.c && it.c.stats ? it.c.stats() || [] : []; } catch (e) {}   // statystyki modelu z RAZEM (te same co po przytrzymaniu karty w RAZEM)
   const c = it.c, r = it.r, B = betsOf(it).sort((a, b) => b.b.row - a.b.row);
   return `<button class="btn back" data-go="${back}">← wróć</button>
-    <div class="box" style="border-color:var(--or)"><div style="display:flex;justify-content:space-between"><b style="font-size:17px"><span class="bdg R">R${it.t.slice(1)}</span>${esc(it.g.id)}</b><span class="mu">RAZEM ${TABS[it.t].name} · ${esc(it.lab)}</span></div>
+    <div class="box" style="border-color:var(--or)"><div style="display:flex;justify-content:space-between"><b style="font-size:17px"><span class="bdg R">R${it.t.slice(1)}</span>${esc(it.g.id)}</b><span class="mu">RAZEM ${TABS[it.t].name} · <span>${esc(it.lab)}</span></span></div>
     ${c ? `<div class="mu" style="font-size:12px;margin:3px 0 6px">${esc(c.rule || '')}</div>` : '<div class="neg">Nie ma karty tego modelu w RAZEM.</div>'}
     <div style="font-size:14.5px">Teraz: ${shortPh(it)}</div>
     ${it.res ? `<div style="margin-top:4px">Od dodania: ${it.res.win ? '✔ WIN' : '✖ BUST / LOSS'} w Nr ${fmtN(it.res.i + 1)}${it.after ? ` · potem WIN w Nr ${fmtN(it.after.i + 1)}` : ''}</div>` : ''}
     <div class="hint">Śledzę od Nr ${fmtN((it.g.start || 0) + 1)}${it.g.t ? ` · dodany ${ago(it.g.t)}` : ''}</div>
-    <div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (trafi do MOJE ZAKŁADY w RAZEM):</div>${betForm(it, 1)}</div>
+    <div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (zapis w pamięci RAZEM — liczy się tutaj w ZAKŁADY):</div>${betForm(it, 1)}</div>
+    ${rows.length ? `<div class="box"><h4>Statystyki modelu (RAZEM ${TABS[it.t].name})</h4><table class="rows st">${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td style="text-align:right;font-weight:700">${esc(v)}</td></tr>`).join('')}</table></div>` : ''}
     ${c ? `<div class="box"><h4>Co pokazuje RAZEM</h4>${(c.meta || []).map(m => `<div class="mu" style="font-size:12px">${esc(m)}</div>`).join('')}
       ${c.lines.map(l => `<div class="bt ${l.p === 1 ? 'pend' : l.p === 4 ? 'pend' : 'none'}" style="cursor:default"><div>${esc(l.txt || '')}<div class="mu" style="font-size:11px">${esc(l.sub || '')}</div></div></div>`).join('')}</div>` : ''}
     ${B.length ? `<div class="box"><h4>Moje zakłady na tym modelu</h4>${B.map(x => `<div class="bt ${x.res}"><div>Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł <span class="mu">(${ago(x.b.t)})</span></div><div class="r">${x.res === 'pend' ? 'czeka' : x.res === 'none' ? '<span class="mu">nie grał</span>' : zl(betVal(x))} <button class="btn sm" data-delbet="${bets.indexOf(x)}">✕</button></div></div>`).join('')}</div>` : ''}
@@ -729,7 +731,7 @@ function render() {
   const soon = [...new Set(act.map(it => it.d).filter(d => d >= 2 && d <= 3))].sort();
   $('navT').innerHTML = `TERAZ${soon.length ? `<b class="soon">${soon.join(',')}</b>` : ''}${now ? `<i class="nb">${now}</i>` : ''}`;
   const pend = bets.filter(x => x.res === 'pend').length;
-  $('navB').innerHTML = `BUST${bustBadges(items.filter(it => it.inBust))}`;
+  $('navB').innerHTML = `LOST${bustBadges(items.filter(it => it.inBust))}`;
   $('navZ').innerHTML = `ZAKŁADY${pend ? `<i class="nb">${pend}</i>` : ''}`;
   const ae = document.activeElement, keep = ae && ae.id && /^(in|pa)_/.test(ae.id) ? [ae.id, ae.value] : null;
   $('main').innerHTML = view === 'teraz' ? teraz() : view === 'zak' ? zaklady() : view === 'bust' ? busty() : view === 'model' ? model() : view === 'dane' ? dane() : pomoc();
@@ -800,7 +802,7 @@ function LOSTIFY(doc, keepNames) {   // keepNames: zostaw nazwę tabeli / modeli
       .observe(root, { childList: true, subtree: true, characterData: true });
   } catch (e) {}
 }
-LOSTIFY(document, true);
+LOSTIFY(document, 2);
 </script>
 </body>
 </html>
