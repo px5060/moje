@@ -60,4 +60,13 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Zbiera MOJE (modele, które gram) i MOJE ZAKŁADY ze wszystkich SZUKAJ / SZUKAJ+ / BUST, T50 i T60 — czyta wspólną pamięć telefonu, nic nie kopiuje.
 - Przycisk w oknie statystyk SZUKAJ / SZUKAJ+ „⇢ Gram — dodaj do MOJE i otwórz” zastąpił dawne „Dodaj do RAZEM — zakładka SZUKAJ”.
 - Poza tym przyciskiem aplikacji źródłowych **nie zmieniamy** pod MOJE.
+- W aplikacji MOJE są też modele z MOJE GRY w RAZEM 50/60 (stan liczy RAZEM w ukrytej ramce).
 - Wpis kodów w MOJE: przy każdej tabeli ostatni kod i kiedy wpisany („5 minut temu”, „2 dni temu”).
+
+## Kolejność stanów w MOJE (aplikacja MOJE)
+
+- Model po dodaniu: 🟦 CZEKAJĄ (na STEP / TRIGGER) → 🟨 ZA CHWILĘ (TRIGGER był) → 🟧 GRAJ TERAZ (zakład na następnym wierszu).
+- Przegrany krok (np. k2 nie wszedł) → model wraca do CZEKAJĄ → ZA CHWILĘ → GRAJ TERAZ na kolejnym kroku (do k8).
+- **WIN → ✅ ZAKOŃCZONE** (koniec gry modelu).
+- **BUST (przegrany k8) → ✅ ZAKOŃCZONE (✖ BUST k8) i jednocześnie zakładka BUST** (biało-czerwona ramka; DO GRY / CZEKAJĄ), dopóki po BUST-cie nie ma WIN.
+- Zakładka BUST ma dwie części: **💥 MOJE MODELE** (BUST-y modeli z SZUKAJ, SZUKAJ+, RAZEM) i **🅱 SZUKAJ BUST** (BUST-y modeli z aplikacji SZUKAJ BUST) — oddzielnie.
