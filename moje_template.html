@@ -133,7 +133,7 @@ nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-r
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.11.0';
+const APP_VER = '1.12.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -657,6 +657,21 @@ const LT = (it, K, A, B, i) => {
   }
   return '';
 };
+// adapter tabeli RAZEM (UT.A w ramce): etykiety wierszy modelu i opis — do ekranu modelu jak w SZUKAJ
+function rzA(it) { try { const w = rzWin(it.t), f = w && w.document.getElementById('fr_' + it.k), A = f && f.contentWindow.UT && f.contentWindow.UT.A; if (!A) return null; const mi = A.models().findIndex(m => m.id === it.g.rid); return mi < 0 ? null : { A, mi }; } catch (e) { return null; } }
+const rzCls = t => /^\s*(STEP|TRIGGER)[^W]*✓/.test(t) ? 'k3' : /LOST|BUST/.test(t) && !/GRA|gra za|czeka/.test(t) ? 'k8' : /WIN|✓|✔/.test(t) ? 'k6' : /LOSS|✗|pudło|przegr/.test(t) ? 'k7' : /▶|GRA|gra za|START|zakład/.test(t) ? 'k4' : /STEP|TRIGGER|trig/.test(t) ? 'k3' : '';
+function rzRows(it) {
+  const X = rzA(it); if (!X) return '';
+  const n = D[it.t].n, r = it.r, nx = it.d === 1, L = [];
+  for (let i = n - 1; i >= Math.max(0, n - 30); i--) { let c = {}; try { c = X.A.cell(X.mi, i) || {}; } catch (e) {} const t = c.gra ? c.gra.t : c.stan ? c.stan.t : ''; L.push(`<tr class="${rzCls(t)}"><td class="nr">${fmtN(i + 1)}</td><td class="cd">${code(it.t, i)}</td><td>${t ? esc(t) : '<span class="mu">—</span>'}</td></tr>`); }
+  return `<div class="box"><h4>Ostatnie 30 wierszy (najnowszy na górze)</h4><table class="rows">
+    ${r.ph === 2 ? `<tr class="${nx ? 'nx' : 'k5'}"><td class="nr">Nr ${fmtN(r.wz + 1)}</td><td class="cd">?</td><td>${nx ? 'GRAJ TERAZ' : 'tu będzie zakład'} · k${r.bs + 1} · ${r.stake} zł</td></tr>` : ''}${L.join('')}</table></div>`;
+}
+function rzHow(it) {
+  const X = rzA(it); let d = ''; try { d = X && X.A.descTxt ? X.A.descTxt(X.mi) : ''; } catch (e) {}
+  d = d || (it.c && it.c.rule) || '';
+  return d ? `<div class="box"><h4>Jak gra ten model</h4><div style="font-size:13.5px">${esc(d)}</div><div class="hint" style="margin-top:6px">Tabela <span>${esc(it.lab)}</span> w RAZEM ${TABS[it.t].name}. Przegrana → następny krok; WIN → od nowa k1; przegrany krok 8 = LOST.</div></div>` : '';
+}
 function rzModel(it) {
   let rows = []; try { rows = it.c && it.c.stats ? it.c.stats() || [] : []; } catch (e) {}   // statystyki modelu z RAZEM (te same co po przytrzymaniu karty w RAZEM)
   const c = it.c, r = it.r, B = betsOf(it).sort((a, b) => b.b.row - a.b.row);
@@ -667,7 +682,9 @@ function rzModel(it) {
     ${it.res ? `<div style="margin-top:4px">Od dodania: ${it.res.win ? '✔ WIN' : '✖ BUST / LOSS'} w Nr ${fmtN(it.res.i + 1)}${it.after ? ` · potem WIN w Nr ${fmtN(it.after.i + 1)}` : ''}</div>` : ''}
     <div class="hint">Śledzę od Nr ${fmtN((it.g.start || 0) + 1)}${it.g.t ? ` · dodany ${ago(it.g.t)}` : ''}</div>
     <div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (zapis w pamięci RAZEM — liczy się tutaj w ZAKŁADY):</div>${betForm(it, 1)}</div>
+    ${rzHow(it)}
     ${rows.length ? `<div class="box"><h4>Statystyki modelu (RAZEM ${TABS[it.t].name})</h4><table class="rows st">${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td style="text-align:right;font-weight:700">${esc(v)}</td></tr>`).join('')}</table></div>` : ''}
+    ${rzRows(it)}
     ${c ? `<div class="box"><h4>Co pokazuje RAZEM</h4>${(c.meta || []).map(m => `<div class="mu" style="font-size:12px">${esc(m)}</div>`).join('')}
       ${c.lines.map(l => `<div class="bt ${l.p === 1 ? 'pend' : l.p === 4 ? 'pend' : 'none'}" style="cursor:default"><div>${esc(l.txt || '')}<div class="mu" style="font-size:11px">${esc(l.sub || '')}</div></div></div>`).join('')}</div>` : ''}
     ${B.length ? `<div class="box"><h4>Moje zakłady na tym modelu</h4>${B.map(x => `<div class="bt ${x.res}"><div>Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł <span class="mu">(${ago(x.b.t)})</span></div><div class="r">${x.res === 'pend' ? 'czeka' : x.res === 'none' ? '<span class="mu">nie grał</span>' : zl(betVal(x))} <button class="btn sm" data-delbet="${bets.indexOf(x)}">✕</button></div></div>`).join('')}</div>` : ''}
