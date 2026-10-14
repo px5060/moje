@@ -68,5 +68,5 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Model po dodaniu: 🟦 CZEKAJĄ (na STEP / TRIGGER) → 🟨 ZA CHWILĘ (TRIGGER był) → 🟧 GRAJ TERAZ (zakład na następnym wierszu).
 - Przegrany krok (np. k2 nie wszedł) → model wraca do CZEKAJĄ → ZA CHWILĘ → GRAJ TERAZ na kolejnym kroku (do k8).
 - **WIN → ✅ ZAKOŃCZONE** (koniec gry modelu).
-- **BUST (przegrany k8) → ✅ ZAKOŃCZONE (✖ BUST k8) i jednocześnie zakładka BUST** (biało-czerwona ramka; DO GRY / CZEKAJĄ), dopóki po BUST-cie nie ma WIN.
+- **BUST (przegrany k8) → ✅ ZAKOŃCZONE (✖ BUST k8) i jednocześnie zakładka BUST** (biało-czerwona ramka), dopóki po BUST-cie nie ma WIN. W zakładce BUST model gra normalnie dalej na kolejnych krokach: 🟦 CZEKAJĄ → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ (ten sam układ co TERAZ).
 - Zakładka BUST ma dwie części: **💥 MOJE MODELE** (BUST-y modeli z SZUKAJ, SZUKAJ+, RAZEM) i **🅱 SZUKAJ BUST** (BUST-y modeli z aplikacji SZUKAJ BUST) — oddzielnie.

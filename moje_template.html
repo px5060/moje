@@ -133,7 +133,7 @@ nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-r
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.8.1';
+const APP_VER = '1.9.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -607,15 +607,15 @@ function busty() {
   if (!A.length) h += '<div class="empty">Brak BUST-ów w moich modelach — żaden nie przegrał kroku 8 bez późniejszego WIN.</div>';
   else if (!L.length) h += '<div class="empty">Na wybranych krokach nie ma BUST-ów.</div>';
   else {
-    // podzakładki jak w MOJE: DO GRY (TRIGGER był — zakład ustawiony) · CZEKAJĄ (na STEP / TRIGGER)
-    const GR = L.filter(it => it.d >= 1), CZ = L.filter(it => !(it.d >= 1));
-    h += `<div class="tsw sub"><button class="${bsub === 'gra' ? 'on' : ''}" data-bsub="gra">▶ DO GRY <small>· ${GR.length}</small>${bustBadges(GR)}</button><button class="${bsub === 'czekaj' ? 'on' : ''}" data-bsub="czekaj">⏸ CZEKAJĄ <small>· ${CZ.length}</small></button></div>`;
-    const SEC = bsub === 'gra' ? [['🟧 GRAJ NA NASTĘPNYM WIERSZU', it => it.d === 1], ['🟨 ZA CHWILĘ', it => it.d >= 2]] : [['🟥 CZEKAJĄ NA STEP / TRIGGER', it => true]];
-    const B = bsub === 'gra' ? GR : CZ;
-    if (!B.length) h += `<div class="empty">${bsub === 'gra' ? 'Żaden model po BUST-cie nie ma teraz ustawionego zakładu — zobacz CZEKAJĄ.' : 'Wszystkie modele po BUST-cie są w DO GRY.'}</div>`;
-    for (const [nm, f] of SEC) {
-    const G = B.filter(f); if (G.length) h += sec(nm, '', G, { extra: it => it.rz ? `${it.d === 1 ? '' : shortPh(it) + '<br>'}<span class="neg">BUST / LOSS Nr ${fmtN(it.res.i + 1)}</span> · od dodania do MOJE` : `${it.d === 1 ? '' : shortPh(it) + '<br>'}<span class="neg">BUST Nr ${fmtN(it.r.lbr + 1)}</span>${gapTxt(it.r)}${it.gone ? ' · usunięty z MOJE' : ''}` });
-  } }
+    // ta sama droga co na TERAZ: 🟦 CZEKAJĄ → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ (kolejne kroki po BUST-cie, do WIN)
+    const n = D[only].n, ex = it => it.rz ? `${it.d === 1 ? '' : shortPh(it) + '<br>'}<span class="neg">BUST / LOSS Nr ${fmtN(it.res.i + 1)}</span>` : `${it.d === 1 ? '' : shortPh(it) + '<br>'}<span class="neg">BUST Nr ${fmtN(it.r.lbr + 1)}</span>${gapTxt(it.r)}${it.gone ? ' · usunięty z MOJE' : ''}`;
+    const now = L.filter(it => it.d === 1).sort(byApp), soon = L.filter(it => it.d >= 2).sort((a, b) => a.d - b.d || byApp(a, b)), wait = L.filter(it => !(it.d >= 1));
+    h += sec(`🟧 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, now.length ? `razem ${fmtN(now.reduce((a, it) => a + (it.rz ? it.r.stake : ST[it.r.bs]), 0))} zł` : '', now, { cls: 'snow', empty: `Na Nr ${fmtN(n + 1)} żaden model po BUST-cie nie gra.`, extra: ex });
+    if (soon.length) h += sec('🟨 ZA CHWILĘ', 'TRIGGER już był', soon, { cls: 'ssoon', extra: ex });
+    if (wait.length) { let w = '';
+      for (let k = 8; k >= 1; k--) { const G = wait.filter(it => it.r.bs + 1 === k).sort(byApp); if (G.length) w += `<div class="kh">k${k} · ${ST[k - 1]} zł · ${G.length}</div>` + G.map(it => row(it, ex(it))).join(''); }
+      h += `<details class="sec swait" open><summary class="sh"><span>🟦 CZEKAJĄ · ${wait.length}</span><span class="m">na STEP / TRIGGER</span></summary>${w}</details>`; }
+  }
   // historia: wszystkie BUST-y moich modeli od dodania i co było po nich
   const H = [];
   items.forEach(it => { if (it.t !== only || (bsrc === 'B') !== isB(it)) return; const st = it.gone ? it.brow : it.g.start || 0;
