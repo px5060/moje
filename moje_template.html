@@ -133,7 +133,7 @@ nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-r
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.10.0';
+const APP_VER = '1.10.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -388,7 +388,7 @@ const rzNeed = t => jget(RZ[t].key).length > 0 || jget(RZ[t].bk).length > 0;
 function rzT(w, t, k) { try { const f = w.document.getElementById('fr_' + k); return f && f.contentWindow && f.contentWindow[RZ[t].g]; } catch (e) { return null; } }
 function rzReady(t) {
   const w = rzWin(t); if (!w) return false;
-  try { if (w.__MOJE.N() !== D[t].n) return false; return w.__MOJE.list().every(g => { const T = rzT(w, t, g.k); return T && T.cards; }); } catch (e) { return false; }
+  try { if (w.__MOJE.N() !== D[t].n) return false; return w.__MOJE.list().every(g => { if (!w.document.getElementById('fr_' + g.k)) return true; const T = rzT(w, t, g.k); return T && T.cards; }); } catch (e) { return false; }
 }
 function rzLoad() {
   for (const t in RZ) {
@@ -411,6 +411,7 @@ function rzItems(t) {   // modele z MOJE GRY appki RAZEM → wiersze MOJE (krok,
   const w = rzWin(t); if (rzSt[t] !== 'ok' || !w) return [];
   const M = w.__MOJE, N = D[t].n, out = [];
   M.list().forEach(g => {
+    if (!w.document.getElementById('fr_' + g.k)) return;   // tabeli nie ma już w RAZEM
     let c = null, res = null, after = null, soon = { lvl: 0, txt: '' };
     try { c = [].concat(...rzT(w, t, g.k).cards(() => {}).map(z => z.cards)).find(x => (x.mid || x.id) === g.id) || null; } catch (e) {}
     try { res = M.track(g.k, g.id, g.start); } catch (e) {}
@@ -435,6 +436,7 @@ function rzBets(t, byUid) {
   const w = rzWin(t); if (rzSt[t] !== 'ok' || !w) return [];
   const M = w.__MOJE, N = D[t].n, out = [], seen = {};
   M.bets().forEach(b => {
+    if (!w.document.getElementById('fr_' + b.k)) return;
     const key = b.k + '|' + b.id; if (!seen[key]) { try { seen[key] = M.betList(b.k, b.id); } catch (e) { seen[key] = []; } }
     const x = seen[key].find(z => z.t === b.t) || {}, uid = `${t}~R~${b.k}~${b.id}`, lab = M.lab(b.k);
     out.push({ rz: { k: b.k, id: b.id }, t, s: RZS, tg: 'x1x', uid, it: byUid.get(uid), b: { id: `${lab} ${b.id}`, row: b.row, step: b.step, stake: b.stake, t: b.t },
