@@ -133,7 +133,7 @@ nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-r
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.12.0';
+const APP_VER = '1.12.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -485,9 +485,9 @@ function delBet(x) {
   const key = BTK(x.t, x.s, x.tg); lsSet(key, JSON.stringify(jget(key).filter(b => b.t !== x.b.t))); reload();
 }
 function untrack(it) {
-  if (it.rz) { if (!confirm(`Przestać śledzić ${it.label}?\nZniknie też z MOJE GRY w RAZEM.`)) return; const w = rzWin(it.t); if (w) try { w.__MOJE.del(it.k, it.g.rid); } catch (e) {} }
+  if (it.rz) { if (!confirm(`Usunąć ${it.label} z MOJE?`)) return; const w = rzWin(it.t); if (w) try { w.__MOJE.del(it.k, it.g.rid); } catch (e) {} }
   else if (it.gone) { if (!confirm(`Ukryć BUST ${it.label}?`)) return; const k = MBK(it.t, it.tg), a = jget(k), z = a.find(x => x.key === it.gone); if (z) z.hide = 1; lsSet(k, JSON.stringify(a)); }
-  else { if (!confirm(`Przestać śledzić ${it.label}?\nZniknie też z MOJE w ${it.s.name}.`)) return; const k = MYK(it.t, it.s, it.tg); lsSet(k, JSON.stringify(jget(k).filter(g => !(g && Array.isArray(g.m) && spec(g.m) === spec(it.m))))); }
+  else { if (!confirm(`Usunąć ${it.label} z MOJE?`)) return; const k = MYK(it.t, it.s, it.tg); lsSet(k, JSON.stringify(jget(k).filter(g => !(g && Array.isArray(g.m) && spec(g.m) === spec(it.m))))); }
   view = 'teraz'; sel = null; reload();
 }
 
@@ -567,7 +567,7 @@ function teraz() {
   if (rzSt[t] === 'wczytuję') h += `<div class="hint" style="margin:-2px 0 8px">⏳ Wczytuję modele z RAZEM ${TABS[t].name}…</div>`;
   if (rzSt[t] === 'błąd') h += `<div class="hint neg" style="margin:-2px 0 8px">Nie udało się wczytać RAZEM ${TABS[t].name} — otwórz MOJE ponownie.</div>`;
   const L = items.filter(it => it.t === t);
-  if (!items.length && rzSt[t] !== 'wczytuję') return h + `<div class="empty">Brak modeli w MOJE.<br><br>W SZUKAJ, SZUKAJ+ albo SZUKAJ BUST przytrzymaj kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. W RAZEM: przytrzymaj kartę → <b>▶ dodaj do MOJE GRY</b>.</div>`;
+  if (!items.length && rzSt[t] !== 'wczytuję') return h + `<div class="empty">Brak modeli w MOJE.<br><br>W SZUKAJ, SZUKAJ+ albo SZUKAJ BUST przytrzymaj kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. W RAZEM: przytrzymaj kartę → <b>▶ Gram — dodaj do aplikacji MOJE</b>.</div>`;
   const act = L.filter(it => it.grp !== 'done'), play = act.filter(it => it.grp !== 'bust'), now = play.filter(it => it.d === 1).sort(byApp);
   const sum = now.reduce((a, it) => a + ST[it.r.bs], 0);
   // 1. CO GRAM NA NASTĘPNYM WIERSZU
@@ -681,7 +681,7 @@ function rzModel(it) {
     <div style="font-size:14.5px">Teraz: ${shortPh(it)}</div>
     ${it.res ? `<div style="margin-top:4px">Od dodania: ${it.res.win ? '✔ WIN' : '✖ BUST / LOSS'} w Nr ${fmtN(it.res.i + 1)}${it.after ? ` · potem WIN w Nr ${fmtN(it.after.i + 1)}` : ''}</div>` : ''}
     <div class="hint">Śledzę od Nr ${fmtN((it.g.start || 0) + 1)}${it.g.t ? ` · dodany ${ago(it.g.t)}` : ''}</div>
-    <div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (zapis w pamięci RAZEM — liczy się tutaj w ZAKŁADY):</div>${betForm(it, 1)}</div>
+    <div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (wynik zobaczysz w ZAKŁADY):</div>${betForm(it, 1)}</div>
     ${rzHow(it)}
     ${rows.length ? `<div class="box"><h4>Statystyki modelu (RAZEM ${TABS[it.t].name})</h4><table class="rows st">${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td style="text-align:right;font-weight:700">${esc(v)}</td></tr>`).join('')}</table></div>` : ''}
     ${rzRows(it)}
@@ -689,7 +689,7 @@ function rzModel(it) {
       ${c.lines.map(l => `<div class="bt ${l.p === 1 ? 'pend' : l.p === 4 ? 'pend' : 'none'}" style="cursor:default"><div>${esc(l.txt || '')}<div class="mu" style="font-size:11px">${esc(l.sub || '')}</div></div></div>`).join('')}</div>` : ''}
     ${B.length ? `<div class="box"><h4>Moje zakłady na tym modelu</h4>${B.map(x => `<div class="bt ${x.res}"><div>Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł <span class="mu">(${ago(x.b.t)})</span></div><div class="r">${x.res === 'pend' ? 'czeka' : x.res === 'none' ? '<span class="mu">nie grał</span>' : zl(betVal(x))} <button class="btn sm" data-delbet="${bets.indexOf(x)}">✕</button></div></div>`).join('')}</div>` : ''}
     <a class="btn wide" href="${RZ[it.t].url}">Otwórz RAZEM ${TABS[it.t].name}</a>
-    <button class="btn wide" data-untrack="1" style="color:var(--rd)">Przestań śledzić (usuń z MOJE GRY w RAZEM)</button>`;
+    <button class="btn wide" data-untrack="1" style="color:var(--rd)">✕ Usuń z MOJE</button>`;
 }
 function model() {
   const it = items.find(x => x.uid === sel);
@@ -727,11 +727,11 @@ function model() {
   const B = betsOf(it).sort((a, b) => b.b.row - a.b.row);
   if (B.length) h += `<div class="box"><h4>Moje zakłady na tym modelu</h4>${B.map(x => `<div class="bt ${x.res}"><div>Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł <span class="mu">(${ago(x.b.t)})</span></div><div class="r">${x.res === 'pend' ? 'czeka' : x.res === 'none' ? '<span class="mu">nie grał</span>' : zl(betVal(x))} <button class="btn sm" data-delbet="${bets.indexOf(x)}">✕</button></div></div>`).join('')}</div>`;
   h += `<a class="btn wide" href="${it.s.url[it.t]}">Otwórz ${esc(it.s.name)} ${TABS[it.t].name}</a>
-    <button class="btn wide" data-untrack="1" style="color:var(--rd)">${it.gone ? 'Ukryj ten BUST' : 'Przestań śledzić (usuń z MOJE)'}</button>`;
+    <button class="btn wide" data-untrack="1" style="color:var(--rd)">${it.gone ? 'Ukryj ten BUST' : '✕ Usuń z MOJE'}</button>`;
   return h;
 }
 function pomoc() {
-  return `<div class="box"><h4>Co tu jest</h4>MOJE zbiera modele, które grasz, ze wszystkich aplikacji: <span class="bdg R">R</span>RAZEM (MOJE GRY z RAZEM 50 i 60 — stan liczy sama appka RAZEM, wczytuje się kilka sekund), <span class="bdg S">S</span>SZUKAJ, <span class="bdg Sp">S+</span>SZUKAJ+, <span class="bdg B">L</span>SZUKAJ BUST — dla T50 i T60. Liczba przy znaczku = tabela (S50, S+60…).</div>
+  return `<div class="box"><h4>Co tu jest</h4>MOJE zbiera modele, które grasz, ze wszystkich aplikacji: <span class="bdg R">R</span>RAZEM (modele dodane w RAZEM 50 i 60 przyciskiem „▶ Gram — dodaj do aplikacji MOJE” — stan liczy sama appka RAZEM, wczytuje się kilka sekund), <span class="bdg S">S</span>SZUKAJ, <span class="bdg Sp">S+</span>SZUKAJ+, <span class="bdg B">L</span>SZUKAJ BUST — dla T50 i T60. Liczba przy znaczku = tabela (S50, S+60…).</div>
     <div class="box"><h4>Grupy na ekranie TERAZ</h4>🟧 <b>GRAJ TERAZ</b> — zakład na następnym wierszu (kwota i krok na karcie).<br>🟨 <b>ZA 2–3 WIERSZE</b> — TRIGGER już był, zakład za chwilę.<br>🟥 <b>BUST</b> — model przegrał krok 8 (512 zł); znika po pierwszym WIN.<br>🟦 <b>W GRZE</b> — czeka na STEP albo TRIGGER.<br>✅ <b>ZAKOŃCZONE</b> — po WIN (rozwiń na dole).</div>
     <div class="box"><h4>Zakładka BUST</h4>BUST-y moich modeli od dodania do MOJE (przegrany krok 8), dopóki po nich nie było WIN — także po usunięciu modelu z MOJE. Filtr <b>krok:</b> = krok, na którym model gra teraz po BUST-cie (można wybrać kilka). Przy każdym widać, ile cykli wcześniej był poprzedni BUST. Na dole <b>Historia</b>: wszystkie BUST-y moich modeli i co było potem (WIN na kroku / znowu BUST / trwa).</div>
     <div class="box"><h4>Znaczki na TERAZ</h4><b style="background:#FF6600;color:#fff;border-radius:8px;padding:0 5px">2</b> pomarańczowy = ile modeli gra na następnym wierszu.<br><b style="background:#FFD700;color:#000;border-radius:8px;padding:0 5px">2,3</b> żółty = za ile wierszy grają kolejne.</div>
