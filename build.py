@@ -9,6 +9,8 @@ TABS = {
 }
 for t, a in TABS.items():
     a['seed'] = re.sub(r'\D', '', (HERE / f'seed_{t}.txt').read_text())
+    import subprocess
+    a['seedDate'] = subprocess.run(['git', 'log', '-1', '--format=%cs', '--', f'seed_{t}.txt'], cwd=HERE, capture_output=True, text=True).stdout.strip()
     assert len(a['seed']) % 3 == 0 and all(s in a['alph'] for s in re.findall('...', a['seed'])), t
 html = (HERE / 'moje_template.html').read_text().replace('__TABS__', json.dumps(TABS, separators=(',', ':')))
 (HERE / 'index.html').write_text(html)

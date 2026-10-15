@@ -133,7 +133,7 @@ nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-r
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.12.1';
+const APP_VER = '1.13.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -237,7 +237,7 @@ function lastBatch(t) {   // ostatni import / wklejenie — można cofnąć, dop
 function undoBatch(t) {
   const b = lastBatch(t); if (!b) { toast('Nie ma czego cofnąć'); return; }
   if (!confirm(`Cofnąć ${b.how === 2 ? 'import ' + b.f : 'wklejenie'}: ${b.to - b.from} kodów (Nr ${fmtN(b.from + 1)}–${fmtN(b.to)})?\nZnikną we wszystkich aplikacjach.`)) return;
-  lsSet(TABS[t].key, readAdded(t).slice(0, -(b.to - b.from) * 3)); lsSet(IMPK(t), 'null'); reload(); toast(`Cofnięto ${b.to - b.from} kodów`);
+  lsSet(TABS[t].key, readAdded(t).slice(0, -(b.to - b.from) * 3)); lsSet(IMPK(t), 'null'); lsSet(MAXK(t), String(b.from)); reload(); toast(`Cofnięto ${b.to - b.from} kodów`);
 }
 function stamp() { const d = new Date(), p = x => String(x).padStart(2, '0'); return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`; }
 const EXPF = {   // te same nazwy i pola co eksport RAZEM / PIKOFF / TRÓJKA
@@ -273,7 +273,7 @@ function dane() { return daneBox('t50') + daneBox('t60') + '<div class="hint">Ko
 function undoCode(t) {
   const a = readAdded(t); if (!a.length) { toast('Brak dopisanych kodów do cofnięcia'); return; }
   if (!confirm(`Cofnąć ostatni kod ${a.slice(-3)} (Nr ${fmtN(D[t].n)}) w ${TABS[t].name}?\nZniknie we wszystkich aplikacjach (RAZEM, SZUKAJ…).`)) return;
-  lsSet(TABS[t].key, a.slice(0, -3)); reload(); toast('Cofnięto ostatni kod');
+  lsSet(TABS[t].key, a.slice(0, -3)); lsSet(MAXK(t), String(D[t].n - 1)); reload(); toast('Cofnięto ostatni kod');
 }
 function resultPop(t, row, c, list) {   // okienko wyniku: moje modele, które grały na tym wierszu
   const o = $('respop'); if (o) o.remove();
@@ -506,10 +506,20 @@ function phaseTxt(it) {
 // ===== EKRANY =====
 let view = 'teraz', sel = null, only = lsGet('moje_v1_only', 't50'); if (!TABS[only]) only = 't50';   // wybrana tabela (T50 / T60) — każda ma swój ekran
 function reload() { Object.keys(TABS).forEach(loadCodes); _lab.clear(); gather(); render(); rzLoad(); }
+// zgubione kody: tylko baza (brak dopisanych) albo mniej kodów niż ostatnio widziane → podpowiedź „wczytaj kopię”
+const MAXK = t => 'moje_v1_maxn_' + t;
+function lostBox(t) {
+  const n = D[t].n, mx = +lsGet(MAXK(t), '0') || 0, T = TABS[t];
+  if (n > mx) lsSet(MAXK(t), String(n));
+  const imp = `<label class="btn wide pri" style="cursor:pointer">⬆ Wczytaj kopię kodów ${T.name} (plik z eksportu)<input type="file" data-imp="${t}" accept=".json,.txt,.csv,application/json,text/plain" style="display:none"></label>`;
+  if (n < mx) return `<div class="kod" style="border-color:#e10600;background:#2a1418"><b class="neg">⚠ Brakuje kodów ${T.name}</b>: ostatnio było Nr ${fmtN(mx)}, teraz Nr ${fmtN(n)} (brak ${fmtN(mx - n)}). Telefon mógł wyczyścić pamięć przeglądarki.${imp}<div class="hint">Wybierz ostatni plik z eksportu (RAZEM, MOJE, PIKOFF, TRÓJKA). Kody wrócą we wszystkich aplikacjach.</div><button class="btn sm" data-lostok="${t}" style="margin-top:6px">To ja cofnąłem kody — ukryj</button></div>`;
+  if (!readAdded(t)) return `<div class="kod" style="border-color:#e10600;background:#2a1418"><b class="neg">⚠ ${T.name}: są tylko kody z bazy</b> (do Nr ${fmtN(n)}${T.seedDate ? `, stan z ${T.seedDate.split('-').reverse().join('.')}` : ''}). Jeśli wpisywałeś nowsze kody, telefon mógł wyczyścić pamięć — wczytaj kopię.${imp}</div>`;
+  return '';
+}
 function kodBox(t) {
   const T = TABS[t], L = syncLog(t), last = L[L.length - 1], n = D[t].n, age = last ? Date.now() - last.t : 0;
   const prev = []; for (let i = Math.max(0, n - 8); i < n; i++) prev.push(`<b>${code(t, i)}</b>`);
-  return `<div class="kod"><div class="kh"><b>${T.name}</b><span class="src">${fmtN(n)} kodów</span></div>
+  return lostBox(t) + `<div class="kod"><div class="kh"><b>${T.name}</b><span class="src">${fmtN(n)} kodów</span></div>
     <div class="last">Ostatni kod: <b>Nr ${fmtN(n)}</b> = <span class="c">${code(t, n - 1)}</span> ·
     ${last ? `<span class="when ${age > 864e5 ? 'vold' : age > 3 * 36e5 ? 'old' : ''}">${ago(last.t)}</span> <span class="src">(${when(last.t)}${srcTxt(last)})</span>`
       : '<span class="src">kod z bazy (bez dopisanych kodów)</span>'}</div>
@@ -761,6 +771,7 @@ document.addEventListener('click', e => {
   let b;
   if ((b = q('nav button'))) return go(b.dataset.v);
   if ((b = q('[data-add]'))) { const t = b.dataset.add, i = $('in_' + t); addCode(t, i.value.trim()); return; }
+  if ((b = q('[data-lostok]'))) { lsSet(MAXK(b.dataset.lostok), String(D[b.dataset.lostok].n)); return render(); }
   if ((b = q('[data-undo]'))) return undoCode(b.dataset.undo);
   if ((b = q('[data-paste]'))) return pasteCodes(b.dataset.paste);
   if ((b = q('[data-undob]'))) return undoBatch(b.dataset.undob);
@@ -820,6 +831,7 @@ function LOSTIFY(doc, keepNames) {   // keepNames: zostaw nazwę tabeli / modeli
   } catch (e) {}
 }
 LOSTIFY(document, 2);
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}   // pamięć trwała: Android nie czyści jej sam przy braku miejsca
 </script>
 </body>
 </html>
