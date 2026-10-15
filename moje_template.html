@@ -10,7 +10,7 @@
 <link rel="apple-touch-icon" href="moje-192.png">
 <meta name="apple-mobile-web-app-title" content="MOJE">
 <style>
-:root{--bg:#12151c;--pan:#1b1f2a;--card:#242a38;--bd:#323a4d;--tx:#e8ebf2;--mu:#8b93a7;--or:#e07a35;--or2:#eaa06c;--gr:#5fd38a;--rd:#ff8a8a;--bl:#9fc4ff;--ye:#FFD700}
+:root{--bg:#12151c;--pan:#1b1f2a;--card:#242a38;--bd:#323a4d;--tx:#e8ebf2;--mu:#8b93a7;--or:#c97a45;--or2:#d6a07c;--gr:#5fd38a;--rd:#ff8a8a;--bl:#9fc4ff;--ye:#FFD700}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 header{position:sticky;top:0;z-index:10;background:var(--pan);border-bottom:1px solid var(--bd);padding:8px 12px}
@@ -25,25 +25,25 @@ a.btn{text-decoration:none}
 .hint{color:var(--mu);font-size:11.5px;margin-top:4px}
 .chip{position:relative;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:16px;padding:5px 11px;font-size:13px;font-weight:600}
 .chip.on{background:var(--or);border-color:var(--or);color:#fff}
-.chip b.soon{position:absolute;top:-8px;left:-6px;min-width:16px;height:16px;border-radius:8px;background:var(--ye);color:#000;font:700 10px/16px system-ui;padding:0 4px;border:1px solid #fff}.chip i.nb{position:absolute;top:-8px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#e07a35;color:#fff;font:700 10px/16px system-ui;font-style:normal;padding:0 4px;border:1px solid #fff}
+.chip b.soon{position:absolute;top:-8px;left:-6px;min-width:16px;height:16px;border-radius:8px;background:var(--ye);color:#000;font:700 10px/16px system-ui;padding:0 4px;border:1px solid #fff}.chip i.nb{position:absolute;top:-8px;right:-6px;min-width:16px;height:16px;border-radius:8px;background:#c97a45;color:#fff;font:700 10px/16px system-ui;font-style:normal;padding:0 4px;border:1px solid #fff}
 .tsw{display:flex;gap:8px;margin-bottom:8px}.tsw button{flex:1;position:relative;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:10px;padding:10px;font-size:17px;font-weight:800}
 .tsw.sub.src button.on{background:#7a1010;border-color:#e10600}.tsw.sub button{font-size:14px;padding:8px}.tsw.sub button.on{background:#b3261e;border-color:#b3261e}
 .tsw button.on{background:var(--or);border-color:var(--or);color:#fff}.tsw small{font-size:12px;font-weight:600;opacity:.85}
 .tsw b.soon{position:absolute;top:-7px;left:-5px;min-width:18px;height:18px;border-radius:9px;background:var(--ye);color:#000;font:700 11px/18px system-ui;padding:0 4px;border:1px solid #fff}
-.tsw i.nb{position:absolute;top:-7px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:#e07a35;color:#fff;font:700 11px/18px system-ui;font-style:normal;padding:0 4px;border:1px solid #fff}
+.tsw i.nb{position:absolute;top:-7px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:#c97a45;color:#fff;font:700 11px/18px system-ui;font-style:normal;padding:0 4px;border:1px solid #fff}
 .sec{background:var(--pan);border:1px solid var(--bd);border-radius:11px;padding:6px 8px;margin-bottom:10px}
 .sec .sh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:800;font-size:14px;padding:4px 2px 6px;cursor:pointer;position:relative}
 .sec .sh .m{color:var(--mu);font-size:11.5px;font-weight:500;text-align:right}
 .sec.snow{border-color:var(--or);box-shadow:0 0 0 1px var(--or) inset}.sec.ssoon{border-color:#8a7a20}.sec.sbust{border-color:#8a1f1f}
 .sec.link{cursor:pointer}.sec .sh b.soon,.sec .sh i.nb{position:static;display:inline-block;margin-left:6px;min-width:18px;height:18px;border-radius:9px;font:700 11px/18px system-ui;text-align:center;padding:0 4px}
-.sec .sh b.soon{background:var(--ye);color:#000}.sec .sh i.nb{background:#e07a35;color:#fff;font-style:normal}
+.sec .sh b.soon{background:var(--ye);color:#000}.sec .sh i.nb{background:#c97a45;color:#fff;font-style:normal}
 .sec .none{color:var(--mu);font-size:12.5px;padding:2px 4px 6px}
 .sec .kh{color:var(--mu);font-size:12px;font-weight:700;margin:8px 2px 4px;border-bottom:1px solid var(--bd);padding-bottom:2px}
 details.sec>summary{list-style:none}details.sec>summary::-webkit-details-marker{display:none}details.sec>summary .m::after{content:' ▾'}details.sec[open]>summary .m::after{content:' ▴'}
 .rw{background:var(--card);border-left:4px solid #2e75b6;border-radius:8px;padding:6px 8px;margin-bottom:5px;cursor:pointer}
 .rw.abust{border:4px solid transparent;border-image:repeating-linear-gradient(-45deg,#e10600 0 10px,#ffffff 10px 20px) 4}
-.rw.bnow{border:3px solid #e07a35;background:#3a2a1c;box-shadow:0 0 0 1px #e07a35 inset}
-.rw .graj{background:#e07a35;color:#fff;font-weight:800;font-size:14px;border-radius:6px;padding:5px 8px;margin-bottom:5px}
+.rw.bnow{border:3px solid #c97a45;background:#3a2a1c;box-shadow:0 0 0 1px #c97a45 inset}
+.rw .graj{background:#c97a45;color:#fff;font-weight:800;font-size:14px;border-radius:6px;padding:5px 8px;margin-bottom:5px}
 .rw.Sp{border-left-color:#7030a0}.rw.R{border-left-color:#1f8a4c}.rw.B{border-left-color:#b3261e}.rw.now{background:#3a2a1c}
 .rw .l1{display:flex;align-items:center;gap:6px;font-size:14px}.rw .l1 .sp{flex:1}.rw .l1 .zl{min-width:52px;text-align:right}.rw .l1 .btn{padding:3px 9px}.rw .l1 .ok{font-weight:800;padding:0 6px}
 .rw .l2{color:var(--mu);font-size:12px;margin-top:2px}.rw.now .l2{color:#ffd0a8}.rw .bdg{margin-right:0}
@@ -108,13 +108,13 @@ table.rows td{padding:4px 5px;border-top:1px solid var(--bd)}
 table.rows td.nr{color:var(--mu);width:62px;font-variant-numeric:tabular-nums}table.rows td.cd{width:44px;font-weight:700;letter-spacing:1px}
 table.rows tr.k6 td{background:#1f3d2a}table.rows tr.k7 td{background:#3d1f22}table.rows tr.k8 td{background:#6b1414}
 table.rows tr.k4 td,table.rows tr.k5 td{background:#3a2a1c}table.rows tr.k3 td,table.rows tr.k10 td{color:var(--bl)}
-table.rows tr.nx td{background:#e07a35;color:#fff;font-weight:800}
+table.rows tr.nx td{background:#c97a45;color:#fff;font-weight:800}
 .back{margin-bottom:8px}
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--pan);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom);z-index:20}
 nav button{flex:1;background:none;border:0;color:var(--mu);padding:12px 2px;font-size:13px;font-weight:700;position:relative}
 nav button.on{color:var(--or2)}
 nav b.soon,.grp b.soon{position:absolute;top:3px;left:2px;min-width:16px;height:16px;border-radius:8px;background:var(--ye);color:#000;font:700 10px/16px system-ui;padding:0 4px;border:1px solid #fff}
-nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-radius:8px;background:#e07a35;color:#fff;font:700 10px/16px system-ui;font-style:normal;padding:0 4px;border:1px solid #fff}
+nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-radius:8px;background:#c97a45;color:#fff;font:700 10px/16px system-ui;font-style:normal;padding:0 4px;border:1px solid #fff}
 .toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:#000d;color:#fff;padding:8px 14px;border-radius:9px;font-size:13px;z-index:70;max-width:92vw}
 .respop{position:fixed;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);z-index:60;width:min(94vw,560px);border-radius:12px;padding:10px 14px;color:#fff;box-shadow:0 8px 30px #000a;cursor:pointer}
 .respop.win{background:#1f8a4c}.respop.loss{background:#b3261e}.respop.nil{background:#2b3245}
@@ -133,7 +133,7 @@ nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-r
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.13.1';
+const APP_VER = '1.13.2';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -744,7 +744,7 @@ function pomoc() {
   return `<div class="box"><h4>Co tu jest</h4>MOJE zbiera modele, które grasz, ze wszystkich aplikacji: <span class="bdg R">R</span>RAZEM (modele dodane w RAZEM 50 i 60 przyciskiem „▶ Gram — dodaj do aplikacji MOJE” — stan liczy sama appka RAZEM, wczytuje się kilka sekund), <span class="bdg S">S</span>SZUKAJ, <span class="bdg Sp">S+</span>SZUKAJ+, <span class="bdg B">L</span>SZUKAJ BUST — dla T50 i T60. Liczba przy znaczku = tabela (S50, S+60…).</div>
     <div class="box"><h4>Grupy na ekranie TERAZ</h4>🟧 <b>GRAJ TERAZ</b> — zakład na następnym wierszu (kwota i krok na karcie).<br>🟨 <b>ZA 2–3 WIERSZE</b> — TRIGGER już był, zakład za chwilę.<br>🟥 <b>BUST</b> — model przegrał krok 8 (512 zł); znika po pierwszym WIN.<br>🟦 <b>W GRZE</b> — czeka na STEP albo TRIGGER.<br>✅ <b>ZAKOŃCZONE</b> — po WIN (rozwiń na dole).</div>
     <div class="box"><h4>Zakładka BUST</h4>BUST-y moich modeli od dodania do MOJE (przegrany krok 8), dopóki po nich nie było WIN — także po usunięciu modelu z MOJE. Filtr <b>krok:</b> = krok, na którym model gra teraz po BUST-cie (można wybrać kilka). Przy każdym widać, ile cykli wcześniej był poprzedni BUST. Na dole <b>Historia</b>: wszystkie BUST-y moich modeli i co było potem (WIN na kroku / znowu BUST / trwa).</div>
-    <div class="box"><h4>Znaczki na TERAZ</h4><b style="background:#e07a35;color:#fff;border-radius:8px;padding:0 5px">2</b> pomarańczowy = ile modeli gra na następnym wierszu.<br><b style="background:#FFD700;color:#000;border-radius:8px;padding:0 5px">2,3</b> żółty = za ile wierszy grają kolejne.</div>
+    <div class="box"><h4>Znaczki na TERAZ</h4><b style="background:#c97a45;color:#fff;border-radius:8px;padding:0 5px">2</b> pomarańczowy = ile modeli gra na następnym wierszu.<br><b style="background:#FFD700;color:#000;border-radius:8px;padding:0 5px">2,3</b> żółty = za ile wierszy grają kolejne.</div>
     <div class="box"><h4>Kody</h4>Kody są wspólne z RAZEM i SZUKAJ — wpisany tu kod jest od razu we wszystkich aplikacjach (i odwrotnie). Przy każdej tabeli widać ostatni kod i <b>kiedy</b> go wpisano. Gdy kod wpisano w innej aplikacji, MOJE pokazuje, kiedy go tu zauważyło (przy otwarciu).<br>Zakładka <b>KODY</b>: kilka kodów naraz, import pliku (z cofnięciem całego importu) i eksport z nazwami jak w RAZEM — T50: TRÓJKA <b>v13_…kod.json</b>, T60: <b>xx1_pikoff_…json</b> i <b>trojka_xx1_v13_…kod.json</b>, żeby appki na PC je wychwyciły.</div>
     <div class="box"><h4>Zakłady</h4>„💰 Zapisz zakład” zapisuje zakład w MOJE ZAKŁADY aplikacji, z której jest model — widać go tu i tam. Wynik liczy się sam po wpisaniu kodu.</div>
     <div class="box"><h4>Dodawanie modeli</h4>W aplikacji SZUKAJ przytrzymaj kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. Aplikacja doda model i otworzy go tutaj.</div>
