@@ -136,7 +136,7 @@ nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-r
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.13.5';
+const APP_VER = '1.13.6';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -194,6 +194,7 @@ function addCode(t, c) {
   const L = jget(LOGK(t)); L.push({ n: row + 1, c, t: Date.now(), here: 1 }); lsSet(LOGK(t), JSON.stringify(L.slice(-300)));
   reload();
   resultPop(t, row, c, before);
+  autoBackup(t);
 }
 // ===== KODY: wklejanie kilku naraz, import pliku, eksport (nazwy i format jak w RAZEM: PIKOFF / TRÓJKA — appki na PC je wychwytują) =====
 function srcTxt(e) { return e.here === 1 ? ', wpisany tutaj' : e.here === 2 ? `, z pliku ${esc(e.f || '')}` : e.here === 3 ? ', wklejony tutaj' : ', wpisany w innej aplikacji — tu zauważony'; }
@@ -230,7 +231,7 @@ function pasteCodes(t) {   // kilka nowych kodów naraz (dopisywane na koniec, w
   if (bad) { toast(`Zły kod „${esc(bad)}” — ${t === 't50' ? 'T50: trzy cyfry 0/1' : 'T60: pierwsza 0–3, potem dwie 0/1'}`); return; }
   const n = D[t].n;
   if (!confirm(`${TABS[t].name}: dopisać ${arr.length} kod(ów) jako Nr ${fmtN(n + 1)}–${fmtN(n + arr.length)}?\n${arr.join(' ')}`)) return;
-  if (appendBatch(t, arr, 3, '')) { ta.value = ''; toast(`${TABS[t].name}: dopisano ${arr.length}, teraz Nr ${fmtN(D[t].n)}`); }
+  if (appendBatch(t, arr, 3, '')) { ta.value = ''; toast(`${TABS[t].name}: dopisano ${arr.length}, teraz Nr ${fmtN(D[t].n)}`); autoBackup(t); }
 }
 function lastBatch(t) {   // ostatni import / wklejenie — można cofnąć, dopóki to wciąż koniec ciągu
   const b = jobj(IMPK(t)); if (!b || !(b.to > b.from) || b.to !== D[t].n) return null;
@@ -248,13 +249,21 @@ const EXPF = {   // te same nazwy i pola co eksport RAZEM / PIKOFF / TRÓJKA
   t60: [{ nm: 'PIKOFF', file: (s, n) => `xx1_pikoff_${s}_n${n}.json`, pay: (c, d) => ({ kind: 'xx1_pikoff', app: 'T60 RAZEM', source: 'MOJE', version: APP_VER, table: 'Tabela60off5678', created: d, n: c.length, seed_n: 12542, codes: c }) },
         { nm: 'TRÓJKA', file: (s, n) => `trojka_xx1_v13_${s}_${n}kod.json`, pay: (c, d) => ({ codes: c, version: APP_VER, kind: 'trojka_xx1_v13', source: 'MOJE', saved: d, n: c.length }) }],
 };
-function exportFile(t, i) {
+function exportFile(t, i, auto) {
   const E = EXPF[t][i], c = []; for (let k = 0; k < D[t].n; k++) c.push(code(t, k));
   const name = E.file(stamp(), c.length), a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(E.pay(c, new Date().toISOString()), null, 1)], { type: 'application/json' }));
   a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   const x = jobj(EXPK(t)) || {}; x[E.nm] = { t: Date.now(), n: c.length, f: name }; lsSet(EXPK(t), JSON.stringify(x));
+  if (auto) return name;
   toast(`Zapisano ${name}`); render();
+}
+// automatyczna kopia: co 10 nowych kodów od ostatniego eksportu — plik T50 TRÓJKA / T60 PIKOFF w Pobranych (po wpisaniu kodu w MOJE)
+const ABK = 'moje_v1_autobk', AB_N = 10, abOn = () => lsGet(ABK, '1') !== '0';
+const lastExpN = t => Math.max(0, ...Object.values(jobj(EXPK(t)) || {}).map(x => +x.n || 0));
+function autoBackup(t) {
+  if (!abOn() || D[t].n - lastExpN(t) < AB_N) return;
+  try { const nm = exportFile(t, 0, 1); setTimeout(() => toast(`💾 Automatyczna kopia ${TABS[t].name}: ${esc(nm)} (w Pobranych)`), 1600); } catch (e) {}
 }
 function daneBox(t) {
   const T = TABS[t], b = lastBatch(t), ex = jobj(EXPK(t)) || {}, imp = jobj(IMPK(t));
@@ -268,6 +277,7 @@ function daneBox(t) {
     ${imp && imp.t ? `<div class="hint">Ostatnio: ${imp.how === 2 ? 'import ' + esc(imp.f) : 'wklejenie'} · +${imp.to - imp.from} kodów · ${ago(imp.t)} (${when(imp.t)})</div>` : ''}
     ${b ? `<button class="btn wide" data-undob="${t}" style="color:var(--rd)">↶ Cofnij ${b.how === 2 ? 'ten import' : 'to wklejenie'} (${b.to - b.from} kodów, Nr ${fmtN(b.from + 1)}–${fmtN(b.to)})</button>` : ''}
     <h4 style="margin-top:12px">Eksport (nazwy jak w RAZEM — appki na PC je wychwytują)</h4>
+    <label class="hint" style="display:flex;gap:8px;align-items:center;margin:0 0 8px;font-size:13px;color:var(--tx)"><input type="checkbox" data-autobk ${abOn() ? 'checked' : ''} style="width:20px;height:20px">💾 Automatyczna kopia co ${AB_N} kodów (${EXPF[t][0].nm} do Pobranych${abOn() ? (lastExpN(t) + AB_N <= D[t].n + 1 ? ', następna przy najbliższym wpisanym kodzie' : `, następna przy Nr ${fmtN(lastExpN(t) + AB_N)}`) : ''})</label>
     ${EXPF[t].map((E, i) => { const x = ex[E.nm]; return `<button class="btn wide" data-exp="${t}:${i}">⬇ ${E.nm} · ${E.file('RRRRMMDD_GGMM', D[t].n)}</button>
       <div class="hint">${x ? `ostatni: ${ago(x.t)} (${when(x.t)}) · ${fmtN(x.n)} kodów${D[t].n > x.n ? ` · <b style="color:var(--ye)">od tego czasu +${D[t].n - x.n} kodów</b>` : ' · aktualny'}` : 'jeszcze nie eksportowano z MOJE'}</div>`; }).join('')}
   </div>`;
@@ -753,6 +763,7 @@ function pomoc() {
     <div class="box"><h4>Zakładka BUST</h4>BUST-y moich modeli od dodania do MOJE (przegrany krok 8), dopóki po nich nie było WIN — także po usunięciu modelu z MOJE. Filtr <b>krok:</b> = krok, na którym model gra teraz po BUST-cie (można wybrać kilka). Przy każdym widać, ile cykli wcześniej był poprzedni BUST. Na dole <b>Historia</b>: wszystkie BUST-y moich modeli i co było potem (WIN na kroku / znowu BUST / trwa).</div>
     <div class="box"><h4>Znaczki na TERAZ</h4><b style="background:#c97a45;color:#fff;border-radius:8px;padding:0 5px">2</b> pomarańczowy = ile modeli gra na następnym wierszu.<br><b style="background:#FFD700;color:#000;border-radius:8px;padding:0 5px">2,3</b> żółty = za ile wierszy grają kolejne.</div>
     <div class="box"><h4>Kody</h4>Kody są wspólne z RAZEM i SZUKAJ — wpisany tu kod jest od razu we wszystkich aplikacjach (i odwrotnie). Przy każdej tabeli widać ostatni kod i <b>kiedy</b> go wpisano. Gdy kod wpisano w innej aplikacji, MOJE pokazuje, kiedy go tu zauważyło (przy otwarciu).<br>Zakładka <b>KODY</b>: kilka kodów naraz, import pliku (z cofnięciem całego importu) i eksport z nazwami jak w RAZEM — T50: TRÓJKA <b>v13_…kod.json</b>, T60: <b>xx1_pikoff_…json</b> i <b>trojka_xx1_v13_…kod.json</b>, żeby appki na PC je wychwyciły.</div>
+    <div class="box"><h4>Kopia kodów</h4>Co 10 nowych kodów (licząc od ostatniego eksportu) MOJE samo zapisuje plik kopii (T50 TRÓJKA, T60 PIKOFF) do Pobranych — przy wpisaniu kodu tutaj. Gdy telefon wyczyści pamięć, wczytaj go w KODY → Import pliku. Wyłączysz to w KODY.</div>
     <div class="box"><h4>Zakłady</h4>„💰 Zapisz zakład” zapisuje zakład w MOJE ZAKŁADY aplikacji, z której jest model — widać go tu i tam. Wynik liczy się sam po wpisaniu kodu.</div>
     <div class="box"><h4>Dodawanie modeli</h4>W aplikacji SZUKAJ przytrzymaj kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. Aplikacja doda model i otworzy go tutaj.</div>
     <div class="hint">MOJE ${APP_VER}</div>`;
@@ -782,6 +793,7 @@ document.addEventListener('click', e => {
   if ((b = q('[data-undo]'))) return undoCode(b.dataset.undo);
   if ((b = q('[data-paste]'))) return pasteCodes(b.dataset.paste);
   if ((b = q('[data-undob]'))) return undoBatch(b.dataset.undob);
+  if ((b = q('[data-autobk]'))) { lsSet(ABK, b.checked ? '1' : '0'); return render(); }
   if ((b = q('[data-exp]'))) { const [t, i] = b.dataset.exp.split(':'); return exportFile(t, +i); }
   if ((b = q('[data-only]'))) { only = b.dataset.only; lsSet('moje_v1_only', only); return render(); }
   if ((b = q('[data-bsave]'))) { const it = items.find(x => x.uid === b.dataset.bsave), f = b.closest('.btf'); if (it) saveBet(it, +f.querySelector('.fNr').value - 1, +f.querySelector('.fK').value, +f.querySelector('.fZl').value); return; }
