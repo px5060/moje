@@ -7,7 +7,7 @@ ze wszystkich aplikacji SZUKAJ, SZUKAJ+ i SZUKAJ BUST (T50 i T60). Czyta wspóln
 - **ZAKŁADY** — wszystkie zapisane zakłady i wynik.
 - **MODEL** — opis modelu słowami, statystyki na całej tabeli, bank +3 / +5, ostatnie 30 wierszy.
 - **BANK** — bank +3 / +5 (bez limitu) dla moich modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST: GRAJ BANK na następnym wierszu,
-  🎯 bank +3 na k4–k6, stawki do zmiany (domyślnie 8 · 8 · 8 · 16, dalej ×2), szanse z historii modelu. Zasady: `RULES.md`.
+  🎯 bank +3 na k4–k6, stawki do zmiany (domyślnie 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512, dalej ×2), szanse z historii modelu. Zasady: `RULES.md`.
 
 Budowa: `python3 build.py` (z `moje_template.html` + `seed_t50.txt` / `seed_t60.txt`) → `index.html`. Ikony: `python3 make_icons.py`.
 Silnik = ten sam co w SZUKAJ+ (SZUKAJ i BUST to SZUKAJ+ z 1 TRIGGEREM i bez STEP2).

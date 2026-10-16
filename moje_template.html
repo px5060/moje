@@ -143,7 +143,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.14.0';
+const APP_VER = '1.14.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -781,7 +781,8 @@ function model() {
 // czeka do końca cyklu modelu i w następnym cyklu gra dalej od kolejnego kroku (+3 / +5).
 const BKW = [3, 5], BSTK = 'moje_v1_bankst';
 const bParse = s => (String(s).match(/\d+/g) || []).map(Number).filter(v => v > 0).slice(0, 20);
-let BST = (a => a.length ? a : [8, 8, 8, 16])(bParse(lsGet(BSTK, '8 8 8 16')));   // podane kroki, każdy następny ×2
+const BST0 = [8, 8, 16, 32, 64, 128, 256, 512];   // progresja modelu; bez limitu: dalej każdy krok ×2
+let BST = (a => a.length ? a : BST0)(bParse(lsGet(BSTK, BST0.join(' '))));
 const bStake = k => k <= BST.length ? BST[k - 1] : BST[BST.length - 1] * 2 ** (k - BST.length);
 function bCum(k) { let s = 0; for (let j = 1; j <= k; j++) s += bStake(j); return s; }
 const bSer = k => 3 * bStake(k) - bCum(k);   // WIN banku na kroku k: wynik całej serii od k1 (kurs 3,0)
@@ -871,7 +872,7 @@ function pomoc() {
     <div class="box"><h4>Znaczki na TERAZ</h4><b style="background:#c97a45;color:#fff;border-radius:8px;padding:0 5px">2</b> pomarańczowy = ile modeli gra na następnym wierszu.<br><b style="background:#FFD700;color:#000;border-radius:8px;padding:0 5px">2,3</b> żółty = za ile wierszy grają kolejne.</div>
     <div class="box"><h4>Kody</h4>Kody są wspólne z RAZEM i SZUKAJ — wpisany tu kod jest od razu we wszystkich aplikacjach (i odwrotnie). Przy każdej tabeli widać ostatni kod i <b>kiedy</b> go wpisano. Gdy kod wpisano w innej aplikacji, MOJE pokazuje, kiedy go tu zauważyło (przy otwarciu).<br>Zakładka <b>KODY</b>: kilka kodów naraz, import pliku (z cofnięciem całego importu) i eksport z nazwami jak w RAZEM — T50: TRÓJKA <b>v13_…kod.json</b>, T60: <b>xx1_pikoff_…json</b> i <b>trojka_xx1_v13_…kod.json</b>, żeby appki na PC je wychwyciły.</div>
     <div class="box"><h4>Kopia kodów</h4>Co 10 nowych kodów (licząc od ostatniego eksportu) MOJE samo zapisuje plik kopii (T50 TRÓJKA, T60 PIKOFF) do Pobranych — przy wpisaniu kodu tutaj. Gdy telefon wyczyści pamięć, wczytaj go w KODY → Import pliku. Wyłączysz to w KODY.</div>
-    <div class="box"><h4>Zakładka BANK</h4>Bank +3 / +5 dla moich modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST — bez limitu. Bank gra w każdym cyklu modelu tylko pierwsze 3 (5) zakłady; model trafi → WIN banku (przeniesione kroki + krok modelu) i bank od k1; nie trafi → bank przegrywa 3 (5) kroki, czeka i w następnym cyklu gra dalej. <b>🎯 BANK +3 na k4–k6</b> = modele, w których bank +3 przegrał k1–k3 i gra k4–k6. Stawki do zmiany na górze zakładki (domyślnie 8 · 8 · 8 · 16, dalej ×2). Dotknięcie modelu → kroki i stawki w oknie, szanse z historii modelu, wyniki banku po kolei.</div>
+    <div class="box"><h4>Zakładka BANK</h4>Bank +3 / +5 dla moich modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST — bez limitu. Bank gra w każdym cyklu modelu tylko pierwsze 3 (5) zakłady; model trafi → WIN banku (przeniesione kroki + krok modelu) i bank od k1; nie trafi → bank przegrywa 3 (5) kroki, czeka i w następnym cyklu gra dalej. <b>🎯 BANK +3 na k4–k6</b> = modele, w których bank +3 przegrał k1–k3 i gra k4–k6. Stawki do zmiany na górze zakładki (domyślnie 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512, dalej ×2). Dotknięcie modelu → kroki i stawki w oknie, szanse z historii modelu, wyniki banku po kolei.</div>
     <div class="box"><h4>Zakłady</h4>„💰 Zapisz zakład” zapisuje zakład w MOJE ZAKŁADY aplikacji, z której jest model — widać go tu i tam. Wynik liczy się sam po wpisaniu kodu.</div>
     <div class="box"><h4>Dodawanie modeli</h4>W aplikacji SZUKAJ przytrzymaj kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. Aplikacja doda model i otworzy go tutaj.</div>
     <div class="hint">MOJE ${APP_VER}</div>`;
