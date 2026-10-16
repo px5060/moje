@@ -78,7 +78,7 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 
 ## Zakładka BANK (aplikacja MOJE) — bank +3 / +5
 
-- Liczony dla moich modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST (modele z RAZEM — nie, ich cykle liczy RAZEM).
+- **Lista BANK** jest osobna od MOJE: tylko modele dodane przyciskiem **➕ Dodaj do BANK** (w banku modelu — w wyszukiwarce i na ekranie modelu z MOJE); zapis `moje_v1_bank` ({t, a, tg, m, id, t0}). Ten sam przycisk usuwa (✓ Jest na liście BANK — usuń). Modele z RAZEM — nie (ich cykle liczy RAZEM).
 - Biorę po kolei wszystkie cykle modelu na całej tabeli (od Nr 1). **W** = krok, na którym model wygrał; LOST modelu = brak WIN w każdym oknie.
 - **Bank +3** gra w każdym cyklu tylko pierwsze 3 zakłady modelu, **bank +5** — pierwsze 5.
 - Model trafi w tych zakładach → **WIN banku na kroku = przeniesione kroki + W**, bank wraca na k1.
@@ -89,4 +89,4 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Kafelki wyników banku: zielony **W4** = WIN banku na k4, czerwony **L6** = okno przegrane (bank doszedł do k6 i czeka) — także okno już przegrane w bieżącym cyklu.
 - Tabela szans: od obecnego kroku banku kolejne kroki (bank +3: 3 okna = 9 kroków, +5: 2 okna = 10 kroków), szansa zamknięcia dokładnie na kroku i łącznie; dalsze okna = kolejne cykle modelu.
 - **🔎 Wyszukiwarka** (na górze BANK): nazwa modelu z SZUKAJ / SZUKAJ+ / SZUKAJ LOST (np. P1037; „S+…”, „L…”, „S…” zawęża aplikację) → statystyki modelu, ostatnie cykle i bank +3 / +5. Pule wczytywane na żądanie z aplikacji (ten sam adres, `const POOLS`), więc nazwy zgadzają się z bieżącą wersją SZUKAJ.
-- Grupy: 🟧 GRAJ BANK (zakład banku na następnym wierszu, znaczek przy BANK) · 🎯 BANK +3 na k4–k6 · 🟦 pozostałe. Szczegóły banku także w ekranie MODEL.
+- Lista jak na TERAZ / LOST (zwarte wiersze): 🟧 GRAJ BANK (zakład banku na następnym wierszu, znaczek przy BANK) · 🟨 ZA CHWILĘ (za 2–3 wiersze) · 🎯 BANK +3 na k4–k6 · 🟦 CZEKAJĄ. Dotknięcie wiersza → ekran banku modelu (szanse, stawki, wyniki, usuń z listy). Szczegóły banku także w ekranie MODEL.
