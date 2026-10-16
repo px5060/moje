@@ -75,3 +75,15 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - **WIN → ✅ ZAKOŃCZONE** (koniec gry modelu).
 - **BUST (przegrany k8) → ✅ ZAKOŃCZONE (✖ BUST k8) i jednocześnie zakładka BUST** (biało-czerwona ramka), dopóki po BUST-cie nie ma WIN. W zakładce BUST model gra normalnie dalej na kolejnych krokach: 🟦 CZEKAJĄ → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ (ten sam układ co TERAZ).
 - Zakładka BUST ma dwie części: **💥 MOJE MODELE** (BUST-y modeli z SZUKAJ, SZUKAJ+, RAZEM) i **🅱 SZUKAJ BUST** (BUST-y modeli z aplikacji SZUKAJ BUST) — oddzielnie.
+
+## Zakładka BANK (aplikacja MOJE) — bank +3 / +5
+
+- Liczony dla moich modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST (modele z RAZEM — nie, ich cykle liczy RAZEM).
+- Biorę po kolei wszystkie cykle modelu na całej tabeli (od Nr 1). **W** = krok, na którym model wygrał; LOST modelu = brak WIN w każdym oknie.
+- **Bank +3** gra w każdym cyklu tylko pierwsze 3 zakłady modelu, **bank +5** — pierwsze 5.
+- Model trafi w tych zakładach → **WIN banku na kroku = przeniesione kroki + W**, bank wraca na k1.
+- Model nie trafi → bank przegrywa swoje 3 (5) kroki i **czeka** (dalszych zakładów modelu w tym cyklu nie gramy); w następnym cyklu gra dalej (+3 / +5). Przeniesienia się sumują.
+- **Bez limitu** (ustalone: interesuje nas gra do k4–k6). Przykłady: W7, W1 → +3: WIN k4, +5: WIN k6 · W5, W3 → +3: W6 · W4, W5, W2 → +3: W8 · W6, W7, W1 → +3: W7, +5: W11.
+- Stawki banku domyślnie **8 · 8 · 8 · 16**, dalej ×2 (k4 = 16 zł) — do zmiany na górze zakładki (`moje_v1_bankst`). WIN zakładu = +2 × stawka; „seria” = wynik od k1 banku z przegranymi krokami.
+- Szanse: z historii modelu; w bieżącym cyklu tylko cykle, w których model też przegrał już tyle zakładów (np. +5 po 3 przegranych: W4–W5 wśród cykli z W ≥ 4). „Do k…” = to okno albo następne.
+- Grupy: 🟧 GRAJ BANK (zakład banku na następnym wierszu, znaczek przy BANK) · 🎯 BANK +3 na k4–k6 · 🟦 pozostałe. Szczegóły banku także w ekranie MODEL.
