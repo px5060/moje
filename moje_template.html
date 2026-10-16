@@ -143,7 +143,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.16.0';
+const APP_VER = '1.16.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -921,18 +921,19 @@ function bankDet(it, B) {
   const head = B.now ? `zakład banku na <b>Nr ${fmtN(r.wz + 1)}</b>${it.d === 1 ? ' — <b>GRAJ TERAZ</b>' : ''}: <span class="kk">k${B.next}</span> <b>${fmtN(bStake(B.next))} zł</b>`
     : B.inWin ? `okno <b>k${B.ws}–k${B.we}</b> w tym cyklu modelu${r.bs ? ` (model przegrał już ${r.bs})` : ''} · następny zakład banku <span class="kk">k${B.next}</span> ${fmtN(bStake(B.next))} zł`
     : `w tym cyklu bank przegrał już k${B.ws - w}–k${B.ws - 1} — <b>czeka</b>, aż model skończy cykl; w następnym cyklu gra <b>k${B.ws}–k${B.we}</b>`;
-  const S = B.steps, last = S.length ? S[S.length - 1] : null;
-  const rows = S.map((x, j) => (j && x.i !== S[j - 1].i ? `<tr class="hd"><td colspan="5">↓ następny cykl modelu: k${x.k}–k${x.k + w - 1}</td></tr>` : '')
-    + `<tr><td>k${x.k}</td><td class="c">${fmtN(bStake(x.k))} zł</td><td class="c"><b>${pct(x.p)}</b></td><td class="c">${pct(x.cum)}</td><td class="c">${zl(bSer(x.k))}</td></tr>`).join('');
-  const nl = B.seq.filter(x => !x.win).length, cnt = {}; B.res.forEach(x => { cnt[x.k] = (cnt[x.k] || 0) + 1; });
+  const S = B.steps, last = S.length ? S[S.length - 1] : null, W = [];   // szanse zebrane w okna: ten cykl modelu, następny, kolejny
+  S.forEach(x => { const o = W[x.i] || (W[x.i] = { a: x.k, b: x.k, p: 0, cum: 0 }); o.b = x.k; o.p += x.p; o.cum = x.cum; });
+  const rng = (a, b) => a === b ? `k${a}` : `k${a}–${b}`, zlr = (a, b) => a === b ? `${fmtN(bStake(a))} zł` : `${fmtN(bStake(a))}–${fmtN(bStake(b))} zł`;
+  const CYC = ['ten cykl modelu', 'następny cykl', 'za 2 cykle', 'za 3 cykle'];
+  const rows = W.map((o, i) => `<tr><td><b>${rng(o.a, o.b)}</b><div class="mu" style="font-size:10.5px">${CYC[i + (B.inWin ? 0 : 1)]}</div></td><td class="c">${zlr(o.a, o.b)}</td><td class="c"><b>${pct(o.p)}</b></td><td class="c">${pct(o.cum)}</td></tr>`).join('');
+  const nl = B.seq.filter(x => !x.win).length, grp = {}; B.res.forEach(x => { const g = Math.ceil(x.k / w); grp[g] = (grp[g] || 0) + 1; });
   return `<div style="margin:8px 0 4px;font-weight:800;color:var(--or2)">BANK +${w}</div><div style="font-size:13.5px">${head}</div>
-    ${last ? `<div class="hint" style="margin-top:6px">Szansa na zamknięcie banku na kolejnych krokach (od teraz):</div>
-    <table class="rows" style="margin-top:2px"><tr class="hd"><td>krok</td><td class="c">stawka</td><td class="c">szansa</td><td class="c">łącznie</td><td class="c">WIN seria</td></tr>${rows}
-    <tr><td colspan="3" class="mu">nie zamknie do k${last.k}</td><td class="c"><b>${pct(1 - last.cum)}</b></td><td class="c mu">−${fmtN(bCum(last.k))} zł</td></tr></table>
-    <div style="margin-top:5px">zamknie w tym oknie <b>${pct(B.p1)}</b>${B.p2 != null ? ` · do k${B.we + w} <b>${pct(B.p2)}</b>` : ''}</div>` : '<div class="hint">Model nie ma jeszcze zakończonych cykli — brak szans.</div>'}
+    ${last ? `<div class="hint" style="margin-top:6px">Szansa na zamknięcie banku (od teraz):</div>
+    <table class="rows" style="margin-top:2px"><tr class="hd"><td>okno</td><td class="c">stawki</td><td class="c">szansa</td><td class="c">łącznie</td></tr>${rows}
+    <tr><td colspan="3" class="mu">nie zamknie do k${last.k} · seria −${fmtN(bCum(last.k))} zł</td><td class="c"><b>${pct(1 - last.cum)}</b></td></tr></table>` : '<div class="hint">Model nie ma jeszcze zakończonych cykli — brak szans.</div>'}
     <div class="hint" style="margin-top:6px">Wyniki banku po kolei (${B.res.length} WIN · ${nl} przegranych okien, najnowszy z prawej):</div>
     <div class="cyc">${B.seq.slice(-40).map(x => x.win ? `<b class="${x.k > 2 * w ? 'hh' : x.k > w ? 'hi' : ''}">W${x.k}</b>` : `<b class="x">L${x.k}</b>`).join('')}</div>
-    <div class="hint" style="margin-top:4px">WIN banku na krokach: ${Object.keys(cnt).sort((a, b) => a - b).map(k => `k${k}: ${cnt[k]}`).join(' · ')}</div>
+    <div class="hint" style="margin-top:4px">Gdzie bank się zamykał: ${Object.keys(grp).sort((a, b) => a - b).map(g => `<b>${rng((g - 1) * w + 1, g * w)}</b> ${pct(grp[g] / B.res.length)}`).join(' · ')}</div>
     <div class="hint">najwyższy krok k${B.maxk} (seria do niego ${fmtN(bCum(B.maxk))} zł) · bilans bez limitu od Nr 1: ${zl(B.pnl)}</div>`;
 }
 function bankBox(it) {
