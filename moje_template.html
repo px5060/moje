@@ -143,7 +143,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.16.1';
+const APP_VER = '1.16.2';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -787,14 +787,13 @@ function bCum(k) { let s = 0; for (let j = 1; j <= k; j++) s += bStake(j); retur
 const bSer = k => 3 * bStake(k) - bCum(k);   // WIN banku na kroku k: wynik całej serii od k1 (kurs 3,0)
 const pct = v => v == null ? '—' : Math.round(100 * v) + '%';
 function bankOf(it, w) {
-  const r = it.r, M = r.ev.map(e => e[1] === 1 ? e[2] : 99), res = [], seq = [];   // M = krok WIN modelu w każdym cyklu (99 = LOST) · res = WIN-y banku · seq = WIN-y i przegrane okna po kolei
+  const r = it.r, M = r.ev.map(e => e[1] === 1 ? e[2] : 99), res = [];   // M = krok WIN modelu w każdym cyklu (99 = LOST) · res = WIN-y banku
   let carry = 0, pnl = 0, maxk = 0;
   M.forEach((m, j) => {
-    if (m <= w) { const k = carry + m; res.push({ row: r.ev[j][0], k }); seq.push({ k, win: 1 }); pnl += bSer(k); maxk = Math.max(maxk, k); carry = 0; }
-    else { carry += w; seq.push({ k: carry, win: 0 }); }
+    if (m <= w) { const k = carry + m; res.push({ row: r.ev[j][0], k }); pnl += bSer(k); maxk = Math.max(maxk, k); carry = 0; }
+    else carry += w;
   });
   const inWin = r.bs < w, ws = inWin ? carry + 1 : carry + w + 1, we = ws + w - 1;   // okno banku: w bieżącym cyklu modelu albo (gdy już przegrane) w następnym
-  if (!inWin) seq.push({ k: carry + w, win: 0 });   // okno w bieżącym cyklu już przegrane
   const next = inWin ? carry + r.bs + 1 : ws, open = inWin ? carry + r.bs : carry + w;   // krok najbliższego zakładu banku · przegrane kroki otwartej serii
   maxk = Math.max(maxk, open); pnl -= bCum(open);
   // szanse z historii modelu: okno 0 = najbliższe (w bieżącym cyklu tylko cykle, w których model też przegrał już r.bs zakładów), dalej okna w kolejnych cyklach
@@ -806,7 +805,7 @@ function bankOf(it, w) {
     for (let s = cond ? r.bs + 1 : 1; s <= w; s++) { const p = surv * eq(s) / base; pw += eq(s) / base; cum += p; steps.push({ k: ws + i * w + s - 1, p, cum, i }); }
     surv *= 1 - pw; if (i === 0) p1 = cum; else if (i === 1) p2 = cum;
   }
-  return { w, res, seq, carry, inWin, ws, we, next, open, pnl, maxk, steps, p1, p2, now: inWin && r.ph === 2 };
+  return { w, res, carry, inWin, ws, we, next, open, pnl, maxk, steps, p1, p2, now: inWin && r.ph === 2 };
 }
 const bankNext = it => !it.rz && !it.gone && it.r.ph === 2 && it.d === 1 && it.r.bs < Math.max(...BKW);   // któryś bank gra na następnym wierszu
 function bankLine(it, B) {
@@ -849,7 +848,7 @@ function bankRules() {
     <li>Przeniesienia się sumują. <b>Bez limitu</b> — bank gra aż do WIN. Stawki: ${BST.join(' · ')} zł, dalej ×2.</li></ol>
     <div style="margin-top:6px"><b>Przykład:</b> W7, W1 → bank +3: k1–k3 przegrane (model wygrał dopiero na k7), potem W1 = <b>WIN k4</b>; bank +5: k1–k5 przegrane, potem W1 = <b>WIN k6</b>.<br>
     W5, W3 → +3: <b>W6</b> · W4, W5, W2 → +3: <b>W8</b>, +5: W4, W5, W2 · W6, W7, W1 → +3: <b>W7</b>, +5: <b>W11</b>.</div>
-    <div class="hint" style="margin-top:6px">Kafelki: zielony <b>W4</b> = WIN banku na k4, czerwony <b>L6</b> = okno banku przegrane (bank doszedł do k6 i czeka). WIN zakładu = +2 × stawka (kurs 3,0). „Seria” = wynik od k1 banku razem z przegranymi krokami. Szanse liczone z historii tego modelu (wszystkie jego cykle na całej tabeli).</div></details>`;
+    <div class="hint" style="margin-top:6px">WIN zakładu = +2 × stawka (kurs 3,0). „Seria” = wynik od k1 banku razem z przegranymi krokami. Szanse liczone z historii tego modelu (wszystkie jego cykle na całej tabeli).</div></details>`;
 }
 // ===== wyszukiwarka modeli: pule wczytywane z aplikacji SZUKAJ / SZUKAJ+ / SZUKAJ LOST (ten sam adres, te same nazwy P…) =====
 const PL = {};   // `${t}|${aplikacja}` → { st: 'ładuję' | 'ok' | 'błąd', P: { x1x: [...], xx1: [...] } }
@@ -926,13 +925,11 @@ function bankDet(it, B) {
   const rng = (a, b) => a === b ? `k${a}` : `k${a}–${b}`, zlr = (a, b) => a === b ? `${fmtN(bStake(a))} zł` : `${fmtN(bStake(a))}–${fmtN(bStake(b))} zł`;
   const CYC = ['ten cykl modelu', 'następny cykl', 'za 2 cykle', 'za 3 cykle'];
   const rows = W.map((o, i) => `<tr><td><b>${rng(o.a, o.b)}</b><div class="mu" style="font-size:10.5px">${CYC[i + (B.inWin ? 0 : 1)]}</div></td><td class="c">${zlr(o.a, o.b)}</td><td class="c"><b>${pct(o.p)}</b></td><td class="c">${pct(o.cum)}</td></tr>`).join('');
-  const nl = B.seq.filter(x => !x.win).length, grp = {}; B.res.forEach(x => { const g = Math.ceil(x.k / w); grp[g] = (grp[g] || 0) + 1; });
+  const grp = {}; B.res.forEach(x => { const g = Math.ceil(x.k / w); grp[g] = (grp[g] || 0) + 1; });
   return `<div style="margin:8px 0 4px;font-weight:800;color:var(--or2)">BANK +${w}</div><div style="font-size:13.5px">${head}</div>
     ${last ? `<div class="hint" style="margin-top:6px">Szansa na zamknięcie banku (od teraz):</div>
     <table class="rows" style="margin-top:2px"><tr class="hd"><td>okno</td><td class="c">stawki</td><td class="c">szansa</td><td class="c">łącznie</td></tr>${rows}
     <tr><td colspan="3" class="mu">nie zamknie do k${last.k} · seria −${fmtN(bCum(last.k))} zł</td><td class="c"><b>${pct(1 - last.cum)}</b></td></tr></table>` : '<div class="hint">Model nie ma jeszcze zakończonych cykli — brak szans.</div>'}
-    <div class="hint" style="margin-top:6px">Wyniki banku po kolei (${B.res.length} WIN · ${nl} przegranych okien, najnowszy z prawej):</div>
-    <div class="cyc">${B.seq.slice(-40).map(x => x.win ? `<b class="${x.k > 2 * w ? 'hh' : x.k > w ? 'hi' : ''}">W${x.k}</b>` : `<b class="x">L${x.k}</b>`).join('')}</div>
     <div class="hint" style="margin-top:4px">Gdzie bank się zamykał: ${Object.keys(grp).sort((a, b) => a - b).map(g => `<b>${rng((g - 1) * w + 1, g * w)}</b> ${pct(grp[g] / B.res.length)}`).join(' · ')}</div>
     <div class="hint">najwyższy krok k${B.maxk} (seria do niego ${fmtN(bCum(B.maxk))} zł) · bilans bez limitu od Nr 1: ${zl(B.pnl)}</div>`;
 }
@@ -949,7 +946,7 @@ function pomoc() {
     <div class="box"><h4>Znaczki na TERAZ</h4><b style="background:#c97a45;color:#fff;border-radius:8px;padding:0 5px">2</b> pomarańczowy = ile modeli gra na następnym wierszu.<br><b style="background:#FFD700;color:#000;border-radius:8px;padding:0 5px">2,3</b> żółty = za ile wierszy grają kolejne.</div>
     <div class="box"><h4>Kody</h4>Kody są wspólne z RAZEM i SZUKAJ — wpisany tu kod jest od razu we wszystkich aplikacjach (i odwrotnie). Przy każdej tabeli widać ostatni kod i <b>kiedy</b> go wpisano. Gdy kod wpisano w innej aplikacji, MOJE pokazuje, kiedy go tu zauważyło (przy otwarciu).<br>Zakładka <b>KODY</b>: kilka kodów naraz, import pliku (z cofnięciem całego importu) i eksport z nazwami jak w RAZEM — T50: TRÓJKA <b>v13_…kod.json</b>, T60: <b>xx1_pikoff_…json</b> i <b>trojka_xx1_v13_…kod.json</b>, żeby appki na PC je wychwyciły.</div>
     <div class="box"><h4>Kopia kodów</h4>Co 10 nowych kodów (licząc od ostatniego eksportu) MOJE samo zapisuje plik kopii (T50 TRÓJKA, T60 PIKOFF) do Pobranych — przy wpisaniu kodu tutaj. Gdy telefon wyczyści pamięć, wczytaj go w KODY → Import pliku. Wyłączysz to w KODY.</div>
-    <div class="box"><h4>Zakładka BANK</h4>Bank +3 / +5 (bez limitu) dla modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST. Bank gra w każdym cyklu modelu tylko pierwsze 3 (5) zakłady; model trafi → WIN banku (przeniesione kroki + krok modelu) i bank od k1; nie trafi → bank przegrywa 3 (5) kroki, czeka i w następnym cyklu gra dalej. Stawki 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512, dalej ×2.<br><b>Lista BANK</b> ma tylko modele dodane przyciskiem <b>➕ Dodaj do BANK</b> — znajdziesz go przy banku modelu w <b>🔎 wyszukiwarce</b> (dowolny model z SZUKAJ / SZUKAJ+ / SZUKAJ LOST, np. P1037) i na ekranie Twojego modelu z MOJE. Grupy jak na TERAZ: 🟧 GRAJ BANK · 🟨 ZA CHWILĘ · 🎯 BANK +3 na k4–k6 · 🟦 CZEKAJĄ. Dotknięcie modelu → szanse zamknięcia banku na kolejnych krokach, stawki, wyniki banku po kolei (zielony W4 = WIN banku na k4, czerwony L6 = okno przegrane do k6) i usunięcie z listy.</div>
+    <div class="box"><h4>Zakładka BANK</h4>Bank +3 / +5 (bez limitu) dla modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST. Bank gra w każdym cyklu modelu tylko pierwsze 3 (5) zakłady; model trafi → WIN banku (przeniesione kroki + krok modelu) i bank od k1; nie trafi → bank przegrywa 3 (5) kroki, czeka i w następnym cyklu gra dalej. Stawki 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512, dalej ×2.<br><b>Lista BANK</b> ma tylko modele dodane przyciskiem <b>➕ Dodaj do BANK</b> — znajdziesz go przy banku modelu w <b>🔎 wyszukiwarce</b> (dowolny model z SZUKAJ / SZUKAJ+ / SZUKAJ LOST, np. P1037) i na ekranie Twojego modelu z MOJE. Grupy jak na TERAZ: 🟧 GRAJ BANK · 🟨 ZA CHWILĘ · 🎯 BANK +3 na k4–k6 · 🟦 CZEKAJĄ. Dotknięcie modelu → szanse zamknięcia banku na kolejnych krokach, stawki, gdzie bank się zamykał (% dla okien) i usunięcie z listy.</div>
     <div class="box"><h4>Zakłady</h4>„💰 Zapisz zakład” zapisuje zakład w MOJE ZAKŁADY aplikacji, z której jest model — widać go tu i tam. Wynik liczy się sam po wpisaniu kodu.</div>
     <div class="box"><h4>Dodawanie modeli</h4>W aplikacji SZUKAJ przytrzymaj kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. Aplikacja doda model i otworzy go tutaj.</div>
     <div class="hint">MOJE ${APP_VER}</div>`;
