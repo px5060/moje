@@ -84,6 +84,9 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Model trafi w tych zakładach → **WIN banku na kroku = przeniesione kroki + W**, bank wraca na k1.
 - Model nie trafi → bank przegrywa swoje 3 (5) kroki i **czeka** (dalszych zakładów modelu w tym cyklu nie gramy); w następnym cyklu gra dalej (+3 / +5). Przeniesienia się sumują.
 - **Bez limitu** (ustalone: interesuje nas gra do k4–k6). Przykłady: W7, W1 → +3: WIN k4, +5: WIN k6 · W5, W3 → +3: W6 · W4, W5, W2 → +3: W8 · W6, W7, W1 → +3: W7, +5: W11.
-- Stawki banku domyślnie **8 · 8 · 16 · 32 · 64 · 128 · 256 · 512** (jak progresja modelu), bez limitu dalej ×2 (k9 1024, k10 2048 …) — do zmiany na górze zakładki (`moje_v1_bankst`). WIN zakładu = +2 × stawka; „seria” = wynik od k1 banku z przegranymi krokami.
+- Stawki banku stałe: **8 · 8 · 16 · 32 · 64 · 128 · 256 · 512** (jak progresja modelu), bez limitu dalej ×2 (k9 1024, k10 2048 …). Ramki zmiany stawek już nie ma. WIN zakładu = +2 × stawka; „seria” = wynik od k1 banku z przegranymi krokami.
 - Szanse: z historii modelu; w bieżącym cyklu tylko cykle, w których model też przegrał już tyle zakładów (np. +5 po 3 przegranych: W4–W5 wśród cykli z W ≥ 4). „Do k…” = to okno albo następne.
+- Kafelki wyników banku: zielony **W4** = WIN banku na k4, czerwony **L6** = okno przegrane (bank doszedł do k6 i czeka) — także okno już przegrane w bieżącym cyklu.
+- Tabela szans: od obecnego kroku banku kolejne kroki (bank +3: 3 okna = 9 kroków, +5: 2 okna = 10 kroków), szansa zamknięcia dokładnie na kroku i łącznie; dalsze okna = kolejne cykle modelu.
+- **🔎 Wyszukiwarka** (na górze BANK): nazwa modelu z SZUKAJ / SZUKAJ+ / SZUKAJ LOST (np. P1037; „S+…”, „L…”, „S…” zawęża aplikację) → statystyki modelu, ostatnie cykle i bank +3 / +5. Pule wczytywane na żądanie z aplikacji (ten sam adres, `const POOLS`), więc nazwy zgadzają się z bieżącą wersją SZUKAJ.
 - Grupy: 🟧 GRAJ BANK (zakład banku na następnym wierszu, znaczek przy BANK) · 🎯 BANK +3 na k4–k6 · 🟦 pozostałe. Szczegóły banku także w ekranie MODEL.
