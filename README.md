@@ -6,7 +6,7 @@ ze wszystkich aplikacji SZUKAJ, SZUKAJ+ i SZUKAJ BUST (T50 i T60). Czyta wspóln
 - **TERAZ** — wpis kodów T50/T60 (ostatni kod + kiedy wpisany), grupy: GRAJ TERAZ · ZA 2–3 WIERSZE · BUST · W GRZE · ZAKOŃCZONE.
 - **ZAKŁADY** — wszystkie zapisane zakłady i wynik.
 - **MODEL** — opis modelu słowami, statystyki na całej tabeli, bank +3 / +5, ostatnie 30 wierszy.
-- **BANK** — bank +3 / +5 (bez limitu) dla moich modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST: GRAJ BANK na następnym wierszu,
+- **BANK** — bank +3 / +5 (bez limitu) dla modeli dodanych do listy BANK (➕ Dodaj do BANK): GRAJ BANK · ZA CHWILĘ ·
   🎯 bank +3 na k4–k6, stawki 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512 (dalej ×2), szanse na kolejnych krokach z historii modelu,
   🔎 wyszukiwarka dowolnego modelu z SZUKAJ / SZUKAJ+ / SZUKAJ LOST (pule czytane z tych aplikacji). Zasady: `RULES.md`.
 
