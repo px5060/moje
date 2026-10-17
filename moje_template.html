@@ -35,7 +35,7 @@ a.btn{text-decoration:none}
 .sec{background:var(--pan);border:1px solid var(--bd);border-radius:11px;padding:6px 8px;margin-bottom:10px}
 .sec .sh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:800;font-size:14px;padding:4px 2px 6px;cursor:pointer;position:relative}
 .sec .sh .m{color:var(--mu);font-size:11.5px;font-weight:500;text-align:right}
-.sec.snow{border-color:var(--or);box-shadow:0 0 0 1px var(--or) inset}.sec.ssoon{border-color:#8a7a20}.sec.sbust{border-color:#8a1f1f}
+.sec.sheld{border-color:#5a4a8a}.sec.snow{border-color:var(--or);box-shadow:0 0 0 1px var(--or) inset}.sec.ssoon{border-color:#8a7a20}.sec.sbust{border-color:#8a1f1f}
 .sec.link{cursor:pointer}.sec .sh b.soon,.sec .sh i.nb{position:static;display:inline-block;margin-left:6px;min-width:18px;height:18px;border-radius:9px;font:700 11px/18px system-ui;text-align:center;padding:0 4px}
 .sec .sh b.soon{background:var(--ye);color:#000}.sec .sh i.nb{background:#c97a45;color:#fff;font-style:normal}
 .sec .none{color:var(--mu);font-size:12.5px;padding:2px 4px 6px}
@@ -143,7 +143,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.16.2';
+const APP_VER = '1.17.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -807,16 +807,25 @@ function bankOf(it, w) {
   }
   return { w, res, carry, inWin, ws, we, next, open, pnl, maxk, steps, p1, p2, now: inWin && r.ph === 2 };
 }
-const bankNext = it => !it.rz && !it.gone && it.r.ph === 2 && it.d === 1 && it.r.bs < Math.max(...BKW);   // któryś bank gra na następnym wierszu
-function bankLine(it, B) {
-  const r = it.r, st = `<span class="kk">k${B.next}</span> ${fmtN(bStake(B.next))} zł`;
-  const t = B.now ? (it.d === 1 ? `<b>GRAJ Nr ${fmtN(r.wz + 1)}</b> · ${st}` : `zakład na Nr ${fmtN(r.wz + 1)} (za ${it.d} wiersze) · ${st}`)
-    : B.inWin ? `okno k${B.ws}–k${B.we} · następny zakład ${st}` : `czeka na koniec cyklu modelu → potem k${B.ws}–k${B.we}`;
-  return `<div class="bkl${B.now && it.d === 1 ? ' go' : ''}"><b class="w">+${B.w}</b>${t} · w oknie <b>${pct(B.p1)}</b></div>`;
+// stan modelu dla wybranego banku (jak na TERAZ): now = zakład banku na następnym wierszu · soon = za 2+ wiersze · wait = okno banku trwa, czeka na STEP / TRIGGER
+// · held = bank przegrał już swoje okno w tym cyklu — czeka na WIN (koniec cyklu) modelu, potem gra kolejne okno
+let bkw = lsGet('moje_v1_bkw', '3') === '5' ? 5 : 3;   // który bank prowadzi listę: +3 albo +5
+function bState(it, w) {
+  const B = it.bk[w]; if (!B.inWin) return 'held';
+  return it.r.ph === 2 ? (it.d === 1 ? 'now' : 'soon') : 'wait';
 }
-function bankRow(it) {   // jeden model listy BANK = zwarty wiersz jak na TERAZ / LOST: model, jego krok, pod spodem bank +3 i +5
-  return `<div class="rw ${it.s.cls}${bankNext(it) ? ' now' : ''}" data-bkm="${esc(it.uid)}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b>${it.tg !== 'x1x' ? `<span class="mu">${it.tg}</span>` : ''}<span class="sp"></span><span class="mu" style="font-size:12px">model k${it.r.bs + 1} · ${shortPh(it)}</span></div>
-    ${BKW.map(w => bankLine(it, it.bk[w])).join('')}</div>`;
+function bankBadges(L) {   // znaczki jak na TERAZ: żółty = za ile wierszy zakład banku (2, 3), pomarańczowy = ile gra na następnym
+  const now = L.filter(it => bState(it, bkw) === 'now').length, soon = [...new Set(L.filter(it => bState(it, bkw) === 'soon').map(it => it.d).filter(d => d >= 2 && d <= 3))].sort();
+  return (soon.length ? `<b class="soon">${soon.join(',')}</b>` : '') + (now ? `<i class="nb">${now}</i>` : '');
+}
+function bankRow(it) {   // jeden model listy BANK = zwarty wiersz jak na TERAZ: model, krok i stawka banku, pod spodem co się dzieje
+  const B = it.bk[bkw], r = it.r, st = bState(it, bkw), w = B.w;
+  const l2 = st === 'now' ? `<b>GRAJ ${it.tg} · Nr ${fmtN(r.wz + 1)}</b> · bank +${w} k${B.next} · w oknie ${pct(B.p1)}`
+    : st === 'soon' ? `zakład banku na Nr ${fmtN(r.wz + 1)} · za ${it.d} ${it.d <= 4 ? 'wiersze' : 'wierszy'} · w oknie ${pct(B.p1)}`
+    : st === 'wait' ? `${shortPh(it)} · okno k${B.ws}–k${B.we} · w oknie ${pct(B.p1)}`
+    : `bank przegrał k${B.ws - w}–k${B.ws - 1} · model gra dalej bez banku (k${r.bs + 1}) · po WIN modelu bank gra <b>k${B.ws}–k${B.we}</b> (${pct(B.p1)})`;
+  return `<div class="rw ${it.s.cls}${st === 'now' ? ' now' : ''}" data-bkm="${esc(it.uid)}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b>${it.tg !== 'x1x' ? `<span class="mu">${it.tg}</span>` : ''}<span class="sp"></span><span class="kk">k${B.next}</span><b class="zl">${fmtN(bStake(B.next))} zł</b></div>
+    <div class="l2">${l2}</div></div>`;
 }
 // ===== lista BANK: modele dodane przyciskiem „➕ Dodaj do BANK” (z wyszukiwarki albo z ekranu modelu) — niezależnie od MOJE =====
 const BKK = 'moje_v1_bank', BKI = {};   // BKI: uid → model pokazany na ekranie (dla przycisku dodaj / usuń)
@@ -897,19 +906,19 @@ function bankSearch() {
 }
 function bankView() {
   const t = only, n = D[t].n, L = bitems.filter(it => it.t === t);
-  let h = `<div class="tsw">${Object.keys(TABS).map(k => { const A = bitems.filter(it => it.t === k), nx = A.filter(bankNext).length;
-    return `<button class="${only === k ? 'on' : ''}" data-only="${k}">${TABS[k].name} <small>· ${A.length}</small>${nx ? `<i class="nb">${nx}</i>` : ''}</button>`; }).join('')}</div>` + bankSearch();
+  let h = `<div class="tsw">${Object.keys(TABS).map(k => { const A = bitems.filter(it => it.t === k);
+    return `<button class="${only === k ? 'on' : ''}" data-only="${k}">${TABS[k].name} <small>· ${A.length}</small>${bankBadges(A)}</button>`; }).join('')}</div>`;
+  if (L.length) { const cur = bkw; h += `<div class="tsw sub zs">${[3, 5].map(w => { bkw = w; const b = bankBadges(L); bkw = cur; return `<button class="${cur === w ? 'on' : ''}" data-bkw="${w}">BANK +${w}${b}</button>`; }).join('')}</div>`; }
+  h += bankSearch();
   if (!L.length) return h + `<div class="empty">Lista BANK ${TABS[t].name} jest pusta.<br><br>Znajdź model wyszukiwarką powyżej (albo otwórz swój model na TERAZ) i dotknij <b>➕ Dodaj do BANK</b>.</div>` + bankRules();
+  const G = { now: [], soon: [], wait: [], held: [] }; L.forEach(it => G[bState(it, bkw)].push(it));
   const sec = (title, sub, A, cls, empty) => `<div class="sec ${cls}"><div class="sh"><span>${title}${A.length ? ` · ${A.length}` : ''}</span><span class="m">${sub}</span></div>${A.length ? A.map(bankRow).join('') : `<div class="none">${empty}</div>`}</div>`;
-  const now = L.filter(bankNext), used = new Set(now);
-  const soon = L.filter(it => !used.has(it) && it.r.ph === 2 && it.d >= 2 && BKW.some(w => it.bk[w].now)).sort((a, b) => a.d - b.d); soon.forEach(it => used.add(it));
-  const k46 = L.filter(it => !used.has(it) && it.bk[3].ws === 4).sort((a, b) => b.bk[3].inWin - a.bk[3].inWin || b.bk[3].p1 - a.bk[3].p1); k46.forEach(it => used.add(it));
-  const wait = L.filter(it => !used.has(it)).sort((a, b) => b.bk[3].next - a.bk[3].next);
-  h += sec(`🟧 GRAJ BANK · Nr ${fmtN(n + 1)}`, 'zakład banku na następnym wierszu', now, now.length ? 'snow' : '', `Na Nr ${fmtN(n + 1)} żaden bank nie gra.`);
-  if (soon.length) h += sec('🟨 ZA CHWILĘ', 'zakład banku za 2–3 wiersze', soon, 'ssoon');
-  if (k46.length) h += sec('🎯 BANK +3 na k4–k6', 'k1–k3 przegrane, gra k4–k6', k46, 'ssoon');
-  if (wait.length) h += sec('🟦 CZEKAJĄ', 'na STEP / TRIGGER albo koniec cyklu', wait, 'swait');
-  return h + '<div class="hint" style="margin-bottom:8px">Dotknij modelu → szanse na kolejnych krokach, stawki, wyniki banku po kolei i przycisk usunięcia z listy.</div>' + bankRules();
+  const byK = A => { let w = ''; [...new Set(A.map(it => it.bk[bkw].next))].sort((a, b) => b - a).forEach(k => { const g = A.filter(it => it.bk[bkw].next === k); w += `<div class="kh">k${k} · ${fmtN(bStake(k))} zł · ${g.length}</div>` + g.map(bankRow).join(''); }); return w; };
+  h += sec(`🟧 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, G.now.length ? `razem ${fmtN(G.now.reduce((a, it) => a + bStake(it.bk[bkw].next), 0))} zł` : '', G.now, G.now.length ? 'snow' : '', `Na Nr ${fmtN(n + 1)} żaden bank +${bkw} nie gra.`);
+  if (G.soon.length) h += sec('🟨 ZA CHWILĘ', 'TRIGGER już był', G.soon.sort((a, b) => a.d - b.d), 'ssoon');
+  if (G.wait.length) h += `<div class="sec swait"><div class="sh"><span>🟦 CZEKAJĄ · ${G.wait.length}</span><span class="m">bank w oknie · czeka na STEP / TRIGGER</span></div>${byK(G.wait)}</div>`;
+  if (G.held.length) h += `<div class="sec sheld"><div class="sh"><span>⏸ CZEKAJĄ NA BANK · ${G.held.length}</span><span class="m">okno przegrane · czeka na WIN modelu</span></div>${byK(G.held)}</div>`;
+  return h + `<div class="hint" style="margin-bottom:8px">Droga modelu w banku +${bkw}: 🟦 CZEKAJĄ → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ. WIN → bank od k1 (znowu CZEKAJĄ). Przegrane ${bkw} kroki okna → ⏸ CZEKAJĄ NA BANK, aż model skończy cykl (WIN albo LOST); potem znowu CZEKAJĄ na kolejnym oknie. Dotknij modelu → szanse, stawki i usunięcie z listy.</div>` + bankRules();
 }
 function bankModel() {   // model z listy BANK
   const it = bitems.find(x => x.uid === sel); if (!it) { view = 'bank'; return bankView(); }
@@ -946,7 +955,7 @@ function pomoc() {
     <div class="box"><h4>Znaczki na TERAZ</h4><b style="background:#c97a45;color:#fff;border-radius:8px;padding:0 5px">2</b> pomarańczowy = ile modeli gra na następnym wierszu.<br><b style="background:#FFD700;color:#000;border-radius:8px;padding:0 5px">2,3</b> żółty = za ile wierszy grają kolejne.</div>
     <div class="box"><h4>Kody</h4>Kody są wspólne z RAZEM i SZUKAJ — wpisany tu kod jest od razu we wszystkich aplikacjach (i odwrotnie). Przy każdej tabeli widać ostatni kod i <b>kiedy</b> go wpisano. Gdy kod wpisano w innej aplikacji, MOJE pokazuje, kiedy go tu zauważyło (przy otwarciu).<br>Zakładka <b>KODY</b>: kilka kodów naraz, import pliku (z cofnięciem całego importu) i eksport z nazwami jak w RAZEM — T50: TRÓJKA <b>v13_…kod.json</b>, T60: <b>xx1_pikoff_…json</b> i <b>trojka_xx1_v13_…kod.json</b>, żeby appki na PC je wychwyciły.</div>
     <div class="box"><h4>Kopia kodów</h4>Co 10 nowych kodów (licząc od ostatniego eksportu) MOJE samo zapisuje plik kopii (T50 TRÓJKA, T60 PIKOFF) do Pobranych — przy wpisaniu kodu tutaj. Gdy telefon wyczyści pamięć, wczytaj go w KODY → Import pliku. Wyłączysz to w KODY.</div>
-    <div class="box"><h4>Zakładka BANK</h4>Bank +3 / +5 (bez limitu) dla modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST. Bank gra w każdym cyklu modelu tylko pierwsze 3 (5) zakłady; model trafi → WIN banku (przeniesione kroki + krok modelu) i bank od k1; nie trafi → bank przegrywa 3 (5) kroki, czeka i w następnym cyklu gra dalej. Stawki 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512, dalej ×2.<br><b>Lista BANK</b> ma tylko modele dodane przyciskiem <b>➕ Dodaj do BANK</b> — znajdziesz go przy banku modelu w <b>🔎 wyszukiwarce</b> (dowolny model z SZUKAJ / SZUKAJ+ / SZUKAJ LOST, np. P1037) i na ekranie Twojego modelu z MOJE. Grupy jak na TERAZ: 🟧 GRAJ BANK · 🟨 ZA CHWILĘ · 🎯 BANK +3 na k4–k6 · 🟦 CZEKAJĄ. Dotknięcie modelu → szanse zamknięcia banku na kolejnych krokach, stawki, gdzie bank się zamykał (% dla okien) i usunięcie z listy.</div>
+    <div class="box"><h4>Zakładka BANK</h4>Bank +3 / +5 (bez limitu) dla modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST. Bank gra w każdym cyklu modelu tylko pierwsze 3 (5) zakłady; model trafi → WIN banku (przeniesione kroki + krok modelu) i bank od k1; nie trafi → bank przegrywa 3 (5) kroki, czeka i w następnym cyklu gra dalej. Stawki 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512, dalej ×2.<br><b>Lista BANK</b> ma tylko modele dodane przyciskiem <b>➕ Dodaj do BANK</b> — znajdziesz go przy banku modelu w <b>🔎 wyszukiwarce</b> (dowolny model z SZUKAJ / SZUKAJ+ / SZUKAJ LOST, np. P1037) i na ekranie Twojego modelu z MOJE. Przełącznik <b>BANK +3 / BANK +5</b> wybiera, który bank prowadzi listę. Droga modelu jak na TERAZ: 🟦 CZEKAJĄ (okno banku trwa, czeka na STEP / TRIGGER) → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ. WIN → bank od k1 i znowu CZEKAJĄ. Bank przegrał swoje 3 (5) kroki → <b>⏸ CZEKAJĄ NA BANK</b>, aż model skończy cykl (WIN albo LOST) — potem znowu CZEKAJĄ, już na kolejnym oknie (np. k4–k6). Znaczki przy BANK, T50 / T60 i +3 / +5: żółty = za ile wierszy zakład banku, pomarańczowy = ile gra na następnym. Dotknięcie modelu → szanse zamknięcia banku na kolejnych krokach, stawki, gdzie bank się zamykał (% dla okien) i usunięcie z listy.</div>
     <div class="box"><h4>Zakłady</h4>„💰 Zapisz zakład” zapisuje zakład w MOJE ZAKŁADY aplikacji, z której jest model — widać go tu i tam. Wynik liczy się sam po wpisaniu kodu.</div>
     <div class="box"><h4>Dodawanie modeli</h4>W aplikacji SZUKAJ przytrzymaj kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. Aplikacja doda model i otworzy go tutaj.</div>
     <div class="hint">MOJE ${APP_VER}</div>`;
@@ -961,8 +970,7 @@ function render() {
   const pend = bets.filter(x => x.res === 'pend').length;
   $('navB').innerHTML = `LOST${bustBadges(items.filter(it => it.inBust))}`;
   $('navZ').innerHTML = `ZAKŁADY${pend ? `<i class="nb">${pend}</i>` : ''}`;
-  const bnx = bitems.filter(bankNext).length;
-  $('navK').innerHTML = `BANK${bnx ? `<i class="nb">${bnx}</i>` : ''}`;
+  $('navK').innerHTML = `BANK${bankBadges(bitems)}`;
   const ae = document.activeElement, keep = ae && ae.id && /^(in|pa|bq)_/.test(ae.id) ? [ae.id, ae.value] : null;
   $('main').innerHTML = view === 'teraz' ? teraz() : view === 'zak' ? zaklady() : view === 'bust' ? busty() : view === 'bank' ? bankView() : view === 'bankm' ? bankModel() : view === 'model' ? model() : view === 'dane' ? dane() : pomoc();
   if (keep && $(keep[0])) { $(keep[0]).value = keep[1]; $(keep[0]).focus(); }
@@ -980,6 +988,7 @@ document.addEventListener('click', e => {
   if ((b = q('[data-undob]'))) return undoBatch(b.dataset.undob);
   if ((b = q('[data-autobk]'))) { lsSet(ABK, b.checked ? '1' : '0'); return render(); }
   if ((b = q('[data-exp]'))) { const [t, i] = b.dataset.exp.split(':'); return exportFile(t, +i); }
+  if ((b = q('[data-bkw]'))) { bkw = +b.dataset.bkw === 5 ? 5 : 3; lsSet('moje_v1_bkw', String(bkw)); return render(); }
   if ((b = q('[data-only]'))) { only = b.dataset.only; lsSet('moje_v1_only', only); return render(); }
   if ((b = q('[data-bsave]'))) { const it = items.find(x => x.uid === b.dataset.bsave), f = b.closest('.btf'); if (it) saveBet(it, +f.querySelector('.fNr').value - 1, +f.querySelector('.fK').value, +f.querySelector('.fZl').value); return; }
   if ((b = q('[data-fo]'))) { formU = formU === b.dataset.fo ? null : b.dataset.fo; return render(); }
