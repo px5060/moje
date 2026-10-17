@@ -36,7 +36,7 @@ a.btn{text-decoration:none}
 .sec{background:var(--pan);border:1px solid var(--bd);border-radius:11px;padding:6px 8px;margin-bottom:10px}
 .sec .sh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:800;font-size:14px;padding:4px 2px 6px;cursor:pointer;position:relative}
 .sec .sh .m{color:var(--mu);font-size:11.5px;font-weight:500;text-align:right}
-.sec.sheld{border-color:#5a4a8a}.sec.snow{border-color:var(--or);box-shadow:0 0 0 1px var(--or) inset}.sec.ssoon{border-color:#8a7a20}.sec.sbust{border-color:#8a1f1f}.sec.szak{border-color:#2e7d4f}.rw .bw{font-size:11px;font-weight:800;border-radius:5px;padding:2px 5px;margin-right:4px;color:#fff}.rw .bw.w3{background:#2e75b6}.rw .bw.w5{background:#7a3fb0}
+.sec.sheld{border-color:#5a4a8a}.sec.snow{border-color:var(--or);box-shadow:0 0 0 1px var(--or) inset}.sec.ssoon{border-color:#8a7a20}.sec.sbust{border-color:#8a1f1f}.sec.szak{border-color:#2e7d4f}.rw .dd{font-size:11px;font-weight:800;border-radius:5px;padding:2px 5px;margin-right:4px;background:#FFD700;color:#000}.rw .dd.n{background:var(--or);color:#fff}.rw .bw{font-size:11px;font-weight:800;border-radius:5px;padding:2px 5px;margin-right:4px;color:#fff}.rw .bw.w3{background:#2e75b6}.rw .bw.w5{background:#7a3fb0}
 .sec.link{cursor:pointer}.sec .sh b.soon,.sec .sh i.nb{position:static;display:inline-block;margin-left:6px;min-width:18px;height:18px;border-radius:9px;font:700 11px/18px system-ui;text-align:center;padding:0 4px}
 .sec .sh b.soon{background:var(--ye);color:#000}.sec .sh i.nb{background:#c97a45;color:#fff;font-style:normal}
 .sec .none{color:var(--mu);font-size:12.5px;padding:2px 4px 6px}
@@ -164,7 +164,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.19.9';
+const APP_VER = '1.20.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -642,6 +642,8 @@ function sec(title, sub, L, opt) {
   return opt.fold || opt.key ? `<details class="sec ${opt.cls || ''}" ${opt.key ? foldAt(opt.key, opt.open) : opt.open ? 'open' : ''}><summary class="sh">${head}</summary>${body}</details>` : `<div class="sec ${opt.cls || ''}"><div class="sh">${head}</div>${body}</div>`;
 }
 const byApp = (a, b) => SRC.indexOf(a.s) - SRC.indexOf(b.s) || b.r.bs - a.r.bs || (a.g.id > b.g.id ? 1 : -1);
+// znacznik na karcie w paskach TERAZ: pomarańczowy „TERAZ” = gra na następnym wierszu, żółty „za 2 / za 3” = gra za tyle wierszy
+const ddTag = (html, d) => !(d >= 1 && d <= 3) ? html : html.replace('<span class="sp"></span>', `<span class="sp"></span><span class="dd${d === 1 ? ' n' : ''}">${d === 1 ? 'TERAZ' : 'za ' + d}</span>`);
 function teraz() {
   const t = only, n = D[t].n;
   let h = tabSwitch() + kodBox(t);
@@ -663,19 +665,24 @@ function teraz() {
     for (let k = 8; k >= 1; k--) { const G = wait.filter(it => it.r.bs + 1 === k).sort(byApp); if (G.length) w += `<div class="kh">k${k} · ${ST[k - 1]} zł · ${G.length}</div>` + G.map(it => row(it)).join(''); }
     h += `<details class="sec swait" ${foldAt('T-wait', 0)}><summary class="sh"><span>🟦 CZEKAJĄ · ${wait.length}</span><span class="m">rozwiń</span></summary>${w}</details>`;
   }
-  // 4. PO BUST i BANK — zwijane jak pozostałe; w środku tylko to, co gra na następnym wierszu; przytrzymanie nagłówka → zakładka LOST / BANK
-  const bu = L.filter(it => it.inBust), buNow = bu.filter(it => it.d === 1).sort(byApp);
-  if (bu.length) h += `<details class="sec sbust" ${foldAt('T-lost', 1)}><summary class="sh" data-lp="bust"><span>🟥 PO LOST · ${bu.length}${bustBadges(bu)}</span><span class="m">przytrzymaj → BUST</span></summary>
-    ${buNow.length ? buNow.map(it => row(it, null, 1)).join('') : `<div class="none">Na Nr ${fmtN(n + 1)} żaden model po BUST-cie nie gra.</div>`}</details>`;
+  // 4. PO LOST, BANK i ZAKŁADY — zwijane; w środku to, co gra na następnym wierszu (pomarańczowe „TERAZ”) i za 2–3 wiersze (żółte „za 2/3”); przytrzymanie nagłówka → zakładka
+  const near = A => [...A.filter(it => it.d === 1).sort(byApp), ...A.filter(it => it.d >= 2 && it.d <= 3).sort((a, b) => a.d - b.d || byApp(a, b))];
+  const none = co => `<div class="none">Na Nr ${fmtN(n + 1)} i w 2–3 kolejnych wierszach ${co} nie gra.</div>`;
+  const bu = L.filter(it => it.inBust), buNear = near(bu);
+  if (bu.length) h += `<details class="sec sbust" ${foldAt('T-lost', 1)}><summary class="sh" data-lp="bust"><span>🟥 PO LOST · ${bu.length}${bustBadges(bu)}</span><span class="m">przytrzymaj → LOST</span></summary>
+    ${buNear.length ? buNear.map(it => ddTag(row(it, null, 1), it.d)).join('') : none('żaden model po LOST-cie')}</details>`;
   // BANK: jeden pasek dla obu banków — przy każdym modelu oznaczenie +3 / +5 (bankRow liczy dla bkw, więc ustawiam go na chwilę)
-  const BL = bitems.filter(b => b.t === t), cur = bkw, bw = [3, 5].map(w => { bkw = w; const r = { w, now: BL.filter(b => bState(b, w) === 'now'), soon: BL.filter(b => bState(b, w) === 'soon').map(b => b.d) };
-    r.html = r.now.map(b => bankRow(b).replace('<span class="kk">', `<span class="bw w${w}">+${w}</span><span class="kk">`)).join(''); return r; }); bkw = cur;
-  const bkN = bw[0].now.length + bw[1].now.length, bkS = [...new Set([...bw[0].soon, ...bw[1].soon].filter(d => d >= 2 && d <= 3))].sort();
+  const BL = bitems.filter(b => b.t === t), cur = bkw, bw = [3, 5].map(w => { bkw = w;
+    const r = { w, now: BL.filter(b => bState(b, w) === 'now'), soon: BL.filter(b => bState(b, w) === 'soon' && b.d >= 2 && b.d <= 3).sort((a, b) => a.d - b.d || byApp(a, b)) };
+    r.row = b => ddTag(bankRow(b).replace('<span class="kk">', `<span class="bw w${w}">+${w}</span><span class="kk">`), bState(b, w) === 'now' ? 1 : b.d); bkw = cur; return r; });
+  const bkRows = [...bw[0].now.map(b => [b, 0]), ...bw[1].now.map(b => [b, 1]), ...bw[0].soon.map(b => [b, 0]), ...bw[1].soon.map(b => [b, 1])].sort((a, b) => (bState(a[0], bw[a[1]].w) === 'now' ? 1 : a[0].d) - (bState(b[0], bw[b[1]].w) === 'now' ? 1 : b[0].d))
+    .map(([b, i]) => { bkw = bw[i].w; const x = bw[i].row(b); bkw = cur; return x; });
+  const bkN = bw[0].now.length + bw[1].now.length, bkS = [...new Set([...bw[0].soon, ...bw[1].soon].map(b => b.d))].sort();
   if (BL.length) h += `<details class="sec sheld" ${foldAt('T-bank', 1)}><summary class="sh" data-lp="bank"><span>🏦 BANK +3 / +5 · ${BL.length}${bkS.length ? `<b class="soon">${bkS.join(',')}</b>` : ''}${bkN ? `<i class="nb">${bkN}</i>` : ''}</span><span class="m">przytrzymaj → BANK</span></summary>
-    ${bkN ? bw[0].html + bw[1].html : `<div class="none">Na Nr ${fmtN(n + 1)} żaden bank (+3 ani +5) nie gra.</div>`}</details>`;
-  const ZS = zakState(bets.filter(x => x.t === t)), zc = ZS.CH, zNow = zc.filter(it => it.d === 1).sort(byApp);
+    ${bkRows.length ? bkRows.join('') : none('żaden bank (+3 ani +5)')}</details>`;
+  const ZS = zakState(bets.filter(x => x.t === t)), zc = ZS.CH, zNear = near(zc);
   if (zc.length) h += `<details class="sec szak" ${foldAt('T-zak', 1)}><summary class="sh" data-lp="zak"><span>💰 ZAKŁADY · ${zc.length}${bustBadges(zc)}</span><span class="m">przytrzymaj → ZAKŁADY</span></summary>
-    ${zNow.length ? zNow.map(it => row(it, zakLb(ZS.M.get(it.uid)), 0, 1)).join('') : `<div class="none">Na Nr ${fmtN(n + 1)} żaden model po zakładzie nie gra.</div>`}</details>`;
+    ${zNear.length ? zNear.map(it => ddTag(row(it, zakLb(ZS.M.get(it.uid)), 0, 1), it.d)).join('') : none('żaden model po zakładzie')}</details>`;
   const Z = L.filter(it => it.grp === 'done');
   if (Z.length) h += sec('✅ ZAKOŃCZONE', 'WIN albo BUST (krok 8)', Z, { key: 'T-done', cls: 'sdone', extra: it => (it.rz ? `${it.res.win ? '✔ WIN' : '<span class="neg">✖ BUST / LOSS</span>'} · Nr ${fmtN(it.res.i + 1)}` : `${it.res.win ? `✔ WIN k${it.res.k}` : '<span class="neg">✖ BUST k8</span>'} · Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}`) + (it.res.win ? '' : it.inBust ? ' · <b>w zakładce BUST</b>' : ' · potem WIN') });
   return h;
