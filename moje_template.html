@@ -164,7 +164,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.20.0';
+const APP_VER = '1.20.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -896,6 +896,11 @@ function bState(it, w) {
   const B = it.bk[w]; if (!B.inWin) return 'held';
   return it.r.ph === 2 ? (it.d === 1 ? 'now' : 'soon') : 'wait';
 }
+function bankBadges35(L) {   // oba banki naraz (+3 i +5): ile gra na następnym wierszu i za ile wierszy grają kolejne
+  const now = [3, 5].reduce((a, w) => a + L.filter(it => bState(it, w) === 'now').length, 0);
+  const soon = [...new Set([3, 5].flatMap(w => L.filter(it => bState(it, w) === 'soon').map(it => it.d)).filter(d => d >= 2 && d <= 3))].sort();
+  return (soon.length ? `<b class="soon">${soon.join(',')}</b>` : '') + (now ? `<i class="nb">${now}</i>` : '');
+}
 function bankBadges(L) {   // znaczki jak na TERAZ: żółty = za ile wierszy zakład banku (2, 3), pomarańczowy = ile gra na następnym
   const now = L.filter(it => bState(it, bkw) === 'now').length, soon = [...new Set(L.filter(it => bState(it, bkw) === 'soon').map(it => it.d).filter(d => d >= 2 && d <= 3))].sort();
   return (soon.length ? `<b class="soon">${soon.join(',')}</b>` : '') + (now ? `<i class="nb">${now}</i>` : '');
@@ -1071,10 +1076,10 @@ function render() {
   const act = vitems.filter(it => it.grp !== 'done' && it.grp !== 'bust' && it.r.ph === 2), now = act.filter(it => it.d === 1).length;
   const soon = [...new Set(act.map(it => it.d).filter(d => d >= 2 && d <= 3))].sort();
   $('navT').innerHTML = `TERAZ${soon.length ? `<b class="soon">${soon.join(',')}</b>` : ''}${now ? `<i class="nb">${now}</i>` : ''}`;
-  const pend = bets.filter(x => x.res === 'pend').length;
+  // znaczki jak na TERAZ: żółty = za ile wierszy grają (2, 3), pomarańczowy = ile gra na następnym wierszu
   $('navB').innerHTML = `LOST${bustBadges(vitems.filter(it => it.inBust))}`;
-  $('navZ').innerHTML = `ZAKŁADY${pend ? `<i class="nb">${pend}</i>` : ''}`;
-  $('navK').innerHTML = `BANK${bankBadges(bitems)}`;
+  $('navZ').innerHTML = `ZAKŁADY${bustBadges(zakState(bets).CH)}`;
+  $('navK').innerHTML = `BANK${bankBadges35(bitems)}`;
   const ae = document.activeElement, keep = ae && ae.id && /^(in|pa|bq)_/.test(ae.id) ? [ae.id, ae.value] : null;
   $('main').innerHTML = view === 'teraz' ? teraz() : view === 'zak' ? zaklady() : view === 'bust' ? busty() : view === 'bank' ? bankView() : view === 'bankm' ? bankModel() : view === 'model' ? model() : view === 'dane' ? dane() : pomoc();
   if (keep && $(keep[0])) { $(keep[0]).value = keep[1]; $(keep[0]).focus(); }
