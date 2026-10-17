@@ -29,7 +29,8 @@ a.btn{text-decoration:none}
 .tsw{display:flex;gap:8px;margin-bottom:8px}.tsw button{flex:1;position:relative;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:10px;padding:10px;font-size:17px;font-weight:800}
 .tsw.sub.src button.on{background:#6a1a1a;border-color:#a8423a}.tsw.sub button{font-size:14px;padding:8px}.tsw.sub button.on{background:#8e2a2a;border-color:#8e2a2a}
 .tsw.sub.zs button.on{background:#2e4a6a;border-color:#4d7fb3}.tsw.sub.zs button{font-size:13px;padding:8px 4px}
-.tsw button.on{background:var(--or);border-color:var(--or);color:#fff}.tsw small{font-size:12px;font-weight:600;opacity:.85}
+.tsw button.on{background:var(--or);border-color:var(--or);color:#fff}
+.tsw button.on[data-only="t60"]{background:#457ec9;border-color:#457ec9}.tsw small{font-size:12px;font-weight:600;opacity:.85}
 .tsw b.soon{position:absolute;top:-7px;left:-5px;min-width:18px;height:18px;border-radius:9px;background:var(--ye);color:#000;font:700 11px/18px system-ui;padding:0 4px;border:1px solid #fff}
 .tsw i.nb{position:absolute;top:-7px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:#c97a45;color:#fff;font:700 11px/18px system-ui;font-style:normal;padding:0 4px;border:1px solid #fff}
 .sec{background:var(--pan);border:1px solid var(--bd);border-radius:11px;padding:6px 8px;margin-bottom:10px}
@@ -162,7 +163,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.19.5';
+const APP_VER = '1.19.6';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
