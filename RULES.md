@@ -70,6 +70,8 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 
 ## Kolejność stanów w MOJE (aplikacja MOJE)
 
+- Grupy 🟧 GRAJ TERAZ, 🟨 ZA CHWILĘ, 🟦 CZEKAJĄ (i ✅ ZAKOŃCZONE, ⏸ CZEKAJĄ NA BANK) na TERAZ, LOST i BANK można zwijać i rozwijać (dotknięcie nagłówka). Stan każdej grupy jest zapamiętany (`moje_v1_fold`) i zostaje po wpisaniu kodu / odświeżeniu. Domyślnie: GRAJ TERAZ i ZA CHWILĘ rozwinięte, CZEKAJĄ na TERAZ zwinięte.
+
 - Model po dodaniu: 🟦 CZEKAJĄ (na STEP / TRIGGER) → 🟨 ZA CHWILĘ (TRIGGER był) → 🟧 GRAJ TERAZ (zakład na następnym wierszu).
 - Przegrany krok (np. k2 nie wszedł) → model wraca do CZEKAJĄ → ZA CHWILĘ → GRAJ TERAZ na kolejnym kroku (do k8).
 - **WIN → ✅ ZAKOŃCZONE** (koniec gry modelu).

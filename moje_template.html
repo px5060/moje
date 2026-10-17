@@ -144,7 +144,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.17.2';
+const APP_VER = '1.17.3';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -595,11 +595,16 @@ function row(it, extra) {
     <div class="l2">${extra != null ? extra : shortPh(it)}${pend.length ? ` · <span style="color:var(--bl)">● postawiony k${pend[pend.length - 1].b.step} ${pend[pend.length - 1].b.stake} zł</span>` : ''}</div>
     ${formU === it.uid && canBet ? betForm(it) : ''}</div>`;
 }
+// grupy zwijane / rozwijane (GRAJ TERAZ, ZA CHWILĘ, CZEKAJĄ …): stan każdej grupy zapamiętany (klucz data-fold), zostaje po odświeżeniu ekranu
+const FOLDK = 'moje_v1_fold', FOLD = (() => { try { const v = JSON.parse(lsGet(FOLDK, '{}')); return v && typeof v === 'object' ? v : {}; } catch (e) { return {}; } })();
+const isOpen = (k, d) => FOLD[k] === undefined ? !!d : !!FOLD[k];
+const foldAt = (k, d) => `data-fold="${k}"${isOpen(k, d) ? ' open' : ''}`;
+document.addEventListener('toggle', e => { const k = e.target && e.target.dataset && e.target.dataset.fold; if (!k || FOLD[k] === +e.target.open) return; FOLD[k] = +e.target.open; lsSet(FOLDK, JSON.stringify(FOLD)); }, true);
 function sec(title, sub, L, opt) {
   opt = opt || {};
   const body = L.length ? L.map(it => row(it, opt.extra ? opt.extra(it) : null)).join('') : `<div class="none">${opt.empty || 'nic'}</div>`;
   const head = `<span>${title}${L.length ? ` · ${L.length}` : ''}</span><span class="m">${sub}</span>`;
-  return opt.fold ? `<details class="sec ${opt.cls || ''}"${opt.open ? ' open' : ''}><summary class="sh">${head}</summary>${body}</details>` : `<div class="sec ${opt.cls || ''}"><div class="sh">${head}</div>${body}</div>`;
+  return opt.fold || opt.key ? `<details class="sec ${opt.cls || ''}" ${opt.key ? foldAt(opt.key, opt.open) : opt.open ? 'open' : ''}><summary class="sh">${head}</summary>${body}</details>` : `<div class="sec ${opt.cls || ''}"><div class="sh">${head}</div>${body}</div>`;
 }
 const byApp = (a, b) => SRC.indexOf(a.s) - SRC.indexOf(b.s) || b.r.bs - a.r.bs || (a.g.id > b.g.id ? 1 : -1);
 function teraz() {
@@ -612,22 +617,22 @@ function teraz() {
   const act = L.filter(it => it.grp !== 'done'), play = act.filter(it => it.grp !== 'bust'), now = play.filter(it => it.d === 1).sort(byApp);
   const sum = now.reduce((a, it) => a + ST[it.r.bs], 0);
   // 1. CO GRAM NA NASTĘPNYM WIERSZU
-  h += sec(`🟧 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, now.length ? `razem ${fmtN(sum)} zł` : '', now, { cls: 'snow', empty: `Na Nr ${fmtN(n + 1)} żaden mój model nie gra — wpisz kod, gdy padnie.` });
+  h += sec(`🟧 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, now.length ? `razem ${fmtN(sum)} zł` : '', now, { cls: 'snow', key: 'T-now', open: 1, empty: `Na Nr ${fmtN(n + 1)} żaden mój model nie gra — wpisz kod, gdy padnie.` });
   // 2. ZA CHWILĘ (TRIGGER już był)
   const soon = play.filter(it => it.d >= 2).sort((a, b) => a.d - b.d || byApp(a, b));
-  if (soon.length) h += sec('🟨 ZA CHWILĘ', 'TRIGGER już był', soon, { cls: 'ssoon' });
+  if (soon.length) h += sec('🟨 ZA CHWILĘ', 'TRIGGER już był', soon, { cls: 'ssoon', key: 'T-soon', open: 1 });
   // 3. CZEKAJĄ — zwinięte, pogrupowane po kroku (od najwyższego)
   const wait = act.filter(it => !it.d && it.grp !== 'bust');
   if (wait.length) {
     let w = '';
     for (let k = 8; k >= 1; k--) { const G = wait.filter(it => it.r.bs + 1 === k).sort(byApp); if (G.length) w += `<div class="kh">k${k} · ${ST[k - 1]} zł · ${G.length}</div>` + G.map(it => row(it)).join(''); }
-    h += `<details class="sec swait"><summary class="sh"><span>🟦 CZEKAJĄ · ${wait.length}</span><span class="m">rozwiń</span></summary>${w}</details>`;
+    h += `<details class="sec swait" ${foldAt('T-wait', 0)}><summary class="sh"><span>🟦 CZEKAJĄ · ${wait.length}</span><span class="m">rozwiń</span></summary>${w}</details>`;
   }
   // 4. BUST i ZAKOŃCZONE — tylko skrót
   const bu = L.filter(it => it.inBust);
   if (bu.length) h += `<div class="sec sbust link" data-go="bust"><div class="sh"><span>🟥 PO BUST · ${bu.length}${bustBadges(bu)}</span><span class="m">zakładka BUST ›</span></div></div>`;
   const Z = L.filter(it => it.grp === 'done');
-  if (Z.length) h += sec('✅ ZAKOŃCZONE', 'WIN albo BUST (krok 8)', Z, { fold: 1, cls: 'sdone', extra: it => (it.rz ? `${it.res.win ? '✔ WIN' : '<span class="neg">✖ BUST / LOSS</span>'} · Nr ${fmtN(it.res.i + 1)}` : `${it.res.win ? `✔ WIN k${it.res.k}` : '<span class="neg">✖ BUST k8</span>'} · Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}`) + (it.res.win ? '' : it.inBust ? ' · <b>w zakładce BUST</b>' : ' · potem WIN') });
+  if (Z.length) h += sec('✅ ZAKOŃCZONE', 'WIN albo BUST (krok 8)', Z, { key: 'T-done', cls: 'sdone', extra: it => (it.rz ? `${it.res.win ? '✔ WIN' : '<span class="neg">✖ BUST / LOSS</span>'} · Nr ${fmtN(it.res.i + 1)}` : `${it.res.win ? `✔ WIN k${it.res.k}` : '<span class="neg">✖ BUST k8</span>'} · Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}`) + (it.res.win ? '' : it.inBust ? ' · <b>w zakładce BUST</b>' : ' · potem WIN') });
   return h;
 }
 // ===== BUST: BUST-y moich modeli (od dodania do MOJE, bez WIN po nich) — filtr po kroku, na którym model gra teraz =====
@@ -653,11 +658,11 @@ function busty() {
     // ta sama droga co na TERAZ: 🟦 CZEKAJĄ → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ (kolejne kroki po BUST-cie, do WIN)
     const n = D[only].n, ex = it => it.rz ? `${it.d === 1 ? '' : shortPh(it) + '<br>'}<span class="neg">BUST / LOSS Nr ${fmtN(it.res.i + 1)}</span>` : `${it.d === 1 ? '' : shortPh(it) + '<br>'}<span class="neg">BUST Nr ${fmtN(it.r.lbr + 1)}</span>${gapTxt(it.r)}${it.gone ? ' · usunięty z MOJE' : ''}`;
     const now = L.filter(it => it.d === 1).sort(byApp), soon = L.filter(it => it.d >= 2).sort((a, b) => a.d - b.d || byApp(a, b)), wait = L.filter(it => !(it.d >= 1));
-    h += sec(`🟥 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, now.length ? `razem ${fmtN(now.reduce((a, it) => a + (it.rz ? it.r.stake : ST[it.r.bs]), 0))} zł` : '', now, { cls: 'slnow', empty: `Na Nr ${fmtN(n + 1)} żaden model po BUST-cie nie gra.`, extra: ex });
-    if (soon.length) h += sec('🟨 ZA CHWILĘ', 'TRIGGER już był', soon, { cls: 'ssoon', extra: ex });
+    h += sec(`🟥 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, now.length ? `razem ${fmtN(now.reduce((a, it) => a + (it.rz ? it.r.stake : ST[it.r.bs]), 0))} zł` : '', now, { cls: 'slnow', key: 'L-now', open: 1, empty: `Na Nr ${fmtN(n + 1)} żaden model po BUST-cie nie gra.`, extra: ex });
+    if (soon.length) h += sec('🟨 ZA CHWILĘ', 'TRIGGER już był', soon, { cls: 'ssoon', key: 'L-soon', open: 1, extra: ex });
     if (wait.length) { let w = '';
       for (let k = 8; k >= 1; k--) { const G = wait.filter(it => it.r.bs + 1 === k).sort(byApp); if (G.length) w += `<div class="kh">k${k} · ${ST[k - 1]} zł · ${G.length}</div>` + G.map(it => row(it, ex(it))).join(''); }
-      h += `<details class="sec swait" open><summary class="sh"><span>🟦 CZEKAJĄ · ${wait.length}</span><span class="m">na STEP / TRIGGER</span></summary>${w}</details>`; }
+      h += `<details class="sec swait" ${foldAt('L-wait', 1)}><summary class="sh"><span>🟦 CZEKAJĄ · ${wait.length}</span><span class="m">na STEP / TRIGGER</span></summary>${w}</details>`; }
   }
   // historia: wszystkie BUST-y moich modeli od dodania i co było po nich
   const H = [];
@@ -914,12 +919,12 @@ function bankView() {
   h += bankSearch();
   if (!L.length) return h + `<div class="empty">Lista BANK ${TABS[t].name} jest pusta.<br><br>Znajdź model wyszukiwarką powyżej (albo otwórz swój model na TERAZ) i dotknij <b>➕ Dodaj do BANK</b>.</div>` + bankRules();
   const G = { now: [], soon: [], wait: [], held: [] }; L.forEach(it => G[bState(it, bkw)].push(it));
-  const sec = (title, sub, A, cls, empty) => `<div class="sec ${cls}"><div class="sh"><span>${title}${A.length ? ` · ${A.length}` : ''}</span><span class="m">${sub}</span></div>${A.length ? A.map(bankRow).join('') : `<div class="none">${empty}</div>`}</div>`;
+  const sec = (key, title, sub, A, cls, empty, body) => `<details class="sec ${cls}" ${foldAt(key, 1)}><summary class="sh"><span>${title}${A.length ? ` · ${A.length}` : ''}</span><span class="m">${sub}</span></summary>${body != null ? body : A.length ? A.map(bankRow).join('') : `<div class="none">${empty}</div>`}</details>`;
   const byK = A => { let w = ''; [...new Set(A.map(it => it.bk[bkw].next))].sort((a, b) => b - a).forEach(k => { const g = A.filter(it => it.bk[bkw].next === k); w += `<div class="kh">k${k} · ${fmtN(bStake(k))} zł · ${g.length}</div>` + g.map(bankRow).join(''); }); return w; };
-  h += sec(`🟧 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, G.now.length ? `razem ${fmtN(G.now.reduce((a, it) => a + bStake(it.bk[bkw].next), 0))} zł` : '', G.now, G.now.length ? 'snow' : '', `Na Nr ${fmtN(n + 1)} żaden bank +${bkw} nie gra.`);
-  if (G.soon.length) h += sec('🟨 ZA CHWILĘ', 'TRIGGER już był', G.soon.sort((a, b) => a.d - b.d), 'ssoon');
-  if (G.wait.length) h += `<div class="sec swait"><div class="sh"><span>🟦 CZEKAJĄ · ${G.wait.length}</span><span class="m">bank w oknie · czeka na STEP / TRIGGER</span></div>${byK(G.wait)}</div>`;
-  if (G.held.length) h += `<div class="sec sheld"><div class="sh"><span>⏸ CZEKAJĄ NA BANK · ${G.held.length}</span><span class="m">okno przegrane · czeka na WIN modelu</span></div>${byK(G.held)}</div>`;
+  h += sec('K-now', `🟧 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, G.now.length ? `razem ${fmtN(G.now.reduce((a, it) => a + bStake(it.bk[bkw].next), 0))} zł` : '', G.now, G.now.length ? 'snow' : '', `Na Nr ${fmtN(n + 1)} żaden bank +${bkw} nie gra.`);
+  if (G.soon.length) h += sec('K-soon', '🟨 ZA CHWILĘ', 'TRIGGER już był', G.soon.sort((a, b) => a.d - b.d), 'ssoon');
+  if (G.wait.length) h += sec('K-wait', '🟦 CZEKAJĄ', 'bank w oknie · czeka na STEP / TRIGGER', G.wait, 'swait', '', byK(G.wait));
+  if (G.held.length) h += sec('K-held', '⏸ CZEKAJĄ NA BANK', 'okno przegrane · czeka na WIN modelu', G.held, 'sheld', '', byK(G.held));
   return h + `<div class="hint" style="margin-bottom:8px">Droga modelu w banku +${bkw}: 🟦 CZEKAJĄ → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ. WIN → bank od k1 (znowu CZEKAJĄ). Przegrane ${bkw} kroki okna → ⏸ CZEKAJĄ NA BANK, aż model skończy cykl (WIN albo LOST); potem znowu CZEKAJĄ na kolejnym oknie. Dotknij modelu → szanse, stawki i usunięcie z listy.</div>` + bankRules();
 }
 function bankModel() {   // model z listy BANK
