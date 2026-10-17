@@ -36,7 +36,7 @@ a.btn{text-decoration:none}
 .sec{background:var(--pan);border:1px solid var(--bd);border-radius:11px;padding:6px 8px;margin-bottom:10px}
 .sec .sh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:800;font-size:14px;padding:4px 2px 6px;cursor:pointer;position:relative}
 .sec .sh .m{color:var(--mu);font-size:11.5px;font-weight:500;text-align:right}
-.sec.sheld{border-color:#5a4a8a}.sec.snow{border-color:var(--or);box-shadow:0 0 0 1px var(--or) inset}.sec.ssoon{border-color:#8a7a20}.sec.sbust{border-color:#8a1f1f}.sec.szak{border-color:#2e7d4f}
+.sec.sheld{border-color:#5a4a8a}.sec.snow{border-color:var(--or);box-shadow:0 0 0 1px var(--or) inset}.sec.ssoon{border-color:#8a7a20}.sec.sbust{border-color:#8a1f1f}.sec.szak{border-color:#2e7d4f}.rw .bw{font-size:11px;font-weight:800;border-radius:5px;padding:2px 5px;margin-right:4px;color:#fff}.rw .bw.w3{background:#2e75b6}.rw .bw.w5{background:#7a3fb0}
 .sec.link{cursor:pointer}.sec .sh b.soon,.sec .sh i.nb{position:static;display:inline-block;margin-left:6px;min-width:18px;height:18px;border-radius:9px;font:700 11px/18px system-ui;text-align:center;padding:0 4px}
 .sec .sh b.soon{background:var(--ye);color:#000}.sec .sh i.nb{background:#c97a45;color:#fff;font-style:normal}
 .sec .none{color:var(--mu);font-size:12.5px;padding:2px 4px 6px}
@@ -164,7 +164,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.19.8';
+const APP_VER = '1.19.9';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -667,9 +667,12 @@ function teraz() {
   const bu = L.filter(it => it.inBust), buNow = bu.filter(it => it.d === 1).sort(byApp);
   if (bu.length) h += `<details class="sec sbust" ${foldAt('T-lost', 1)}><summary class="sh" data-lp="bust"><span>🟥 PO LOST · ${bu.length}${bustBadges(bu)}</span><span class="m">przytrzymaj → BUST</span></summary>
     ${buNow.length ? buNow.map(it => row(it, null, 1)).join('') : `<div class="none">Na Nr ${fmtN(n + 1)} żaden model po BUST-cie nie gra.</div>`}</details>`;
-  const BL = bitems.filter(b => b.t === t), bkNow = BL.filter(b => bState(b, bkw) === 'now');
-  if (BL.length) h += `<details class="sec sheld" ${foldAt('T-bank', 1)}><summary class="sh" data-lp="bank"><span>🏦 BANK +${bkw} · ${BL.length}${bankBadges(BL)}</span><span class="m">przytrzymaj → BANK</span></summary>
-    ${bkNow.length ? bkNow.map(bankRow).join('') : `<div class="none">Na Nr ${fmtN(n + 1)} żaden bank +${bkw} nie gra.</div>`}</details>`;
+  // BANK: jeden pasek dla obu banków — przy każdym modelu oznaczenie +3 / +5 (bankRow liczy dla bkw, więc ustawiam go na chwilę)
+  const BL = bitems.filter(b => b.t === t), cur = bkw, bw = [3, 5].map(w => { bkw = w; const r = { w, now: BL.filter(b => bState(b, w) === 'now'), soon: BL.filter(b => bState(b, w) === 'soon').map(b => b.d) };
+    r.html = r.now.map(b => bankRow(b).replace('<span class="kk">', `<span class="bw w${w}">+${w}</span><span class="kk">`)).join(''); return r; }); bkw = cur;
+  const bkN = bw[0].now.length + bw[1].now.length, bkS = [...new Set([...bw[0].soon, ...bw[1].soon].filter(d => d >= 2 && d <= 3))].sort();
+  if (BL.length) h += `<details class="sec sheld" ${foldAt('T-bank', 1)}><summary class="sh" data-lp="bank"><span>🏦 BANK +3 / +5 · ${BL.length}${bkS.length ? `<b class="soon">${bkS.join(',')}</b>` : ''}${bkN ? `<i class="nb">${bkN}</i>` : ''}</span><span class="m">przytrzymaj → BANK</span></summary>
+    ${bkN ? bw[0].html + bw[1].html : `<div class="none">Na Nr ${fmtN(n + 1)} żaden bank (+3 ani +5) nie gra.</div>`}</details>`;
   const ZS = zakState(bets.filter(x => x.t === t)), zc = ZS.CH, zNow = zc.filter(it => it.d === 1).sort(byApp);
   if (zc.length) h += `<details class="sec szak" ${foldAt('T-zak', 1)}><summary class="sh" data-lp="zak"><span>💰 ZAKŁADY · ${zc.length}${bustBadges(zc)}</span><span class="m">przytrzymaj → ZAKŁADY</span></summary>
     ${zNow.length ? zNow.map(it => row(it, zakLb(ZS.M.get(it.uid)), 0, 1)).join('') : `<div class="none">Na Nr ${fmtN(n + 1)} żaden model po zakładzie nie gra.</div>`}</details>`;
