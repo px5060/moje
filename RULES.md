@@ -70,6 +70,8 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 
 ## Kolejność stanów w MOJE (aplikacja MOJE)
 
+- Grupy 🟧 GRAJ TERAZ, 🟨 ZA CHWILĘ, 🟦 CZEKAJĄ (i ✅ ZAKOŃCZONE, ⏸ CZEKAJĄ NA BANK) na TERAZ, LOST i BANK można zwijać i rozwijać (dotknięcie nagłówka). Stan każdej grupy jest zapamiętany (`moje_v1_fold`) i zostaje po wpisaniu kodu / odświeżeniu. Domyślnie: GRAJ TERAZ i ZA CHWILĘ rozwinięte, CZEKAJĄ na TERAZ zwinięte.
+
 - Model po dodaniu: 🟦 CZEKAJĄ (na STEP / TRIGGER) → 🟨 ZA CHWILĘ (TRIGGER był) → 🟧 GRAJ TERAZ (zakład na następnym wierszu).
 - Przegrany krok (np. k2 nie wszedł) → model wraca do CZEKAJĄ → ZA CHWILĘ → GRAJ TERAZ na kolejnym kroku (do k8).
 - **WIN → ✅ ZAKOŃCZONE** (koniec gry modelu).
@@ -78,7 +80,8 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 
 ## Zakładka BANK (aplikacja MOJE) — bank +3 / +5
 
-- **Lista BANK** jest osobna od MOJE: tylko modele dodane przyciskiem **➕ Dodaj do BANK** (w banku modelu — w wyszukiwarce i na ekranie modelu z MOJE); zapis `moje_v1_bank` ({t, a, tg, m, id, t0}). Ten sam przycisk usuwa (✓ Jest na liście BANK — usuń). Modele z RAZEM — nie (ich cykle liczy RAZEM).
+- **Tryb gry** modelu (przy banku modelu: w wyszukiwarce i na ekranie modelu): 🟧 **TERAZ** = prosta progresja k1–k8 (model w MOJE GRY aplikacji źródłowej, widoczny na TERAZ / LOST) · 🏦 **BANK** = tylko na liście BANK (`moje_v1_bank`); model z MOJE w trybie BANK jest ukryty z TERAZ / LOST (`moje_v1_noteraz`), nie skasowany · 🟧+🏦 **OBA** = TERAZ i BANK, wiersz na TERAZ / LOST ma dopisek 🏦 banku (krok, stawka, okno). Model z wyszukiwarki ustawiony na TERAZ / OBA trafia do MOJE GRY aplikacji źródłowej (start = bieżący wiersz). „✕ usuń z BANK” przy modelu „tylko BANK” przywraca go na TERAZ (jeśli jest w MOJE). Modele z RAZEM — bez banku.
+- Na TERAZ rubryczka **🏦 BANK +3 · n** (jak „PO BUST”) ze znaczkami żółty / pomarańczowy → dotknięcie przenosi do zakładki BANK.
 - Biorę po kolei wszystkie cykle modelu na całej tabeli (od Nr 1). **W** = krok, na którym model wygrał; LOST modelu = brak WIN w każdym oknie.
 - **Bank +3** gra w każdym cyklu tylko pierwsze 3 zakłady modelu, **bank +5** — pierwsze 5.
 - Model trafi w tych zakładach → **WIN banku na kroku = przeniesione kroki + W**, bank wraca na k1.
@@ -90,3 +93,4 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Tabela szans: tylko okna, nie każdy krok — od obecnego okna banku: bank +3 3 okna (np. k4–6 · k7–9 · k10–12), bank +5 2 okna (np. k1–5 · k6–10); przy oknie stawki (od–do), szansa zamknięcia w tym oknie i łącznie, który to cykl modelu (ten / następny / za 2 cykle). „Gdzie bank się zamykał” = % WIN-ów banku w oknach k1–3 · k4–6 · k7–9 … (dla +5: k1–5 · k6–10 …). Przy szansie w nawiasie, jasnoniebieskim, **(od k1)** = od początku gry: % serii banku zamkniętych na krokach k1 do końca tego okna (suma okien, np. k1–6 = k1–3 + k4–6).
 - **🔎 Wyszukiwarka** (na górze BANK): nazwa modelu z SZUKAJ / SZUKAJ+ / SZUKAJ LOST (np. P1037; „S+…”, „L…”, „S…” zawęża aplikację) → statystyki modelu, ostatnie cykle i bank +3 / +5. Pule wczytywane na żądanie z aplikacji (ten sam adres, `const POOLS`), więc nazwy zgadzają się z bieżącą wersją SZUKAJ.
 - Lista jak na TERAZ (zwarte wiersze: model, krok i stawka banku), osobno dla **BANK +3 / BANK +5** (przełącznik, `moje_v1_bkw`). Stany wybranego banku: 🟦 **CZEKAJĄ** (okno trwa, model czeka na STEP / TRIGGER; podgrupy wg kroku banku) → 🟨 **ZA CHWILĘ** (zakład banku za 2+ wiersze) → 🟧 **GRAJ TERAZ** (zakład banku na następnym wierszu, „razem … zł”). WIN → bank od k1 → CZEKAJĄ. Okno przegrane w tym cyklu → **⏸ CZEKAJĄ NA BANK** (model gra dalej bez banku), aż model skończy cykl (WIN albo LOST) → znowu CZEKAJĄ na kolejnym oknie. Znaczki jak na TERAZ (żółty = za ile wierszy, pomarańczowy = ile na następnym) przy BANK, T50 / T60 i +3 / +5. Dotknięcie wiersza → ekran banku modelu.
+- Model po LOST-cie (ostatni zakończony cykl to LOST, od niego bez WIN — `sinceB === 0`) ma w BANK **biało-czerwoną ramkę** jak na LOST (wiersz listy i ekran banku modelu) oraz dopisek „po LOST (Nr …)”.
