@@ -172,7 +172,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.22.5';
+const APP_VER = '1.22.6';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -805,7 +805,7 @@ function zaklady() {
 const LT = (it, K, A, B, i) => {
   const m = it.m;
   switch (K) {
-    case 0: return '<span class="mu">—</span>';
+    case 0: return '<span class="mu">czeka na STEP</span>';   // jak w SZUKAJ: w tym wierszu nie było STEP-u
     case 1: return `czeka na TRIGGER${TN(m) > 1 ? ` (było ${A}/${TN(m)})` : ''}`;
     case 2: return `STEP ${A}/${m[2]}`;
     case 3: return '<b>STEP ✓</b>';
