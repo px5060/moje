@@ -172,7 +172,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.22.0';
+const APP_VER = '1.22.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -658,8 +658,8 @@ const foldAt = (k, d) => `data-fold="${k}"${isOpen(k, d) ? ' open' : ''}`;
 document.addEventListener('toggle', e => { const k = e.target && e.target.dataset && e.target.dataset.fold; if (!k || FOLD[k] === +e.target.open) return; FOLD[k] = +e.target.open; lsSet(FOLDK, JSON.stringify(FOLD)); }, true);
 function sec(title, sub, L, opt) {
   opt = opt || {};
-  const body = L.length ? L.map(it => row(it, opt.extra ? opt.extra(it) : null, opt.lost ? opt.lost(it) : 0)).join('') : `<div class="none">${opt.empty || 'nic'}</div>`;
-  const head = `<span>${title}${L.length ? ` · ${L.length}` : ''}</span><span class="m">${sub}</span>`;
+  const tn = opt.tailN || 0, body = (L.length ? L.map(it => row(it, opt.extra ? opt.extra(it) : null, opt.lost ? opt.lost(it) : 0)).join('') : tn ? '' : `<div class="none">${opt.empty || 'nic'}</div>`) + (opt.tail || '');
+  const head = `<span>${title}${L.length + tn ? ` · ${L.length + tn}` : ''}</span><span class="m">${sub}</span>`;
   return opt.fold || opt.key ? `<details class="sec ${opt.cls || ''}" ${opt.key ? foldAt(opt.key, opt.open) : opt.open ? 'open' : ''}><summary class="sh">${head}</summary>${body}</details>` : `<div class="sec ${opt.cls || ''}"><div class="sh">${head}</div>${body}</div>`;
 }
 const byApp = (a, b) => SRC.indexOf(a.s) - SRC.indexOf(b.s) || b.r.bs - a.r.bs || (a.g.id > b.g.id ? 1 : -1);
@@ -674,8 +674,10 @@ function teraz() {
   if (!vitems.length && !bitems.length && rzSt[t] !== 'wczytuję') return h + `<div class="empty">Brak modeli w MOJE.<br><br>W SZUKAJ, SZUKAJ+ albo SZUKAJ BUST przytrzymaj kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. W RAZEM: przytrzymaj kartę → <b>▶ Gram — dodaj do aplikacji MOJE</b>.</div>`;
   const act = L.filter(it => it.grp !== 'done'), play = act.filter(it => it.grp !== 'bust'), now = play.filter(it => it.d === 1).sort(byApp);
   const sum = now.reduce((a, it) => a + ST[it.r.bs], 0);
-  // 1. CO GRAM NA NASTĘPNYM WIERSZU
-  h += sec(`🟧 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, now.length ? `razem ${fmtN(sum)} zł` : '', now, { cls: 'snow', key: 'T-now', open: 1, empty: `Na Nr ${fmtN(n + 1)} żaden mój model nie gra — wpisz kod, gdy padnie.` });
+  // 1. CO GRAM NA NASTĘPNYM WIERSZU — moje modele i zakłady banku (+3 / +5), które grają na następnym wierszu
+  const cb = bkw, bkT = []; let bkSum = 0;
+  bitems.filter(b => b.t === t).forEach(b => [3, 5].forEach(w => { if (bState(b, w) !== 'now') return; bkw = w; bkT.push(ddTag(bankRow(b).replace('<span class="kk">', `<span class="bw w${w}">🏦 +${w}</span><span class="kk">`), 1)); bkSum += bStake(b.bk[w].next); bkw = cb; }));
+  h += sec(`🟧 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, now.length + bkT.length ? `razem ${fmtN(sum + bkSum)} zł` : '', now, { cls: 'snow', key: 'T-now', open: 1, tail: bkT.join(''), tailN: bkT.length, empty: `Na Nr ${fmtN(n + 1)} żaden mój model nie gra — wpisz kod, gdy padnie.` });
   // 2. ZA CHWILĘ (TRIGGER już był)
   const soon = play.filter(it => it.d >= 2).sort((a, b) => a.d - b.d || byApp(a, b));
   if (soon.length) h += sec('🟨 ZA CHWILĘ', 'TRIGGER już był', soon, { cls: 'ssoon', key: 'T-soon', open: 1 });
