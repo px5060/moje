@@ -164,7 +164,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.20.1';
+const APP_VER = '1.20.2';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -593,9 +593,15 @@ function card(it) {
 }
 const GRP = [['now', '🟧 GRAJ TERAZ', 'zakład na następnym wierszu'], ['soon', '🟨 ZA 2–3 WIERSZE', 'TRIGGER był, zakład za chwilę'], ['bust', '🟥 BUST', 'przegrany krok 8 — do pierwszego WIN po nim'], ['wait', '🟦 W GRZE', 'czeka na STEP / TRIGGER']];
 // ---- przełącznik tabeli: T50 | T60 (duże przyciski ze znaczkami) ----
-function tabSwitch(f) {
+const bdg = (now, ds) => { const soon = [...new Set(ds.filter(d => d >= 2 && d <= 3))].sort(); return (soon.length ? `<b class="soon">${soon.join(',')}</b>` : '') + (now ? `<i class="nb">${now}</i>` : ''); };
+function allBadges(t) {   // TERAZ: znaczki T50 / T60 = wszystko do gry — moje modele, PO LOST, po zakładzie i oba banki
+  const near = [...vitems.filter(it => it.t === t && it.grp !== 'done' && it.r.ph === 2), ...zakState(bets.filter(x => x.t === t)).CH.filter(it => it.grp === 'done')];
+  const B = bitems.filter(b => b.t === t), bn = [3, 5].reduce((a, w) => a + B.filter(b => bState(b, w) === 'now').length, 0), bs = [3, 5].flatMap(w => B.filter(b => bState(b, w) === 'soon').map(b => b.d));
+  return bdg(near.filter(it => it.d === 1).length + bn, [...near.map(it => it.d), ...bs]);
+}
+function tabSwitch(f, all) {
   return `<div class="tsw">${Object.keys(TABS).map(t => { const L = vitems.filter(it => it.t === t && (f ? f(it) : it.grp !== 'done' && it.grp !== 'bust'));
-    return `<button class="${only === t ? 'on' : ''}" data-only="${t}">${TABS[t].name} <small>· ${L.length}</small>${bustBadges(L)}</button>`; }).join('')}</div>`;
+    return `<button class="${only === t ? 'on' : ''}" data-only="${t}">${TABS[t].name} <small>· ${L.length}</small>${all ? allBadges(t) : bustBadges(L)}</button>`; }).join('')}</div>`;
 }
 // ---- jeden model = jeden zwarty wiersz: aplikacja · model · krok · stawka, pod spodem co się dzieje ----
 let formU = null;   // otwarty formularz zakładu (uid)
@@ -646,7 +652,7 @@ const byApp = (a, b) => SRC.indexOf(a.s) - SRC.indexOf(b.s) || b.r.bs - a.r.bs |
 const ddTag = (html, d) => !(d >= 1 && d <= 3) ? html : html.replace('<span class="sp"></span>', `<span class="sp"></span><span class="dd${d === 1 ? ' n' : ''}">${d === 1 ? 'TERAZ' : 'za ' + d}</span>`);
 function teraz() {
   const t = only, n = D[t].n;
-  let h = tabSwitch() + kodBox(t);
+  let h = tabSwitch(null, 1) + kodBox(t);
   if (rzSt[t] === 'wczytuję') h += `<div class="hint" style="margin:-2px 0 8px">⏳ Wczytuję modele z RAZEM ${TABS[t].name}…</div>`;
   if (rzSt[t] === 'błąd') h += `<div class="hint neg" style="margin:-2px 0 8px">Nie udało się wczytać RAZEM ${TABS[t].name} — otwórz MOJE ponownie.</div>`;
   const L = vitems.filter(it => it.t === t);
@@ -737,11 +743,12 @@ function zakState(L) {
 const zakLb = x => `ostatni zakład Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł ${x.res === 'lost' ? '<span class="neg">✖ przegrany</span>' : x.res === 'pend' ? '<span style="color:var(--or2)">czeka na wynik</span>' : '<span class="mu">model nie grał</span>'}`;
 function zaklady() {
   const LA = bets.filter(x => x.t === only), np = g => LA.filter(x => ZG(x) === g && x.res === 'pend').length;
-  const zb = (g, lab) => { const n = LA.filter(x => ZG(x) === g).length, p = np(g); return `<button class="${zsrc === g ? 'on' : ''}" data-zsrc="${g}">${lab} <small>· ${n}</small>${p ? `<i class="nb">${p}</i>` : ''}</button>`; };
+  const zb = (g, lab) => { const A = LA.filter(x => ZG(x) === g); return `<button class="${zsrc === g ? 'on' : ''}" data-zsrc="${g}">${lab} <small>· ${A.length}</small>${bustBadges(zakState(A).CH)}</button>`; };
+  const zt = `<div class="tsw">${Object.keys(TABS).map(k => { const A = bets.filter(x => x.t === k); return `<button class="${only === k ? 'on' : ''}" data-only="${k}">${TABS[k].name} <small>· ${A.length}</small>${bustBadges(zakState(A).CH)}</button>`; }).join('')}</div>`;
   const L = LA.filter(x => ZG(x) === zsrc).sort((a, b) => b.b.t - a.b.t);
   const done = L.filter(x => x.res === 'win' || x.res === 'lost'), put = done.reduce((a, x) => a + x.b.stake, 0), res = done.reduce((a, x) => a + betVal(x), 0);
   const day = new Date(); day.setHours(0, 0, 0, 0); const today = done.filter(x => x.b.t >= day.getTime()).reduce((a, x) => a + betVal(x), 0);
-  let h = tabSwitch() + `<div class="tsw sub zs">${zb('R', '🧮 RAZEM')}${zb('S', '🔎 SZUKAJ')}${zb('L', '🔻 SZUKAJ LOST')}</div><div class="sum"><div><b>${zl(res)}</b>wynik łącznie</div><div><b>${fmtN(put)} zł</b>postawione (rozliczone)</div><div><b>${zl(today)}</b>dziś</div></div>
+  let h = zt + `<div class="tsw sub zs">${zb('R', '🧮 RAZEM')}${zb('S', '🔎 SZUKAJ')}${zb('L', '🔻 SZUKAJ LOST')}</div><div class="sum"><div><b>${zl(res)}</b>wynik łącznie</div><div><b>${fmtN(put)} zł</b>postawione (rozliczone)</div><div><b>${zl(today)}</b>dziś</div></div>
     <div class="hint" style="margin:-4px 0 10px">WIN = +2 × stawka (kurs 3,0), przegrana = −stawka. Zakłady zapisane tutaj albo w aplikacjach SZUKAJ.</div>`;
   // modele, których ostatni zakład przegrał albo czeka — dopóki model nie trafi WIN po tym zakładzie, gram dalej kolejny krok
   const { M, CH, ZK } = zakState(L);
@@ -1014,7 +1021,7 @@ function bankSearch() {
 function bankView() {
   const t = only, n = D[t].n, L = bitems.filter(it => it.t === t);
   let h = `<div class="tsw">${Object.keys(TABS).map(k => { const A = bitems.filter(it => it.t === k);
-    return `<button class="${only === k ? 'on' : ''}" data-only="${k}">${TABS[k].name} <small>· ${A.length}</small>${bankBadges(A)}</button>`; }).join('')}</div>`;
+    return `<button class="${only === k ? 'on' : ''}" data-only="${k}">${TABS[k].name} <small>· ${A.length}</small>${bankBadges35(A)}</button>`; }).join('')}</div>`;
   if (L.length) { const cur = bkw; h += `<div class="tsw sub zs">${[3, 5].map(w => { bkw = w; const b = bankBadges(L); bkw = cur; return `<button class="${cur === w ? 'on' : ''}" data-bkw="${w}">BANK +${w}${b}</button>`; }).join('')}</div>`; }
   h += bankSearch();
   if (!L.length) return h + `<div class="empty">Lista BANK ${TABS[t].name} jest pusta.<br><br>Znajdź model wyszukiwarką powyżej (albo otwórz swój model na TERAZ) i dotknij <b>🏦 Przenieś do BANK</b>.</div>` + bankRules();
