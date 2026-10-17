@@ -64,7 +64,7 @@ details.sec>summary{list-style:none}[data-lp]{-webkit-user-select:none;user-sele
 .kod .when{font-weight:800;color:var(--gr)}.kod .when.old{color:var(--ye)}.kod .when.vold{color:var(--rd)}
 .kod .src{color:var(--mu);font-size:11.5px}
 .erow{display:flex;gap:6px;margin-top:7px}
-.erow input{flex:1;min-width:0;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:8px 10px;font-size:18px;letter-spacing:3px}
+.erow input{flex:1;min-width:0;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:8px 10px;font-size:18px;letter-spacing:3px}.erow input::placeholder{letter-spacing:0;font-size:14px;color:var(--mu)}
 .prev{display:flex;gap:3px;flex-wrap:nowrap;margin-top:6px;font-size:11px;color:var(--mu);align-items:center}
 .prev b{color:var(--tx);background:var(--card);border-radius:5px;padding:1px 0;font-weight:600;font-variant-numeric:tabular-nums;flex:1 1 0;min-width:0;text-align:center}
 /* grupy */
@@ -172,7 +172,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.22.3';
+const APP_VER = '1.22.4';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -226,7 +226,8 @@ function validCode(t, c) { return t === 't50' ? /^[01]{3}$/.test(c) : /^[0-3][01
 function addCode(t, c) {
   if (!validCode(t, c)) { toast(t === 't50' ? 'Kod T50: trzy cyfry 0/1, np. 010' : 'Kod T60: pierwsza cyfra 0–3, potem dwie 0/1, np. 210'); return; }
   const row = D[t].n, before = vitems.filter(it => !it.rz && it.t === t && it.grp !== 'done' && it.r.ph === 2 && it.r.wz === row);
-  if (!lsSet(TABS[t].key, readAdded(t) + c)) { alert('BŁĄD zapisu pamięci telefonu!'); return; }   // czytaj-zmień-zapisz: nie gubi kodów z innych aplikacji
+  if (!lsSet(TABS[t].key, readAdded(t) + c)) { alert('BŁĄD zapisu pamięci telefonu!'); return; }
+  const inp = $('in_' + t); if (inp) inp.value = '';   // pole od razu puste na następny kod   // czytaj-zmień-zapisz: nie gubi kodów z innych aplikacji
   const L = jget(LOGK(t)); L.push({ n: row + 1, c, t: Date.now(), here: 1 }); lsSet(LOGK(t), JSON.stringify(L.slice(-300)));
   reload();
   resultPop(t, row, c, before);
@@ -588,7 +589,7 @@ function kodBox(t) {
     <div class="last">Ostatni kod: <b>Nr ${fmtN(n)}</b> = <span class="c">${code(t, n - 1)}</span> ·
     ${last ? `<span class="when ${age > 864e5 ? 'vold' : age > 3 * 36e5 ? 'old' : ''}">${ago(last.t)}</span> <span class="src">(${when(last.t)}${srcTxt(last)})</span>`
       : '<span class="src">kod z bazy (bez dopisanych kodów)</span>'}</div>
-    <div class="erow"><input id="in_${t}" inputmode="numeric" maxlength="3" placeholder="kod Nr ${fmtN(n + 1)}" autocomplete="off"><button class="btn pri" data-add="${t}">Dodaj</button><button class="btn" data-undo="${t}" title="cofnij ostatni">↶</button></div>
+    <div class="erow"><input id="in_${t}" inputmode="numeric" maxlength="3" placeholder="wpisz następny kod · Nr ${fmtN(n + 1)}" autocomplete="off"><button class="btn" data-undo="${t}" title="cofnij ostatni">↶</button></div>
     <div class="prev">ostatnie: ${prev.join('')}</div></div>`;
 }
 function srcBdg(it) { return `<span class="bdg ${it.s.cls}">${it.s.a}${it.t.slice(1)}</span>`; }
@@ -1167,7 +1168,7 @@ document.addEventListener('input', e => { if (e.target.id === 'bq_in') { bq = e.
 document.addEventListener('input', e => {   // 3 cyfry → od razu dodaj
   const t = e.target.id && e.target.id.startsWith('in_') ? e.target.id.slice(3) : null; if (!t) return;
   e.target.value = e.target.value.replace(/\D/g, '').slice(0, 3);
-  if (e.target.value.length === 3 && validCode(t, e.target.value)) addCode(t, e.target.value);
+  if (e.target.value.length === 3) addCode(t, e.target.value);   // zły kod → komunikat, dobry → zapis i puste pole
 });
 document.addEventListener('change', e => {
   const t = e.target.dataset && e.target.dataset.imp, f = t && e.target.files && e.target.files[0]; if (!f) return;
