@@ -172,7 +172,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.22.4';
+const APP_VER = '1.22.5';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -633,7 +633,9 @@ function cycOf(it) {
   const n = D[it.t].n, key = it.uid + '@' + n; if (_cyc.has(key)) return _cyc.get(key);
   const X = rzA(it); if (!X) return null;   // RAZEM: z linijek tabeli w RAZEM (wiersz z WIN / LOST)
   const ev = []; for (let i = 0; i < n; i++) { let c = {}; try { c = X.A.cell(X.mi, i) || {}; } catch (e) {} const t = c.gra ? c.gra.t : c.stan ? c.stan.t : '', k = t && rzCls(t);
-    if (k === 'k6') { const m = /k\s?(\d+)/i.exec(t); ev.push(m ? +m[1] : 0); } else if (k === 'k8') ev.push(-1); }
+    // LOST: „K8 → BUST ✗”, „→ LOST”, „✗ LOSS K=10” (RAZEM pisze GRA w tej samej linijce, więc rzCls widzi tu tylko przegrany krok)
+    if (k === 'k8' || /→\s*(BUST|LOST)|(BUST|LOST)\s*✗|✗\s*LOSS\s*K\s*=/.test(t)) ev.push(-1);
+    else if (k === 'k6') { const m = /k\s?=?\s?(\d+)/i.exec(t); ev.push(m ? +m[1] : 0); } }
   const o = { nw: ev.filter(v => v >= 0).length, nl: ev.filter(v => v < 0).length, l3: ev.slice(-3) }; _cyc.set(key, o); return o;
 }
 function cycLine(it) {
