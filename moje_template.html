@@ -143,7 +143,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.17.0';
+const APP_VER = '1.17.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -933,12 +933,14 @@ function bankDet(it, B) {
   S.forEach(x => { const o = W[x.i] || (W[x.i] = { a: x.k, b: x.k, p: 0, cum: 0 }); o.b = x.k; o.p += x.p; o.cum = x.cum; });
   const rng = (a, b) => a === b ? `k${a}` : `k${a}–${b}`, zlr = (a, b) => a === b ? `${fmtN(bStake(a))} zł` : `${fmtN(bStake(a))}–${fmtN(bStake(b))} zł`;
   const CYC = ['ten cykl modelu', 'następny cykl', 'za 2 cykle', 'za 3 cykle'];
-  const rows = W.map((o, i) => `<tr><td><b>${rng(o.a, o.b)}</b><div class="mu" style="font-size:10.5px">${CYC[i + (B.inWin ? 0 : 1)]}</div></td><td class="c">${zlr(o.a, o.b)}</td><td class="c"><b>${pct(o.p)}</b></td><td class="c">${pct(o.cum)}</td></tr>`).join('');
+  const st0 = kEnd => B.res.length ? B.res.filter(x => x.k <= kEnd).length / B.res.length : null;   // od początku gry: ile serii banku zamknęło się do kEnd (k1…kEnd)
+  const rows = W.map((o, i) => `<tr><td><b>${rng(o.a, o.b)}</b><div class="mu" style="font-size:10.5px">${CYC[i + (B.inWin ? 0 : 1)]}</div></td><td class="c">${zlr(o.a, o.b)}</td><td class="c"><b>${pct(o.p)}</b> <span style="color:var(--bl)">(${pct(st0(o.b))})</span></td><td class="c">${pct(o.cum)}</td></tr>`).join('');
   const grp = {}; B.res.forEach(x => { const g = Math.ceil(x.k / w); grp[g] = (grp[g] || 0) + 1; });
   return `<div style="margin:8px 0 4px;font-weight:800;color:var(--or2)">BANK +${w}</div><div style="font-size:13.5px">${head}</div>
     ${last ? `<div class="hint" style="margin-top:6px">Szansa na zamknięcie banku (od teraz):</div>
-    <table class="rows" style="margin-top:2px"><tr class="hd"><td>okno</td><td class="c">stawki</td><td class="c">szansa</td><td class="c">łącznie</td></tr>${rows}
-    <tr><td colspan="3" class="mu">nie zamknie do k${last.k} · seria −${fmtN(bCum(last.k))} zł</td><td class="c"><b>${pct(1 - last.cum)}</b></td></tr></table>` : '<div class="hint">Model nie ma jeszcze zakończonych cykli — brak szans.</div>'}
+    <table class="rows" style="margin-top:2px"><tr class="hd"><td>okno</td><td class="c">stawki</td><td class="c">szansa <span style="color:var(--bl)">(od k1)</span></td><td class="c">łącznie</td></tr>${rows}
+    <tr><td colspan="3" class="mu">nie zamknie do k${last.k} · seria −${fmtN(bCum(last.k))} zł</td><td class="c"><b>${pct(1 - last.cum)}</b></td></tr></table>
+    <div class="hint" style="margin-top:3px">szansa = na krokach, które zostały w tym oknie (od teraz) · <span style="color:var(--bl)">(od k1)</span> = od początku gry: ile serii banku zamknęło się na krokach k1 do końca tego okna (np. k1–6 = k1–3 + k4–6)</div>` : '<div class="hint">Model nie ma jeszcze zakończonych cykli — brak szans.</div>'}
     <div class="hint" style="margin-top:4px">Gdzie bank się zamykał: ${Object.keys(grp).sort((a, b) => a - b).map(g => `<b>${rng((g - 1) * w + 1, g * w)}</b> ${pct(grp[g] / B.res.length)}`).join(' · ')}</div>
     <div class="hint">najwyższy krok k${B.maxk} (seria do niego ${fmtN(bCum(B.maxk))} zł) · bilans bez limitu od Nr 1: ${zl(B.pnl)}</div>`;
 }
