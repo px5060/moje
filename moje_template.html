@@ -40,7 +40,7 @@ a.btn{text-decoration:none}
 .sec .sh b.soon{background:var(--ye);color:#000}.sec .sh i.nb{background:#c97a45;color:#fff;font-style:normal}
 .sec .none{color:var(--mu);font-size:12.5px;padding:2px 4px 6px}
 .sec .kh{color:var(--mu);font-size:12px;font-weight:700;margin:8px 2px 4px;border-bottom:1px solid var(--bd);padding-bottom:2px}
-details.sec>summary{list-style:none}details.sec>summary::-webkit-details-marker{display:none}details.sec>summary .m::after{content:' ▾'}details.sec[open]>summary .m::after{content:' ▴'}
+details.sec>summary{list-style:none}[data-lp]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}details.sec>summary::-webkit-details-marker{display:none}details.sec>summary .m::after{content:' ▾'}details.sec[open]>summary .m::after{content:' ▴'}
 .rw{background:var(--card);border-left:4px solid #2e75b6;border-radius:8px;padding:6px 8px;margin-bottom:5px;cursor:pointer}
 .rw.abust{border:4px solid transparent;border-image:repeating-linear-gradient(-45deg,#a8423a 0 10px,#e8e2e2 10px 20px) 4}
 .box.abust{border:3px solid transparent;border-image:repeating-linear-gradient(-45deg,#a8423a 0 10px,#e8e2e2 10px 20px) 3}
@@ -144,7 +144,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.19.0';
+const APP_VER = '1.19.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -586,9 +586,9 @@ function shortPh(it) {
   if (r.ph === 1) return r.st === 1 ? `STEP był · czeka na STEP2` : `STEP był · czeka na TRIGGER${TN(m) > 1 ? ` ${r.tc + 1}/${TN(m)}` : ''}`;
   return `czeka na STEP${m[0] === 'S' && m[2] > 1 && r.cnt ? ` (${r.cnt}/${m[2]})` : ''}`;
 }
-function row(it, extra) {
+function row(it, extra, asLost) {
   const r = it.r, pend = betsOf(it).filter(x => x.res === 'pend'), saved = r.ph === 2 && pend.some(x => x.b.row === r.wz), canBet = r.ph === 2 && it.d <= 3 && (it.grp !== 'done' || it.inBust && view === 'bust');
-  const bu = it.inBust && view === 'bust', bnow = bu && it.d === 1, stk = it.rz ? r.stake : ST[r.bs];
+  const bu = it.inBust && (view === 'bust' || asLost), bnow = bu && it.d === 1, stk = it.rz ? r.stake : ST[r.bs];
   return `<div class="rw ${it.s.cls}${it.d === 1 && it.grp !== 'done' ? ' now' : ''}${bu ? (bnow ? ' bnow' : ' abust') : ''}" data-u="${esc(it.uid)}">
     ${bnow ? `<div class="graj">GRAJ Nr ${fmtN(r.wz + 1)} · k${r.bs + 1} · ${stk} zł${it.rz ? '' : ' na ' + it.tg}</div>` : ''}
     <div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b>${it.tg !== 'x1x' ? `<span class="mu">${it.tg}</span>` : ''}<span class="sp"></span>${it.grp === 'done' && !(it.inBust && view === 'bust') ? '' : `<span class="kk">k${r.bs + 1}</span><b class="zl">${stk} zł</b>`}
@@ -629,11 +629,13 @@ function teraz() {
     for (let k = 8; k >= 1; k--) { const G = wait.filter(it => it.r.bs + 1 === k).sort(byApp); if (G.length) w += `<div class="kh">k${k} · ${ST[k - 1]} zł · ${G.length}</div>` + G.map(it => row(it)).join(''); }
     h += `<details class="sec swait" ${foldAt('T-wait', 0)}><summary class="sh"><span>🟦 CZEKAJĄ · ${wait.length}</span><span class="m">rozwiń</span></summary>${w}</details>`;
   }
-  // 4. BANK, BUST i ZAKOŃCZONE — tylko skrót (dotknięcie → zakładka)
-  const BL = bitems.filter(b => b.t === t);
-  if (BL.length) h += `<div class="sec sheld link" data-go="bank"><div class="sh"><span>🏦 BANK +${bkw} · ${BL.length}${bankBadges(BL)}</span><span class="m">zakładka BANK ›</span></div></div>`;
-  const bu = L.filter(it => it.inBust);
-  if (bu.length) h += `<div class="sec sbust link" data-go="bust"><div class="sh"><span>🟥 PO BUST · ${bu.length}${bustBadges(bu)}</span><span class="m">zakładka BUST ›</span></div></div>`;
+  // 4. PO BUST i BANK — zwijane jak pozostałe; w środku tylko to, co gra na następnym wierszu; przytrzymanie nagłówka → zakładka LOST / BANK
+  const bu = L.filter(it => it.inBust), buNow = bu.filter(it => it.d === 1).sort(byApp);
+  if (bu.length) h += `<details class="sec sbust" ${foldAt('T-lost', 1)}><summary class="sh" data-lp="bust"><span>🟥 PO LOST · ${bu.length}${bustBadges(bu)}</span><span class="m">przytrzymaj → BUST</span></summary>
+    ${buNow.length ? buNow.map(it => row(it, null, 1)).join('') : `<div class="none">Na Nr ${fmtN(n + 1)} żaden model po BUST-cie nie gra.</div>`}</details>`;
+  const BL = bitems.filter(b => b.t === t), bkNow = BL.filter(b => bState(b, bkw) === 'now');
+  if (BL.length) h += `<details class="sec sheld" ${foldAt('T-bank', 1)}><summary class="sh" data-lp="bank"><span>🏦 BANK +${bkw} · ${BL.length}${bankBadges(BL)}</span><span class="m">przytrzymaj → BANK</span></summary>
+    ${bkNow.length ? bkNow.map(bankRow).join('') : `<div class="none">Na Nr ${fmtN(n + 1)} żaden bank +${bkw} nie gra.</div>`}</details>`;
   const Z = L.filter(it => it.grp === 'done');
   if (Z.length) h += sec('✅ ZAKOŃCZONE', 'WIN albo BUST (krok 8)', Z, { key: 'T-done', cls: 'sdone', extra: it => (it.rz ? `${it.res.win ? '✔ WIN' : '<span class="neg">✖ BUST / LOSS</span>'} · Nr ${fmtN(it.res.i + 1)}` : `${it.res.win ? `✔ WIN k${it.res.k}` : '<span class="neg">✖ BUST k8</span>'} · Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}`) + (it.res.win ? '' : it.inBust ? ' · <b>w zakładce BUST</b>' : ' · potem WIN') });
   return h;
@@ -986,7 +988,7 @@ function pomoc() {
     <div class="box"><h4>Znaczki na TERAZ</h4><b style="background:#c97a45;color:#fff;border-radius:8px;padding:0 5px">2</b> pomarańczowy = ile modeli gra na następnym wierszu.<br><b style="background:#FFD700;color:#000;border-radius:8px;padding:0 5px">2,3</b> żółty = za ile wierszy grają kolejne.</div>
     <div class="box"><h4>Kody</h4>Kody są wspólne z RAZEM i SZUKAJ — wpisany tu kod jest od razu we wszystkich aplikacjach (i odwrotnie). Przy każdej tabeli widać ostatni kod i <b>kiedy</b> go wpisano. Gdy kod wpisano w innej aplikacji, MOJE pokazuje, kiedy go tu zauważyło (przy otwarciu).<br>Zakładka <b>KODY</b>: kilka kodów naraz, import pliku (z cofnięciem całego importu) i eksport z nazwami jak w RAZEM — T50: TRÓJKA <b>v13_…kod.json</b>, T60: <b>xx1_pikoff_…json</b> i <b>trojka_xx1_v13_…kod.json</b>, żeby appki na PC je wychwyciły.</div>
     <div class="box"><h4>Kopia kodów</h4>Co 10 nowych kodów (licząc od ostatniego eksportu) MOJE samo zapisuje plik kopii (T50 TRÓJKA, T60 PIKOFF) do Pobranych — przy wpisaniu kodu tutaj. Gdy telefon wyczyści pamięć, wczytaj go w KODY → Import pliku. Wyłączysz to w KODY.</div>
-    <div class="box"><h4>Zakładka BANK</h4>Bank +3 / +5 (bez limitu) dla modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST. Bank gra w każdym cyklu modelu tylko pierwsze 3 (5) zakłady; model trafi → WIN banku (przeniesione kroki + krok modelu) i bank od k1; nie trafi → bank przegrywa 3 (5) kroki, czeka i w następnym cyklu gra dalej. Stawki 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512, dalej ×2.<br>Model jest <b>albo na TERAZ</b> (prosta progresja k1–k8), <b>albo w BANK</b> (+3 / +5) — nigdy w obu. Przełącznik przy modelu (ekran modelu i <b>🔎 wyszukiwarka</b>): <b>🏦 Przenieś do BANK</b> / <b>🟧 Przenieś do TERAZ</b>. „✕ usuń z BANK” usuwa model całkiem (też z MOJE). Na TERAZ rubryczka <b>🏦 BANK</b> ze znaczkami → dotknięcie przenosi do zakładki BANK. Przełącznik <b>BANK +3 / BANK +5</b> wybiera, który bank prowadzi listę. Droga modelu jak na TERAZ: 🟦 CZEKAJĄ (okno banku trwa, czeka na STEP / TRIGGER) → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ. WIN → bank od k1 i znowu CZEKAJĄ. Bank przegrał swoje 3 (5) kroki → <b>⏸ CZEKAJĄ NA BANK</b>, aż model skończy cykl (WIN albo LOST) — potem znowu CZEKAJĄ, już na kolejnym oknie (np. k4–k6). Znaczki przy BANK, T50 / T60 i +3 / +5: żółty = za ile wierszy zakład banku, pomarańczowy = ile gra na następnym. Dotknięcie modelu → szanse zamknięcia banku na kolejnych krokach, stawki, gdzie bank się zamykał (% dla okien) i usunięcie z listy.</div>
+    <div class="box"><h4>Zakładka BANK</h4>Bank +3 / +5 (bez limitu) dla modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST. Bank gra w każdym cyklu modelu tylko pierwsze 3 (5) zakłady; model trafi → WIN banku (przeniesione kroki + krok modelu) i bank od k1; nie trafi → bank przegrywa 3 (5) kroki, czeka i w następnym cyklu gra dalej. Stawki 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512, dalej ×2.<br>Model jest <b>albo na TERAZ</b> (prosta progresja k1–k8), <b>albo w BANK</b> (+3 / +5) — nigdy w obu. Przełącznik przy modelu (ekran modelu i <b>🔎 wyszukiwarka</b>): <b>🏦 Przenieś do BANK</b> / <b>🟧 Przenieś do TERAZ</b>. „✕ usuń z BANK” usuwa model całkiem (też z MOJE). Na TERAZ grupy <b>🟥 PO BUST</b> i <b>🏦 BANK</b> (zwijane jak pozostałe) pokazują to, co gra na następnym wierszu; <b>przytrzymanie</b> nagłówka przenosi do zakładki LOST / BANK. Przełącznik <b>BANK +3 / BANK +5</b> wybiera, który bank prowadzi listę. Droga modelu jak na TERAZ: 🟦 CZEKAJĄ (okno banku trwa, czeka na STEP / TRIGGER) → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ. WIN → bank od k1 i znowu CZEKAJĄ. Bank przegrał swoje 3 (5) kroki → <b>⏸ CZEKAJĄ NA BANK</b>, aż model skończy cykl (WIN albo LOST) — potem znowu CZEKAJĄ, już na kolejnym oknie (np. k4–k6). Znaczki przy BANK, T50 / T60 i +3 / +5: żółty = za ile wierszy zakład banku, pomarańczowy = ile gra na następnym. Dotknięcie modelu → szanse zamknięcia banku na kolejnych krokach, stawki, gdzie bank się zamykał (% dla okien) i usunięcie z listy.</div>
     <div class="box"><h4>Zakłady</h4>„💰 Zapisz zakład” zapisuje zakład w MOJE ZAKŁADY aplikacji, z której jest model — widać go tu i tam. Wynik liczy się sam po wpisaniu kodu.</div>
     <div class="box"><h4>Dodawanie modeli</h4>W aplikacji SZUKAJ przytrzymaj kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. Aplikacja doda model i otworzy go tutaj.</div>
     <div class="hint">MOJE ${APP_VER}</div>`;
@@ -1056,6 +1058,15 @@ document.addEventListener('change', e => {
   const t = e.target.dataset && e.target.dataset.imp, f = t && e.target.files && e.target.files[0]; if (!f) return;
   const fr = new FileReader(); fr.onload = () => { e.target.value = ''; importFile(t, String(fr.result), f.name); }; fr.readAsText(f);
 });
+// przytrzymanie nagłówka [data-lp] → zakładka (krótkie dotknięcie zwija / rozwija grupę)
+let lpT = null, lpOn = false, lpUp = 0, lpXY = null;   // lpOn = przytrzymanie zadziałało, palec jeszcze na ekranie
+const lpStop = () => { clearTimeout(lpT); lpT = null; };
+document.addEventListener('pointerdown', e => { const s = e.target.closest && e.target.closest('[data-lp]'); if (!s) return; lpXY = [e.clientX, e.clientY]; lpStop();
+  lpT = setTimeout(() => { lpT = null; lpOn = true; try { navigator.vibrate && navigator.vibrate(30); } catch (x) {} go(s.dataset.lp); }, 550); });
+document.addEventListener('pointerup', () => { lpStop(); if (lpOn) { lpOn = false; lpUp = Date.now(); } }); document.addEventListener('pointercancel', () => { lpStop(); lpOn = false; });
+document.addEventListener('pointermove', e => { if (lpT && lpXY && Math.hypot(e.clientX - lpXY[0], e.clientY - lpXY[1]) > 12) lpStop(); });
+document.addEventListener('click', e => { if (lpOn || Date.now() - lpUp < 350) { e.preventDefault(); e.stopPropagation(); lpUp = 0; } }, true);   // „klik” z puszczenia palca po przytrzymaniu — nie zwijaj i nie klikaj w nowym ekranie
+document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('[data-lp]')) e.preventDefault(); });
 window.addEventListener('storage', () => reload());
 document.addEventListener('visibilitychange', () => { if (!document.hidden) reload(); });
 setInterval(() => { if (!document.hidden && !(document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName))) render(); }, 30000);
