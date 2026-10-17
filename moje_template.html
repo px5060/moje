@@ -29,7 +29,8 @@ a.btn{text-decoration:none}
 .tsw{display:flex;gap:8px;margin-bottom:8px}.tsw button{flex:1;position:relative;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:10px;padding:10px;font-size:17px;font-weight:800}
 .tsw.sub.src button.on{background:#6a1a1a;border-color:#a8423a}.tsw.sub button{font-size:14px;padding:8px}.tsw.sub button.on{background:#8e2a2a;border-color:#8e2a2a}
 .tsw.sub.zs button.on{background:#2e4a6a;border-color:#4d7fb3}.tsw.sub.zs button{font-size:13px;padding:8px 4px}
-.tsw button.on{background:var(--or);border-color:var(--or);color:#fff}.tsw small{font-size:12px;font-weight:600;opacity:.85}
+.tsw button.on{background:var(--or);border-color:var(--or);color:#fff}
+.tsw button.on[data-only="t60"]{background:#457ec9;border-color:#457ec9}.tsw small{font-size:12px;font-weight:600;opacity:.85}
 .tsw b.soon{position:absolute;top:-7px;left:-5px;min-width:18px;height:18px;border-radius:9px;background:var(--ye);color:#000;font:700 11px/18px system-ui;padding:0 4px;border:1px solid #fff}
 .tsw i.nb{position:absolute;top:-7px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:#c97a45;color:#fff;font:700 11px/18px system-ui;font-style:normal;padding:0 4px;border:1px solid #fff}
 .sec{background:var(--pan);border:1px solid var(--bd);border-radius:11px;padding:6px 8px;margin-bottom:10px}
@@ -130,7 +131,7 @@ nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-r
 .cyc b.hi{background:#7a5a1a}.cyc b.hh{background:#a0521a}
 table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:11px;border-top:0}
 .respop .h{font-size:20px;font-weight:900}.respop .i{padding:3px 0;border-top:1px solid #ffffff33;font-size:13px}.respop .x{font-size:11px;opacity:.75;margin-top:5px;text-align:right}
-#appbar{display:flex;gap:3px;flex-wrap:wrap;padding:3px 0;min-width:0}#appbar::-webkit-scrollbar{display:none}#appbar a,#appbar b{flex:none;font:700 11px/1 system-ui,sans-serif;border-radius:6px;padding:5px 4px;text-decoration:none;color:#e8ebf2;border:1.5px solid;background:transparent}#appbar b{color:#fff;border-color:transparent}#appbar a{transition:transform .15s}#appbar a.big{transform:scale(1.45);background:#2b3245;position:relative;z-index:5;box-shadow:0 0 0 2px #fff6}header .t #appbar{flex:1}
+#appbar{display:flex;gap:2px;flex-wrap:wrap;padding:3px 0;min-width:0}#appbar::-webkit-scrollbar{display:none}#appbar a,#appbar b{flex:none;font:700 10.5px/1 system-ui,sans-serif;border-radius:6px;padding:5px 3px;text-decoration:none;color:#e8ebf2;border:1.5px solid;background:transparent}#appbar b{color:#fff;border-color:transparent}#appbar a{transition:transform .15s}#appbar a.big{transform:scale(1.45);background:#2b3245;position:relative;z-index:5;box-shadow:0 0 0 2px #fff6}header .t #appbar{flex:1}
 </style>
 </head>
 <body>
@@ -138,7 +139,8 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 <script>
 (function () {   // pasek aplikacji: przyciski otwierające pozostałe aplikacje (ten sam adres px5060.github.io, wspólne kody)
   const A = [['/moje/', 'MOJE', '#c97a45'], ['/t50razem/', 'R50', '#2e7d4f'], ['/all60/', 'R60', '#2e7d4f'], ['/szukaj50/', 'S50', '#2e75b6'], ['/szukaj60/', 'S60', '#2e75b6'],
-    ['/szukaj50plus/', 'S+50', '#7a3fb0'], ['/szukaj60plus/', 'S+60', '#7a3fb0'], ['/szukajbust50/', 'L50', '#8e2a2a'], ['/szukajbust60/', 'L60', '#8e2a2a']];
+    ['/szukaj50plus/', 'S+50', '#7a3fb0'], ['/szukaj60plus/', 'S+60', '#7a3fb0'], ['/szukajbust50/', 'L50', '#8e2a2a'], ['/szukajbust60/', 'L60', '#8e2a2a'],
+    ['intent://www.sofascore.com/#Intent;scheme=https;package=com.sofascore.results;S.browser_fallback_url=https%3A%2F%2Fwww.sofascore.com%2F;end', 'SOFA', '#5b6bd6']];   // aplikacja SofaScore (Android; bez niej strona www)
   const el = document.getElementById('appbar'), here = location.pathname.replace(/index\.html$/, '');
   if (el) el.innerHTML = [...A.filter(([u]) => here.endsWith(u)), ...A.filter(([u]) => !here.endsWith(u))].map(([u, l, c]) => here.endsWith(u) ? `<b style="background:${c}">${l}</b>` : `<a href="${u}" style="border-color:${c}">${l}</a>`).join('');
   // 1. dotknięcie powiększa przycisk, 2. dotknięcie powiększonego otwiera aplikację (żeby nie przełączyć przez przypadek)
@@ -162,7 +164,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.19.3';
+const APP_VER = '1.19.7';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -619,11 +621,11 @@ function cycLine(it) {
   return `<div class="l3">WIN <b class="pos">${c.nw}</b> · LOST <b class="neg">${c.nl}</b>${c.l3.length ? ` · ostatnie: ${c.l3.map(v => v >= 0 ? `<i>W${v || ''}</i>` : '<i class="x">L</i>').join('')}` : ''}</div>`;
 }
 function row(it, extra, asLost) {
-  const r = it.r, pend = betsOf(it).filter(x => x.res === 'pend'), saved = r.ph === 2 && pend.some(x => x.b.row === r.wz), canBet = r.ph === 2 && it.d <= 3 && (it.grp !== 'done' || it.inBust && view === 'bust');
+  const r = it.r, pend = betsOf(it).filter(x => x.res === 'pend'), saved = r.ph === 2 && pend.some(x => x.b.row === r.wz), canBet = r.ph === 2 && it.d <= 3 && (it.grp !== 'done' || it.inBust && view === 'bust' || view === 'zak');
   const bu = it.inBust && (view === 'bust' || asLost), bnow = bu && it.d === 1, stk = it.rz ? r.stake : ST[r.bs];
   return `<div class="rw ${it.s.cls}${it.d === 1 && it.grp !== 'done' ? ' now' : ''}${bu ? (bnow ? ' bnow' : ' abust') : ''}" data-u="${esc(it.uid)}">
     ${bnow ? `<div class="graj">GRAJ Nr ${fmtN(r.wz + 1)} · k${r.bs + 1} · ${stk} zł${it.rz ? '' : ' na ' + it.tg}</div>` : ''}
-    <div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b>${it.tg !== 'x1x' ? `<span class="mu">${it.tg}</span>` : ''}<span class="sp"></span>${it.grp === 'done' && !(it.inBust && view === 'bust') ? '' : `<span class="kk">k${r.bs + 1}</span><b class="zl">${stk} zł</b>`}
+    <div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b>${it.tg !== 'x1x' ? `<span class="mu">${it.tg}</span>` : ''}<span class="sp"></span>${it.grp === 'done' && !(it.inBust && view === 'bust') && view !== 'zak' ? '' : `<span class="kk">k${r.bs + 1}</span><b class="zl">${stk} zł</b>`}
     ${canBet ? (saved ? '<span class="pos ok">✓</span>' : `<button class="btn sm ${it.d === 1 ? 'pri' : ''}" data-fo="${esc(it.uid)}">💰</button>`) : ''}</div>
     <div class="l2">${extra != null ? extra : shortPh(it)}${pend.length ? ` · <span style="color:var(--bl)">● postawiony k${pend[pend.length - 1].b.step} ${pend[pend.length - 1].b.stake} zł</span>` : ''}</div>${cycLine(it)}
     ${formU === it.uid && canBet ? betForm(it) : ''}</div>`;
@@ -721,9 +723,27 @@ function zaklady() {
   const day = new Date(); day.setHours(0, 0, 0, 0); const today = done.filter(x => x.b.t >= day.getTime()).reduce((a, x) => a + betVal(x), 0);
   let h = tabSwitch() + `<div class="tsw sub zs">${zb('R', '🧮 RAZEM')}${zb('S', '🔎 SZUKAJ')}${zb('L', '🔻 SZUKAJ LOST')}</div><div class="sum"><div><b>${zl(res)}</b>wynik łącznie</div><div><b>${fmtN(put)} zł</b>postawione (rozliczone)</div><div><b>${zl(today)}</b>dziś</div></div>
     <div class="hint" style="margin:-4px 0 10px">WIN = +2 × stawka (kurs 3,0), przegrana = −stawka. Zakłady zapisane tutaj albo w aplikacjach SZUKAJ.</div>`;
+  // modele, których ostatni zakład przegrał albo czeka — dopóki model nie trafi WIN po tym zakładzie, gram dalej kolejny krok
+  const M = new Map(); L.forEach(x => { if (!x.it) return; const o = M.get(x.it.uid); if (!o || x.b.row > o.b.row) M.set(x.it.uid, x); });
+  const wonAfter = x => (x.it.r.ev || []).find(e => e[1] === 1 && e[0] >= x.b.row);   // WIN modelu od wiersza zakładu
+  const CH = [...M.values()].filter(x => x.res !== 'win' && !wonAfter(x)).map(x => x.it);
+  const ZK = [...M.values()].filter(x => x.res === 'win' || wonAfter(x)).sort((a, b) => b.b.row - a.b.row);   // wygrany zakład / WIN po zakładzie → ZAKOŃCZONE (na samym dole)
+  if (CH.length) {
+    const n = D[only].n, lb = it => { const x = M.get(it.uid); return `ostatni zakład Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł ${x.res === 'lost' ? '<span class="neg">✖ przegrany</span>' : x.res === 'pend' ? '<span style="color:var(--or2)">czeka na wynik</span>' : '<span class="mu">model nie grał</span>'}`; };
+    const ex = it => `${it.d === 1 ? '' : shortPh(it) + '<br>'}${lb(it)}`;
+    const now = CH.filter(it => it.d === 1).sort(byApp), soon = CH.filter(it => it.d >= 2).sort((a, b) => a.d - b.d || byApp(a, b)), wait = CH.filter(it => !(it.d >= 1)).sort(byApp);
+    h += `<div class="hint" style="margin:0 0 6px">Modele po zakładzie — gram dalej kolejny krok, aż wejdzie WIN:</div>`;
+    h += sec(`🟧 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, now.length ? `razem ${fmtN(now.reduce((a, it) => a + (it.rz ? it.r.stake : ST[it.r.bs]), 0))} zł` : '', now, { cls: 'snow', empty: `Na Nr ${fmtN(n + 1)} żaden z tych modeli nie gra.`, extra: ex });
+    if (soon.length) h += sec('🟨 ZA CHWILĘ', 'TRIGGER już był', soon, { cls: 'ssoon', extra: ex });
+    if (wait.length) h += sec('🟦 CZEKAJĄ', 'na STEP / TRIGGER', wait, { cls: 'swait', extra: ex, key: 'zakwait', open: 1 });
+    h += `<div class="hint" style="margin:10px 0 6px">Wszystkie zakłady (najnowszy na górze):</div>`;
+  }
   if (!L.length) return h + '<div class="empty">Brak zapisanych zakładów w tej grupie. Na karcie „GRAJ TERAZ” dotknij <b>💰 Zapisz zakład</b>.</div>';
-  return h + L.map((x, i) => `<div class="bt ${x.res}" data-bi="${bets.indexOf(x)}"><span class="bdg ${x.s.cls}">${x.s.a}${x.t.slice(1)}</span><div>${esc(x.b.id)}${x.tg !== 'x1x' ? ' · ' + x.tg : ''} · Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł<div class="mu" style="font-size:11px">zapisany ${ago(x.b.t)} (${when(x.b.t)})</div></div>
+  h += L.map((x, i) => `<div class="bt ${x.res}" data-bi="${bets.indexOf(x)}"><span class="bdg ${x.s.cls}">${x.s.a}${x.t.slice(1)}</span><div>${esc(x.b.id)}${x.tg !== 'x1x' ? ' · ' + x.tg : ''} · Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł<div class="mu" style="font-size:11px">zapisany ${ago(x.b.t)} (${when(x.b.t)})</div></div>
     <div class="r">${x.res === 'pend' ? '<span style="color:var(--or2)">czeka</span>' : x.res === 'win' ? zl(betVal(x)) : x.res === 'lost' ? zl(betVal(x)) : '<span class="mu">model nie grał</span>'}<br><button class="ub" data-delbet="${bets.indexOf(x)}">↶ cofnij</button></div></div>`).join('');
+  if (ZK.length) h += `<details class="sec sdone" ${foldAt('zakdone', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${ZK.length}</span><span class="m">WIN po zakładzie</span></summary>${ZK.map(x => row(x.it,
+    x.res === 'win' ? `<span class="pos">✔ WIN na zakładzie</span> Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł · ${zl(betVal(x))}` : (w => `ostatni zakład Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł · potem <span class="pos">WIN modelu k${w[2]}</span> w Nr ${fmtN(w[0] + 1)} (bez zakładu)`)(wonAfter(x)))).join('')}</details>`;
+  return h;
 }
 const LT = (it, K, A, B, i) => {
   const m = it.m;
