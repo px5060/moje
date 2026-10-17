@@ -43,6 +43,7 @@ a.btn{text-decoration:none}
 details.sec>summary{list-style:none}details.sec>summary::-webkit-details-marker{display:none}details.sec>summary .m::after{content:' ▾'}details.sec[open]>summary .m::after{content:' ▴'}
 .rw{background:var(--card);border-left:4px solid #2e75b6;border-radius:8px;padding:6px 8px;margin-bottom:5px;cursor:pointer}
 .rw.abust{border:4px solid transparent;border-image:repeating-linear-gradient(-45deg,#a8423a 0 10px,#e8e2e2 10px 20px) 4}
+.box.abust{border:3px solid transparent;border-image:repeating-linear-gradient(-45deg,#a8423a 0 10px,#e8e2e2 10px 20px) 3}
 .rw.bnow{border:3px solid #8e2a2a;background:#2e1a1c;box-shadow:0 0 0 1px #8e2a2a inset}.rw.bnow .graj{background:#8e2a2a}
 .sec.slnow{border-color:#8e2a2a;box-shadow:0 0 0 1px #8e2a2a inset}
 .rw .graj{background:#c97a45;color:#fff;font-weight:800;font-size:14px;border-radius:6px;padding:5px 8px;margin-bottom:5px}
@@ -143,7 +144,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.17.1';
+const APP_VER = '1.17.2';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -824,8 +825,9 @@ function bankRow(it) {   // jeden model listy BANK = zwarty wiersz jak na TERAZ:
     : st === 'soon' ? `zakład banku na Nr ${fmtN(r.wz + 1)} · za ${it.d} ${it.d <= 4 ? 'wiersze' : 'wierszy'} · w oknie ${pct(B.p1)}`
     : st === 'wait' ? `${shortPh(it)} · okno k${B.ws}–k${B.we} · w oknie ${pct(B.p1)}`
     : `bank przegrał k${B.ws - w}–k${B.ws - 1} · model gra dalej bez banku (k${r.bs + 1}) · po WIN modelu bank gra <b>k${B.ws}–k${B.we}</b> (${pct(B.p1)})`;
-  return `<div class="rw ${it.s.cls}${st === 'now' ? ' now' : ''}" data-bkm="${esc(it.uid)}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b>${it.tg !== 'x1x' ? `<span class="mu">${it.tg}</span>` : ''}<span class="sp"></span><span class="kk">k${B.next}</span><b class="zl">${fmtN(bStake(B.next))} zł</b></div>
-    <div class="l2">${l2}</div></div>`;
+  const pl = r.sinceB === 0;   // model po LOST-cie (od LOST-u bez WIN) — biało-czerwona ramka jak na LOST
+  return `<div class="rw ${it.s.cls}${st === 'now' ? ' now' : ''}${pl ? ' abust' : ''}" data-bkm="${esc(it.uid)}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b>${it.tg !== 'x1x' ? `<span class="mu">${it.tg}</span>` : ''}<span class="sp"></span><span class="kk">k${B.next}</span><b class="zl">${fmtN(bStake(B.next))} zł</b></div>
+    <div class="l2">${pl ? `<span class="neg">po LOST (Nr ${fmtN(r.lbr + 1)})</span> · ` : ''}${l2}</div></div>`;
 }
 // ===== lista BANK: modele dodane przyciskiem „➕ Dodaj do BANK” (z wyszukiwarki albo z ekranu modelu) — niezależnie od MOJE =====
 const BKK = 'moje_v1_bank', BKI = {};   // BKI: uid → model pokazany na ekranie (dla przycisku dodaj / usuń)
@@ -884,8 +886,8 @@ function bqFind(t, q) {   // „P1037”, „1037”, „S+1037” (tylko SZUKAJ
 }
 function bqDet(it) {
   const r = it.r;
-  return `<div class="box" style="border-color:var(--or);margin-top:6px"><div style="display:flex;justify-content:space-between;gap:6px"><b style="font-size:16px">${srcBdg(it)}${esc(it.g.id)} <span class="mu">${it.tg}</span></b><span class="mu">${esc(it.s.name)} ${TABS[it.t].name}</span></div>
-    <div class="rule mu" style="font-size:12px;margin:3px 0 6px">${esc(ruleTxt(it.m))}</div><div style="font-size:14px">Teraz: ${phaseTxt(it)}</div>
+  return `<div class="box${r.sinceB === 0 ? ' abust' : ''}" style="border-color:var(--or);margin-top:6px"><div style="display:flex;justify-content:space-between;gap:6px"><b style="font-size:16px">${srcBdg(it)}${esc(it.g.id)} <span class="mu">${it.tg}</span></b><span class="mu">${esc(it.s.name)} ${TABS[it.t].name}</span></div>
+    <div class="rule mu" style="font-size:12px;margin:3px 0 6px">${esc(ruleTxt(it.m))}</div><div style="font-size:14px">Teraz: ${phaseTxt(it)}</div>${r.sinceB === 0 ? `<div class="neg" style="margin-top:4px">LOST w Nr ${fmtN(r.lbr + 1)} — od niego jeszcze bez WIN</div>` : ''}
     <div class="kv" style="margin-top:6px"><div><b>${r.nw + r.nbu}</b>cykli</div><div><b class="pos">${r.nw}</b>WIN</div><div><b class="neg">${r.nbu}</b>LOST</div><div><b>${zl(r.pnl)}</b>bilans</div></div>
     <div class="hint" style="margin-top:6px">Ostatnie cykle modelu (najnowszy z prawej):</div><div class="cyc">${r.ev.slice(-16).map(e => e[1] === 1 ? `<b>W${e[2]}</b>` : '<b class="x">LOST</b>').join('')}</div></div>` + bankBox(it);
 }
