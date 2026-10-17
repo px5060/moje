@@ -144,7 +144,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.17.3';
+const APP_VER = '1.18.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -197,7 +197,7 @@ function syncLog(t) {
 function validCode(t, c) { return t === 't50' ? /^[01]{3}$/.test(c) : /^[0-3][01]{2}$/.test(c); }
 function addCode(t, c) {
   if (!validCode(t, c)) { toast(t === 't50' ? 'Kod T50: trzy cyfry 0/1, np. 010' : 'Kod T60: pierwsza cyfra 0–3, potem dwie 0/1, np. 210'); return; }
-  const row = D[t].n, before = items.filter(it => !it.rz && it.t === t && it.grp !== 'done' && it.r.ph === 2 && it.r.wz === row);
+  const row = D[t].n, before = vitems.filter(it => !it.rz && it.t === t && it.grp !== 'done' && it.r.ph === 2 && it.r.wz === row);
   if (!lsSet(TABS[t].key, readAdded(t) + c)) { alert('BŁĄD zapisu pamięci telefonu!'); return; }   // czytaj-zmień-zapisz: nie gubi kodów z innych aplikacji
   const L = jget(LOGK(t)); L.push({ n: row + 1, c, t: Date.now(), here: 1 }); lsSet(LOGK(t), JSON.stringify(L.slice(-300)));
   reload();
@@ -375,7 +375,7 @@ function labOf(it) { const key = it.uid + '#' + D[it.t].n; let v = _lab.get(key)
 // ===== ZBIERANIE: MOJE ze wszystkich aplikacji SZUKAJ =====
 const MYK = (t, s, g) => t + s.pfx + 'moje_' + g, BTK = (t, s, g) => t + s.pfx + 'bets_' + g, MBK = (t, g) => t + '_szukaj_v1_mybust_' + g;
 const spec = m => norm(m).join('|');
-let items = [], bets = [], bitems = [];   // bitems = lista BANK
+let items = [], bets = [], bitems = [], vitems = [], BKMAP = new Map();   // bitems = lista BANK · vitems = modele na TERAZ / LOST (bez trybu „tylko BANK”)
 function mkItem(t, s, tg, g, extra) {
   const m = norm(g.m), r = sim(D[t], m, tg);
   return Object.assign({ t, s, tg, g, m, r, uid: [t, s.a, tg, spec(m)].join('~'), label: `${s.a}${t.slice(1)}${TABS[t].targets.length > 1 ? '·' + tg : ''}·${g.id}` }, extra || {});
@@ -398,7 +398,8 @@ function gather() {
   items.forEach(classify);
   bets.forEach(x => { x.it = byUid.get(x.uid); x.res = betRes(x); });
   for (const t in RZ) { const R = rzItems(t); R.forEach(it => byUid.set(it.uid, it)); items.push(...R); bets.push(...rzBets(t, byUid)); }
-  bitems = bankItems();
+  bitems = bankItems(); BKMAP = new Map(bitems.map(b => [b.uid, b]));
+  const NT = new Set(jget(NTK)); items.forEach(it => { it.hid = !it.rz && !it.gone && NT.has(it.uid); }); vitems = items.filter(it => !it.hid);
 }
 // ===== RAZEM (etap 2): MOJE GRY i MOJE ZAKŁADY z T50 / T60 RAZEM =====
 // Stan modeli RAZEM liczy sama appka RAZEM — MOJE otwiera ją w ukrytej ramce (ten sam adres i pamięć) i czyta jej MOJE GRY, karty i zakłady.
@@ -519,6 +520,7 @@ function untrack(it) {
   if (it.rz) { if (!confirm(`Usunąć ${it.label} z MOJE?`)) return; const w = rzWin(it.t); if (w) try { w.__MOJE.del(it.k, it.g.rid); } catch (e) {} }
   else if (it.gone) { if (!confirm(`Ukryć BUST ${it.label}?`)) return; const k = MBK(it.t, it.tg), a = jget(k), z = a.find(x => x.key === it.gone); if (z) z.hide = 1; lsSet(k, JSON.stringify(a)); }
   else { if (!confirm(`Usunąć ${it.label} z MOJE?`)) return; const k = MYK(it.t, it.s, it.tg); lsSet(k, JSON.stringify(jget(k).filter(g => !(g && Array.isArray(g.m) && spec(g.m) === spec(it.m))))); }
+  lsSet(NTK, JSON.stringify(jget(NTK).filter(u => u !== it.uid)));
   view = 'teraz'; sel = null; reload();
 }
 
@@ -573,7 +575,7 @@ function card(it) {
 const GRP = [['now', '🟧 GRAJ TERAZ', 'zakład na następnym wierszu'], ['soon', '🟨 ZA 2–3 WIERSZE', 'TRIGGER był, zakład za chwilę'], ['bust', '🟥 BUST', 'przegrany krok 8 — do pierwszego WIN po nim'], ['wait', '🟦 W GRZE', 'czeka na STEP / TRIGGER']];
 // ---- przełącznik tabeli: T50 | T60 (duże przyciski ze znaczkami) ----
 function tabSwitch(f) {
-  return `<div class="tsw">${Object.keys(TABS).map(t => { const L = items.filter(it => it.t === t && (f ? f(it) : it.grp !== 'done' && it.grp !== 'bust'));
+  return `<div class="tsw">${Object.keys(TABS).map(t => { const L = vitems.filter(it => it.t === t && (f ? f(it) : it.grp !== 'done' && it.grp !== 'bust'));
     return `<button class="${only === t ? 'on' : ''}" data-only="${t}">${TABS[t].name} <small>· ${L.length}</small>${bustBadges(L)}</button>`; }).join('')}</div>`;
 }
 // ---- jeden model = jeden zwarty wiersz: aplikacja · model · krok · stawka, pod spodem co się dzieje ----
@@ -593,7 +595,7 @@ function row(it, extra) {
     <div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b>${it.tg !== 'x1x' ? `<span class="mu">${it.tg}</span>` : ''}<span class="sp"></span>${it.grp === 'done' && !(it.inBust && view === 'bust') ? '' : `<span class="kk">k${r.bs + 1}</span><b class="zl">${stk} zł</b>`}
     ${canBet ? (saved ? '<span class="pos ok">✓</span>' : `<button class="btn sm ${it.d === 1 ? 'pri' : ''}" data-fo="${esc(it.uid)}">💰</button>`) : ''}</div>
     <div class="l2">${extra != null ? extra : shortPh(it)}${pend.length ? ` · <span style="color:var(--bl)">● postawiony k${pend[pend.length - 1].b.step} ${pend[pend.length - 1].b.stake} zł</span>` : ''}</div>
-    ${formU === it.uid && canBet ? betForm(it) : ''}</div>`;
+    ${!it.rz && BKMAP.has(it.uid) ? bankHint(BKMAP.get(it.uid)) : ''}${formU === it.uid && canBet ? betForm(it) : ''}</div>`;
 }
 // grupy zwijane / rozwijane (GRAJ TERAZ, ZA CHWILĘ, CZEKAJĄ …): stan każdej grupy zapamiętany (klucz data-fold), zostaje po odświeżeniu ekranu
 const FOLDK = 'moje_v1_fold', FOLD = (() => { try { const v = JSON.parse(lsGet(FOLDK, '{}')); return v && typeof v === 'object' ? v : {}; } catch (e) { return {}; } })();
@@ -612,8 +614,8 @@ function teraz() {
   let h = tabSwitch() + kodBox(t);
   if (rzSt[t] === 'wczytuję') h += `<div class="hint" style="margin:-2px 0 8px">⏳ Wczytuję modele z RAZEM ${TABS[t].name}…</div>`;
   if (rzSt[t] === 'błąd') h += `<div class="hint neg" style="margin:-2px 0 8px">Nie udało się wczytać RAZEM ${TABS[t].name} — otwórz MOJE ponownie.</div>`;
-  const L = items.filter(it => it.t === t);
-  if (!items.length && rzSt[t] !== 'wczytuję') return h + `<div class="empty">Brak modeli w MOJE.<br><br>W SZUKAJ, SZUKAJ+ albo SZUKAJ BUST przytrzymaj kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. W RAZEM: przytrzymaj kartę → <b>▶ Gram — dodaj do aplikacji MOJE</b>.</div>`;
+  const L = vitems.filter(it => it.t === t);
+  if (!vitems.length && !bitems.length && rzSt[t] !== 'wczytuję') return h + `<div class="empty">Brak modeli w MOJE.<br><br>W SZUKAJ, SZUKAJ+ albo SZUKAJ BUST przytrzymaj kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. W RAZEM: przytrzymaj kartę → <b>▶ Gram — dodaj do aplikacji MOJE</b>.</div>`;
   const act = L.filter(it => it.grp !== 'done'), play = act.filter(it => it.grp !== 'bust'), now = play.filter(it => it.d === 1).sort(byApp);
   const sum = now.reduce((a, it) => a + ST[it.r.bs], 0);
   // 1. CO GRAM NA NASTĘPNYM WIERSZU
@@ -628,7 +630,9 @@ function teraz() {
     for (let k = 8; k >= 1; k--) { const G = wait.filter(it => it.r.bs + 1 === k).sort(byApp); if (G.length) w += `<div class="kh">k${k} · ${ST[k - 1]} zł · ${G.length}</div>` + G.map(it => row(it)).join(''); }
     h += `<details class="sec swait" ${foldAt('T-wait', 0)}><summary class="sh"><span>🟦 CZEKAJĄ · ${wait.length}</span><span class="m">rozwiń</span></summary>${w}</details>`;
   }
-  // 4. BUST i ZAKOŃCZONE — tylko skrót
+  // 4. BANK, BUST i ZAKOŃCZONE — tylko skrót (dotknięcie → zakładka)
+  const BL = bitems.filter(b => b.t === t);
+  if (BL.length) h += `<div class="sec sheld link" data-go="bank"><div class="sh"><span>🏦 BANK +${bkw} · ${BL.length}${bankBadges(BL)}</span><span class="m">zakładka BANK ›</span></div></div>`;
   const bu = L.filter(it => it.inBust);
   if (bu.length) h += `<div class="sec sbust link" data-go="bust"><div class="sh"><span>🟥 PO BUST · ${bu.length}${bustBadges(bu)}</span><span class="m">zakładka BUST ›</span></div></div>`;
   const Z = L.filter(it => it.grp === 'done');
@@ -645,7 +649,7 @@ function bustBadges(L) {
   return (soon.length ? `<b class="soon">${soon.join(',')}</b>` : '') + (now ? `<i class="nb">${now}</i>` : '');
 }
 function busty() {
-  const isB = it => it.s.a === 'L', all = items.filter(it => it.inBust && it.t === only), A = all.filter(it => bsrc === 'B' ? isB(it) : !isB(it));
+  const isB = it => it.s.a === 'L', all = vitems.filter(it => it.inBust && it.t === only), A = all.filter(it => bsrc === 'B' ? isB(it) : !isB(it));
   const L = A.filter(it => !bks.length || bks.includes(it.r.bs + 1)).sort((a, b) => (a.d || 99) - (b.d || 99) || b.r.lbr - a.r.lbr);
   const nB = all.filter(isB), nM = all.filter(it => !isB(it));
   let h = tabSwitch(it => it.inBust) + `<div class="tsw sub src"><button class="${bsrc !== 'B' ? 'on' : ''}" data-bsrc="M">💥 MOJE MODELE <small>· ${nM.length}</small>${bustBadges(nM)}</button><button class="${bsrc === 'B' ? 'on' : ''}" data-bsrc="B">🔻 SZUKAJ LOST <small>· ${nB.length}</small>${bustBadges(nB)}</button></div>
@@ -666,7 +670,7 @@ function busty() {
   }
   // historia: wszystkie BUST-y moich modeli od dodania i co było po nich
   const H = [];
-  items.forEach(it => { if (it.t !== only || (bsrc === 'B') !== isB(it)) return; const st = it.gone ? it.brow : it.g.start || 0;
+  vitems.forEach(it => { if (it.t !== only || (bsrc === 'B') !== isB(it)) return; const st = it.gone ? it.brow : it.g.start || 0;
     it.r.bl.forEach(([row, c], j) => { if (row < st) return; const nx = it.r.ev.find(e => e[0] > row); H.push({ it, row, c, nx, prev: j ? c - it.r.bl[j - 1][1] : null }); }); });
   H.sort((a, b) => b.it.t.localeCompare(a.it.t) || b.row - a.row);
   if (H.length) h += `<details><summary>📜 Historia BUST-ów moich modeli · ${H.length} (co było po BUST-cie)</summary>
@@ -852,8 +856,42 @@ function bankToggle(uid) {
   else L.push({ t: it.t, a: it.s.a, tg: it.tg, m: it.m, id: it.g.id, t0: Date.now() });
   if (!lsSet(BKK, JSON.stringify(L))) { alert('BŁĄD zapisu pamięci telefonu!'); return; }
   toast(i >= 0 ? `Usunięto ${esc(it.g.id)} z BANK` : `Dodano ${esc(it.s.a)} ${esc(it.g.id)} ${it.tg} do BANK`);
+  if (i >= 0) lsSet(NTK, JSON.stringify(jget(NTK).filter(u => u !== uid)));   // był „tylko BANK” — jeśli jest w MOJE, wraca na TERAZ
   if (i >= 0 && view === 'bankm') view = 'bank';
   reload();
+}
+// ===== tryb gry modelu: 🟧 TERAZ (prosta progresja k1–k8) · 🏦 BANK (+3 / +5) · 🟧+🏦 OBA =====
+// TERAZ = model w MOJE GRY aplikacji źródłowej (widoczny na TERAZ / LOST) · BANK = na liście BANK · „tylko BANK” dla modelu z MOJE = ukryty z TERAZ (moje_v1_noteraz), nie skasowany
+const NTK = 'moje_v1_noteraz';
+const myIn = uid => items.some(x => x.uid === uid && !x.rz && !x.gone);
+function gameMode(uid) { const t = myIn(uid) && !jget(NTK).includes(uid), b = bankHas(uid); return t && b ? 'O' : b ? 'B' : t ? 'T' : ''; }
+function addMoje(it) {   // → MOJE GRY aplikacji źródłowej (ten sam zapis co „⇢ Gram — dodaj do MOJE” w SZUKAJ), śledzony od teraz
+  const k = MYK(it.t, it.s, it.tg), a = jget(k).filter(g => !(g && Array.isArray(g.m) && spec(g.m) === spec(it.m)));
+  a.push({ m: it.m.slice(0, it.s.nf), id: it.g.id, start: D[it.t].n, s0: it.r.bs + 1, t: Date.now() });
+  return lsSet(k, JSON.stringify(a));
+}
+function setMode(uid, v) {
+  const it = BKI[uid]; if (!it || gameMode(uid) === v) return;
+  const wantT = v !== 'B', wantB = v !== 'T', NT = jget(NTK).filter(u => u !== uid);
+  if (wantT) { if (!myIn(uid) && !addMoje(it)) { alert('BŁĄD zapisu pamięci telefonu!'); return; } }
+  else if (myIn(uid)) NT.push(uid);
+  lsSet(NTK, JSON.stringify(NT));
+  const L = jget(BKK), i = L.findIndex(x => x && Array.isArray(x.m) && bkUid(x) === uid);
+  if (wantB && i < 0) L.push({ t: it.t, a: it.s.a, tg: it.tg, m: it.m, id: it.g.id, t0: Date.now() });
+  if (!wantB && i >= 0) L.splice(i, 1);
+  if (!lsSet(BKK, JSON.stringify(L))) { alert('BŁĄD zapisu pamięci telefonu!'); return; }
+  toast(`${esc(it.s.a)} ${esc(it.g.id)}: ${v === 'T' ? 'gram na TERAZ (prosta progresja)' : v === 'B' ? 'gram tylko w BANK' : 'gram na TERAZ i w BANK'}`);
+  reload();
+}
+function modeRow(it) {
+  const m = gameMode(it.uid), b = (v, lab) => `<button class="${m === v ? 'on' : ''}" data-mode="${v}" data-mu="${esc(it.uid)}">${lab}</button>`;
+  return `<div class="hint" style="margin:0 0 3px">Tryb gry${m ? '' : ' — jeszcze nigdzie nie grasz tego modelu'}:</div><div class="tsw sub zs" style="margin-bottom:4px">${b('T', '🟧 TERAZ')}${b('B', '🏦 BANK')}${b('O', '🟧+🏦 OBA')}</div>
+    <div class="hint" style="margin:-2px 0 6px">TERAZ = prosta progresja k1–k8 na TERAZ · BANK = tylko bank +3 / +5 w zakładce BANK · OBA = jedno i drugie</div>`;
+}
+function bankHint(bi) {   // dopisek banku w wierszu TERAZ / LOST (tryb OBA)
+  const B = bi.bk[bkw], st = bState(bi, bkw), r = bi.r, z = `k${B.next} ${fmtN(bStake(B.next))} zł`;
+  const t = st === 'now' || st === 'soon' ? `<b>${z}</b> na Nr ${fmtN(r.wz + 1)}` : st === 'wait' ? `okno k${B.ws}–k${B.we} · następny ${z}` : `czeka na WIN modelu → potem k${B.ws}–k${B.we}`;
+  return `<div class="bkl${st === 'now' ? ' go' : ''}"><b class="w">🏦 +${B.w}</b>${t}</div>`;
 }
 function bankRules() {
   return `<details class="box"><summary>📘 Zasady liczenia banku (z przykładem)</summary><ol>
@@ -917,7 +955,7 @@ function bankView() {
     return `<button class="${only === k ? 'on' : ''}" data-only="${k}">${TABS[k].name} <small>· ${A.length}</small>${bankBadges(A)}</button>`; }).join('')}</div>`;
   if (L.length) { const cur = bkw; h += `<div class="tsw sub zs">${[3, 5].map(w => { bkw = w; const b = bankBadges(L); bkw = cur; return `<button class="${cur === w ? 'on' : ''}" data-bkw="${w}">BANK +${w}${b}</button>`; }).join('')}</div>`; }
   h += bankSearch();
-  if (!L.length) return h + `<div class="empty">Lista BANK ${TABS[t].name} jest pusta.<br><br>Znajdź model wyszukiwarką powyżej (albo otwórz swój model na TERAZ) i dotknij <b>➕ Dodaj do BANK</b>.</div>` + bankRules();
+  if (!L.length) return h + `<div class="empty">Lista BANK ${TABS[t].name} jest pusta.<br><br>Znajdź model wyszukiwarką powyżej (albo otwórz swój model na TERAZ) i wybierz tryb gry <b>🏦 BANK</b> albo <b>🟧+🏦 OBA</b>.</div>` + bankRules();
   const G = { now: [], soon: [], wait: [], held: [] }; L.forEach(it => G[bState(it, bkw)].push(it));
   const sec = (key, title, sub, A, cls, empty, body) => `<details class="sec ${cls}" ${foldAt(key, 1)}><summary class="sh"><span>${title}${A.length ? ` · ${A.length}` : ''}</span><span class="m">${sub}</span></summary>${body != null ? body : A.length ? A.map(bankRow).join('') : `<div class="none">${empty}</div>`}</details>`;
   const byK = A => { let w = ''; [...new Set(A.map(it => it.bk[bkw].next))].sort((a, b) => b - a).forEach(k => { const g = A.filter(it => it.bk[bkw].next === k); w += `<div class="kh">k${k} · ${fmtN(bStake(k))} zł · ${g.length}</div>` + g.map(bankRow).join(''); }); return w; };
@@ -955,7 +993,7 @@ function bankBox(it) {
   if (it.rz) return '';
   BKI[it.uid] = it; const inB = bankHas(it.uid);
   return `<div class="box" style="border-color:#8a7a20"><h4>BANK +3 / +5 (bez limitu · stawki ${BST.join(' · ')} zł, dalej ×2)</h4>
-    <button class="btn wide ${inB ? '' : 'pri'}" data-bkadd="${esc(it.uid)}" style="margin:0 0 4px">${inB ? '✓ Jest na liście BANK — usuń z listy' : '➕ Dodaj do BANK'}</button>${BKW.map(w => bankDet(it, bankOf(it, w))).join('')}</div>`;
+    ${modeRow(it)}${inB ? `<button class="btn sm" data-bkadd="${esc(it.uid)}" style="margin:0 0 4px;color:var(--rd)">✕ usuń z BANK</button>` : ''}${BKW.map(w => bankDet(it, bankOf(it, w))).join('')}</div>`;
 }
 function pomoc() {
   return `<div class="box"><h4>Co tu jest</h4>MOJE zbiera modele, które grasz, ze wszystkich aplikacji: <span class="bdg R">R</span>RAZEM (modele dodane w RAZEM 50 i 60 przyciskiem „▶ Gram — dodaj do aplikacji MOJE” — stan liczy sama appka RAZEM, wczytuje się kilka sekund), <span class="bdg S">S</span>SZUKAJ, <span class="bdg Sp">S+</span>SZUKAJ+, <span class="bdg B">L</span>SZUKAJ BUST — dla T50 i T60. Liczba przy znaczku = tabela (S50, S+60…).</div>
@@ -964,7 +1002,7 @@ function pomoc() {
     <div class="box"><h4>Znaczki na TERAZ</h4><b style="background:#c97a45;color:#fff;border-radius:8px;padding:0 5px">2</b> pomarańczowy = ile modeli gra na następnym wierszu.<br><b style="background:#FFD700;color:#000;border-radius:8px;padding:0 5px">2,3</b> żółty = za ile wierszy grają kolejne.</div>
     <div class="box"><h4>Kody</h4>Kody są wspólne z RAZEM i SZUKAJ — wpisany tu kod jest od razu we wszystkich aplikacjach (i odwrotnie). Przy każdej tabeli widać ostatni kod i <b>kiedy</b> go wpisano. Gdy kod wpisano w innej aplikacji, MOJE pokazuje, kiedy go tu zauważyło (przy otwarciu).<br>Zakładka <b>KODY</b>: kilka kodów naraz, import pliku (z cofnięciem całego importu) i eksport z nazwami jak w RAZEM — T50: TRÓJKA <b>v13_…kod.json</b>, T60: <b>xx1_pikoff_…json</b> i <b>trojka_xx1_v13_…kod.json</b>, żeby appki na PC je wychwyciły.</div>
     <div class="box"><h4>Kopia kodów</h4>Co 10 nowych kodów (licząc od ostatniego eksportu) MOJE samo zapisuje plik kopii (T50 TRÓJKA, T60 PIKOFF) do Pobranych — przy wpisaniu kodu tutaj. Gdy telefon wyczyści pamięć, wczytaj go w KODY → Import pliku. Wyłączysz to w KODY.</div>
-    <div class="box"><h4>Zakładka BANK</h4>Bank +3 / +5 (bez limitu) dla modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST. Bank gra w każdym cyklu modelu tylko pierwsze 3 (5) zakłady; model trafi → WIN banku (przeniesione kroki + krok modelu) i bank od k1; nie trafi → bank przegrywa 3 (5) kroki, czeka i w następnym cyklu gra dalej. Stawki 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512, dalej ×2.<br><b>Lista BANK</b> ma tylko modele dodane przyciskiem <b>➕ Dodaj do BANK</b> — znajdziesz go przy banku modelu w <b>🔎 wyszukiwarce</b> (dowolny model z SZUKAJ / SZUKAJ+ / SZUKAJ LOST, np. P1037) i na ekranie Twojego modelu z MOJE. Przełącznik <b>BANK +3 / BANK +5</b> wybiera, który bank prowadzi listę. Droga modelu jak na TERAZ: 🟦 CZEKAJĄ (okno banku trwa, czeka na STEP / TRIGGER) → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ. WIN → bank od k1 i znowu CZEKAJĄ. Bank przegrał swoje 3 (5) kroki → <b>⏸ CZEKAJĄ NA BANK</b>, aż model skończy cykl (WIN albo LOST) — potem znowu CZEKAJĄ, już na kolejnym oknie (np. k4–k6). Znaczki przy BANK, T50 / T60 i +3 / +5: żółty = za ile wierszy zakład banku, pomarańczowy = ile gra na następnym. Dotknięcie modelu → szanse zamknięcia banku na kolejnych krokach, stawki, gdzie bank się zamykał (% dla okien) i usunięcie z listy.</div>
+    <div class="box"><h4>Zakładka BANK</h4>Bank +3 / +5 (bez limitu) dla modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST. Bank gra w każdym cyklu modelu tylko pierwsze 3 (5) zakłady; model trafi → WIN banku (przeniesione kroki + krok modelu) i bank od k1; nie trafi → bank przegrywa 3 (5) kroki, czeka i w następnym cyklu gra dalej. Stawki 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512, dalej ×2.<br><b>Tryb gry</b> każdego modelu (przy banku modelu — w <b>🔎 wyszukiwarce</b> i na ekranie modelu): <b>🟧 TERAZ</b> = prosta progresja k1–k8 na TERAZ · <b>🏦 BANK</b> = tylko w BANK (znika z TERAZ, ale nie jest kasowany) · <b>🟧+🏦 OBA</b> = na TERAZ (z dopiskiem 🏦 banku przy wierszu) i w BANK. Na TERAZ rubryczka <b>🏦 BANK</b> ze znaczkami → dotknięcie przenosi do zakładki BANK. Przełącznik <b>BANK +3 / BANK +5</b> wybiera, który bank prowadzi listę. Droga modelu jak na TERAZ: 🟦 CZEKAJĄ (okno banku trwa, czeka na STEP / TRIGGER) → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ. WIN → bank od k1 i znowu CZEKAJĄ. Bank przegrał swoje 3 (5) kroki → <b>⏸ CZEKAJĄ NA BANK</b>, aż model skończy cykl (WIN albo LOST) — potem znowu CZEKAJĄ, już na kolejnym oknie (np. k4–k6). Znaczki przy BANK, T50 / T60 i +3 / +5: żółty = za ile wierszy zakład banku, pomarańczowy = ile gra na następnym. Dotknięcie modelu → szanse zamknięcia banku na kolejnych krokach, stawki, gdzie bank się zamykał (% dla okien) i usunięcie z listy.</div>
     <div class="box"><h4>Zakłady</h4>„💰 Zapisz zakład” zapisuje zakład w MOJE ZAKŁADY aplikacji, z której jest model — widać go tu i tam. Wynik liczy się sam po wpisaniu kodu.</div>
     <div class="box"><h4>Dodawanie modeli</h4>W aplikacji SZUKAJ przytrzymaj kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. Aplikacja doda model i otworzy go tutaj.</div>
     <div class="hint">MOJE ${APP_VER}</div>`;
@@ -973,11 +1011,11 @@ function render() {
   $('ver').textContent = APP_VER;
   const v = view === 'model' ? back : view === 'bankm' ? 'bank' : view;
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
-  const act = items.filter(it => it.grp !== 'done' && it.grp !== 'bust' && it.r.ph === 2), now = act.filter(it => it.d === 1).length;
+  const act = vitems.filter(it => it.grp !== 'done' && it.grp !== 'bust' && it.r.ph === 2), now = act.filter(it => it.d === 1).length;
   const soon = [...new Set(act.map(it => it.d).filter(d => d >= 2 && d <= 3))].sort();
   $('navT').innerHTML = `TERAZ${soon.length ? `<b class="soon">${soon.join(',')}</b>` : ''}${now ? `<i class="nb">${now}</i>` : ''}`;
   const pend = bets.filter(x => x.res === 'pend').length;
-  $('navB').innerHTML = `LOST${bustBadges(items.filter(it => it.inBust))}`;
+  $('navB').innerHTML = `LOST${bustBadges(vitems.filter(it => it.inBust))}`;
   $('navZ').innerHTML = `ZAKŁADY${pend ? `<i class="nb">${pend}</i>` : ''}`;
   $('navK').innerHTML = `BANK${bankBadges(bitems)}`;
   const ae = document.activeElement, keep = ae && ae.id && /^(in|pa|bq)_/.test(ae.id) ? [ae.id, ae.value] : null;
@@ -1010,6 +1048,7 @@ document.addEventListener('click', e => {
   if ((b = q('[data-bsub]'))) { bsub = b.dataset.bsub; lsSet('moje_v1_bsub', bsub); return render(); }
   if ((b = q('[data-bk]'))) { const k = +b.dataset.bk; bks = !k ? [] : bks.includes(k) ? bks.filter(x => x !== k) : [...bks, k].sort(); lsSet('moje_v1_bks', JSON.stringify(bks)); return render(); }
   if ((b = q('[data-u2]'))) return go('model', b.dataset.u2);
+  if ((b = q('[data-mode]'))) return setMode(b.dataset.mu, b.dataset.mode);
   if ((b = q('[data-bkadd]'))) return bankToggle(b.dataset.bkadd);
   if ((b = q('[data-bkm]'))) return go('bankm', b.dataset.bkm);
   if ((b = q('[data-go]'))) return go(b.dataset.go);

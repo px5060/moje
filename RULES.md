@@ -80,7 +80,8 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 
 ## Zakładka BANK (aplikacja MOJE) — bank +3 / +5
 
-- **Lista BANK** jest osobna od MOJE: tylko modele dodane przyciskiem **➕ Dodaj do BANK** (w banku modelu — w wyszukiwarce i na ekranie modelu z MOJE); zapis `moje_v1_bank` ({t, a, tg, m, id, t0}). Ten sam przycisk usuwa (✓ Jest na liście BANK — usuń). Modele z RAZEM — nie (ich cykle liczy RAZEM).
+- **Tryb gry** modelu (przy banku modelu: w wyszukiwarce i na ekranie modelu): 🟧 **TERAZ** = prosta progresja k1–k8 (model w MOJE GRY aplikacji źródłowej, widoczny na TERAZ / LOST) · 🏦 **BANK** = tylko na liście BANK (`moje_v1_bank`); model z MOJE w trybie BANK jest ukryty z TERAZ / LOST (`moje_v1_noteraz`), nie skasowany · 🟧+🏦 **OBA** = TERAZ i BANK, wiersz na TERAZ / LOST ma dopisek 🏦 banku (krok, stawka, okno). Model z wyszukiwarki ustawiony na TERAZ / OBA trafia do MOJE GRY aplikacji źródłowej (start = bieżący wiersz). „✕ usuń z BANK” przy modelu „tylko BANK” przywraca go na TERAZ (jeśli jest w MOJE). Modele z RAZEM — bez banku.
+- Na TERAZ rubryczka **🏦 BANK +3 · n** (jak „PO BUST”) ze znaczkami żółty / pomarańczowy → dotknięcie przenosi do zakładki BANK.
 - Biorę po kolei wszystkie cykle modelu na całej tabeli (od Nr 1). **W** = krok, na którym model wygrał; LOST modelu = brak WIN w każdym oknie.
 - **Bank +3** gra w każdym cyklu tylko pierwsze 3 zakłady modelu, **bank +5** — pierwsze 5.
 - Model trafi w tych zakładach → **WIN banku na kroku = przeniesione kroki + W**, bank wraca na k1.
