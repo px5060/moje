@@ -172,7 +172,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.21.2';
+const APP_VER = '1.21.3';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1092,13 +1092,12 @@ function render() {
   $('ver').textContent = APP_VER;
   const v = view === 'model' ? back : view === 'bankm' ? 'bank' : view;
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
-  const act = vitems.filter(it => it.grp !== 'done' && it.grp !== 'bust' && it.r.ph === 2), now = act.filter(it => it.d === 1).length;
-  const soon = [...new Set(act.map(it => it.d).filter(d => d >= 2 && d <= 3))].sort();
-  $('navT').innerHTML = `TERAZ${soon.length ? `<b class="soon">${soon.join(',')}</b>` : ''}${now ? `<i class="nb">${now}</i>` : ''}`;
+  // znaczki na dolnym pasku tylko dla wybranej tabeli (T50 albo T60) — jak na przycisku T50 / T60
+  $('navT').innerHTML = `TERAZ${allBadges(only)}`;
   // znaczki jak na TERAZ: żółty = za ile wierszy grają (2, 3), pomarańczowy = ile gra na następnym wierszu
-  $('navB').innerHTML = `LOST${bustBadges(vitems.filter(it => it.inBust))}`;
-  $('navZ').innerHTML = `ZAKŁADY${bustBadges(zakState(bets).CH)}`;
-  $('navK').innerHTML = `BANK${bankBadges35(bitems)}`;
+  $('navB').innerHTML = `LOST${bustBadges(vitems.filter(it => it.t === only && it.inBust))}`;
+  $('navZ').innerHTML = `ZAKŁADY${bustBadges(zakState(bets.filter(x => x.t === only)).CH)}`;
+  $('navK').innerHTML = `BANK${bankBadges35(bitems.filter(it => it.t === only))}`;
   const ae = document.activeElement, keep = ae && ae.id && /^(in|pa|bq)_/.test(ae.id) ? [ae.id, ae.value] : null;
   $('main').innerHTML = view === 'teraz' ? teraz() : view === 'zak' ? zaklady() : view === 'bust' ? busty() : view === 'bank' ? bankView() : view === 'bankm' ? bankModel() : view === 'model' ? model() : view === 'dane' ? dane() : pomoc();
   if (keep && $(keep[0])) { $(keep[0]).value = keep[1]; $(keep[0]).focus(); }
