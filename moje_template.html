@@ -36,7 +36,7 @@ a.btn{text-decoration:none}
 .sec{background:var(--pan);border:1px solid var(--bd);border-radius:11px;padding:6px 8px;margin-bottom:10px}
 .sec .sh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:800;font-size:14px;padding:4px 2px 6px;cursor:pointer;position:relative}
 .sec .sh .m{color:var(--mu);font-size:11.5px;font-weight:500;text-align:right}
-.sec.sheld{border-color:#5a4a8a}.sec.snow{border-color:var(--or);box-shadow:0 0 0 1px var(--or) inset}.sec.ssoon{border-color:#8a7a20}.sec.sbust{border-color:#8a1f1f}
+.sec.sheld{border-color:#5a4a8a}.sec.snow{border-color:var(--or);box-shadow:0 0 0 1px var(--or) inset}.sec.ssoon{border-color:#8a7a20}.sec.sbust{border-color:#8a1f1f}.sec.szak{border-color:#2e7d4f}
 .sec.link{cursor:pointer}.sec .sh b.soon,.sec .sh i.nb{position:static;display:inline-block;margin-left:6px;min-width:18px;height:18px;border-radius:9px;font:700 11px/18px system-ui;text-align:center;padding:0 4px}
 .sec .sh b.soon{background:var(--ye);color:#000}.sec .sh i.nb{background:#c97a45;color:#fff;font-style:normal}
 .sec .none{color:var(--mu);font-size:12.5px;padding:2px 4px 6px}
@@ -164,7 +164,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.19.7';
+const APP_VER = '1.19.8';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -620,12 +620,12 @@ function cycLine(it) {
   const c = cycOf(it); if (!c || !(c.nw + c.nl)) return '';
   return `<div class="l3">WIN <b class="pos">${c.nw}</b> · LOST <b class="neg">${c.nl}</b>${c.l3.length ? ` · ostatnie: ${c.l3.map(v => v >= 0 ? `<i>W${v || ''}</i>` : '<i class="x">L</i>').join('')}` : ''}</div>`;
 }
-function row(it, extra, asLost) {
-  const r = it.r, pend = betsOf(it).filter(x => x.res === 'pend'), saved = r.ph === 2 && pend.some(x => x.b.row === r.wz), canBet = r.ph === 2 && it.d <= 3 && (it.grp !== 'done' || it.inBust && view === 'bust' || view === 'zak');
+function row(it, extra, asLost, zk) {
+  const r = it.r, pend = betsOf(it).filter(x => x.res === 'pend'), saved = r.ph === 2 && pend.some(x => x.b.row === r.wz), canBet = r.ph === 2 && it.d <= 3 && (it.grp !== 'done' || it.inBust && view === 'bust' || view === 'zak' || zk);
   const bu = it.inBust && (view === 'bust' || asLost), bnow = bu && it.d === 1, stk = it.rz ? r.stake : ST[r.bs];
   return `<div class="rw ${it.s.cls}${it.d === 1 && it.grp !== 'done' ? ' now' : ''}${bu ? (bnow ? ' bnow' : ' abust') : ''}" data-u="${esc(it.uid)}">
     ${bnow ? `<div class="graj">GRAJ Nr ${fmtN(r.wz + 1)} · k${r.bs + 1} · ${stk} zł${it.rz ? '' : ' na ' + it.tg}</div>` : ''}
-    <div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b>${it.tg !== 'x1x' ? `<span class="mu">${it.tg}</span>` : ''}<span class="sp"></span>${it.grp === 'done' && !(it.inBust && view === 'bust') && view !== 'zak' ? '' : `<span class="kk">k${r.bs + 1}</span><b class="zl">${stk} zł</b>`}
+    <div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b>${it.tg !== 'x1x' ? `<span class="mu">${it.tg}</span>` : ''}<span class="sp"></span>${it.grp === 'done' && !(it.inBust && view === 'bust') && view !== 'zak' && !zk ? '' : `<span class="kk">k${r.bs + 1}</span><b class="zl">${stk} zł</b>`}
     ${canBet ? (saved ? '<span class="pos ok">✓</span>' : `<button class="btn sm ${it.d === 1 ? 'pri' : ''}" data-fo="${esc(it.uid)}">💰</button>`) : ''}</div>
     <div class="l2">${extra != null ? extra : shortPh(it)}${pend.length ? ` · <span style="color:var(--bl)">● postawiony k${pend[pend.length - 1].b.step} ${pend[pend.length - 1].b.stake} zł</span>` : ''}</div>${cycLine(it)}
     ${formU === it.uid && canBet ? betForm(it) : ''}</div>`;
@@ -670,6 +670,9 @@ function teraz() {
   const BL = bitems.filter(b => b.t === t), bkNow = BL.filter(b => bState(b, bkw) === 'now');
   if (BL.length) h += `<details class="sec sheld" ${foldAt('T-bank', 1)}><summary class="sh" data-lp="bank"><span>🏦 BANK +${bkw} · ${BL.length}${bankBadges(BL)}</span><span class="m">przytrzymaj → BANK</span></summary>
     ${bkNow.length ? bkNow.map(bankRow).join('') : `<div class="none">Na Nr ${fmtN(n + 1)} żaden bank +${bkw} nie gra.</div>`}</details>`;
+  const ZS = zakState(bets.filter(x => x.t === t)), zc = ZS.CH, zNow = zc.filter(it => it.d === 1).sort(byApp);
+  if (zc.length) h += `<details class="sec szak" ${foldAt('T-zak', 1)}><summary class="sh" data-lp="zak"><span>💰 ZAKŁADY · ${zc.length}${bustBadges(zc)}</span><span class="m">przytrzymaj → ZAKŁADY</span></summary>
+    ${zNow.length ? zNow.map(it => row(it, zakLb(ZS.M.get(it.uid)), 0, 1)).join('') : `<div class="none">Na Nr ${fmtN(n + 1)} żaden model po zakładzie nie gra.</div>`}</details>`;
   const Z = L.filter(it => it.grp === 'done');
   if (Z.length) h += sec('✅ ZAKOŃCZONE', 'WIN albo BUST (krok 8)', Z, { key: 'T-done', cls: 'sdone', extra: it => (it.rz ? `${it.res.win ? '✔ WIN' : '<span class="neg">✖ BUST / LOSS</span>'} · Nr ${fmtN(it.res.i + 1)}` : `${it.res.win ? `✔ WIN k${it.res.k}` : '<span class="neg">✖ BUST k8</span>'} · Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}`) + (it.res.win ? '' : it.inBust ? ' · <b>w zakładce BUST</b>' : ' · potem WIN') });
   return h;
@@ -715,6 +718,13 @@ function busty() {
 }
 const ZG = x => x.s.a === 'R' ? 'R' : x.s.a === 'L' ? 'L' : 'S';   // grupa zakładu: RAZEM · SZUKAJ (S i S+) · SZUKAJ LOST
 let zsrc = (v => ['R', 'S', 'L'].includes(v) ? v : 'R')(lsGet('moje_v1_zsrc', 'R'));
+// modele po zakładzie: ostatni zakład przegrany / czeka / model nie grał — dopóki po nim nie wejdzie WIN (wtedy ZAKOŃCZONE)
+const wonAfter = x => (x.it.r.ev || []).find(e => e[1] === 1 && e[0] >= x.b.row);   // WIN modelu od wiersza zakładu
+function zakState(L) {
+  const M = new Map(); L.forEach(x => { if (!x.it) return; const o = M.get(x.it.uid); if (!o || x.b.row > o.b.row) M.set(x.it.uid, x); });
+  return { M, CH: [...M.values()].filter(x => x.res !== 'win' && !wonAfter(x)).map(x => x.it), ZK: [...M.values()].filter(x => x.res === 'win' || wonAfter(x)).sort((a, b) => b.b.row - a.b.row) };
+}
+const zakLb = x => `ostatni zakład Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł ${x.res === 'lost' ? '<span class="neg">✖ przegrany</span>' : x.res === 'pend' ? '<span style="color:var(--or2)">czeka na wynik</span>' : '<span class="mu">model nie grał</span>'}`;
 function zaklady() {
   const LA = bets.filter(x => x.t === only), np = g => LA.filter(x => ZG(x) === g && x.res === 'pend').length;
   const zb = (g, lab) => { const n = LA.filter(x => ZG(x) === g).length, p = np(g); return `<button class="${zsrc === g ? 'on' : ''}" data-zsrc="${g}">${lab} <small>· ${n}</small>${p ? `<i class="nb">${p}</i>` : ''}</button>`; };
@@ -724,12 +734,9 @@ function zaklady() {
   let h = tabSwitch() + `<div class="tsw sub zs">${zb('R', '🧮 RAZEM')}${zb('S', '🔎 SZUKAJ')}${zb('L', '🔻 SZUKAJ LOST')}</div><div class="sum"><div><b>${zl(res)}</b>wynik łącznie</div><div><b>${fmtN(put)} zł</b>postawione (rozliczone)</div><div><b>${zl(today)}</b>dziś</div></div>
     <div class="hint" style="margin:-4px 0 10px">WIN = +2 × stawka (kurs 3,0), przegrana = −stawka. Zakłady zapisane tutaj albo w aplikacjach SZUKAJ.</div>`;
   // modele, których ostatni zakład przegrał albo czeka — dopóki model nie trafi WIN po tym zakładzie, gram dalej kolejny krok
-  const M = new Map(); L.forEach(x => { if (!x.it) return; const o = M.get(x.it.uid); if (!o || x.b.row > o.b.row) M.set(x.it.uid, x); });
-  const wonAfter = x => (x.it.r.ev || []).find(e => e[1] === 1 && e[0] >= x.b.row);   // WIN modelu od wiersza zakładu
-  const CH = [...M.values()].filter(x => x.res !== 'win' && !wonAfter(x)).map(x => x.it);
-  const ZK = [...M.values()].filter(x => x.res === 'win' || wonAfter(x)).sort((a, b) => b.b.row - a.b.row);   // wygrany zakład / WIN po zakładzie → ZAKOŃCZONE (na samym dole)
+  const { M, CH, ZK } = zakState(L);
   if (CH.length) {
-    const n = D[only].n, lb = it => { const x = M.get(it.uid); return `ostatni zakład Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł ${x.res === 'lost' ? '<span class="neg">✖ przegrany</span>' : x.res === 'pend' ? '<span style="color:var(--or2)">czeka na wynik</span>' : '<span class="mu">model nie grał</span>'}`; };
+    const n = D[only].n, lb = it => zakLb(M.get(it.uid));
     const ex = it => `${it.d === 1 ? '' : shortPh(it) + '<br>'}${lb(it)}`;
     const now = CH.filter(it => it.d === 1).sort(byApp), soon = CH.filter(it => it.d >= 2).sort((a, b) => a.d - b.d || byApp(a, b)), wait = CH.filter(it => !(it.d >= 1)).sort(byApp);
     h += `<div class="hint" style="margin:0 0 6px">Modele po zakładzie — gram dalej kolejny krok, aż wejdzie WIN:</div>`;
