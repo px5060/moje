@@ -80,8 +80,8 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 
 ## Zakładka BANK (aplikacja MOJE) — bank +3 / +5
 
-- **Tryb gry** modelu (przy banku modelu: w wyszukiwarce i na ekranie modelu): 🟧 **TERAZ** = prosta progresja k1–k8 (model w MOJE GRY aplikacji źródłowej, widoczny na TERAZ / LOST) · 🏦 **BANK** = tylko na liście BANK (`moje_v1_bank`); model z MOJE w trybie BANK jest ukryty z TERAZ / LOST (`moje_v1_noteraz`), nie skasowany · 🟧+🏦 **OBA** = TERAZ i BANK, wiersz na TERAZ / LOST ma dopisek 🏦 banku (krok, stawka, okno). Model z wyszukiwarki ustawiony na TERAZ / OBA trafia do MOJE GRY aplikacji źródłowej (start = bieżący wiersz). „✕ usuń z BANK” przy modelu „tylko BANK” przywraca go na TERAZ (jeśli jest w MOJE). Modele z RAZEM — bez banku.
-- Na TERAZ rubryczka **🏦 BANK +3 · n** (jak „PO BUST”) ze znaczkami żółty / pomarańczowy → dotknięcie przenosi do zakładki BANK.
+- **TERAZ albo BANK — nigdy oba.** Model jest albo na TERAZ / LOST (prosta progresja k1–k8, MOJE GRY aplikacji źródłowej), albo w BANK (`moje_v1_bank`). Model z listy BANK nie jest pokazywany na TERAZ / LOST (zapis w MOJE zostaje). Przełącznik przy modelu (ekran modelu z MOJE, ekran banku modelu, wyszukiwarka): **🏦 Przenieś do BANK** / **🟧 Przenieś do TERAZ** (model z wyszukiwarki → MOJE GRY aplikacji źródłowej, start = bieżący wiersz). „✕ usuń z BANK” usuwa całkiem (z BANK i z MOJE). Tryb gry TERAZ / BANK / OBA (1.18.0) wycofany.
+- Na TERAZ grupy **🟥 PO BUST (LOST)** i **🏦 BANK +3** — zwijane jak pozostałe (domyślnie rozwinięte, stan zapamiętany); w środku tylko modele, które grają **na następnym wierszu** (LOST w wyglądzie jak na zakładce LOST, BANK jak na liście BANK); znaczki żółty / pomarańczowy w nagłówku. **Krótkie dotknięcie** nagłówka zwija / rozwija, **przytrzymanie** (~0,5 s) przenosi do zakładki LOST / BANK.
 - Biorę po kolei wszystkie cykle modelu na całej tabeli (od Nr 1). **W** = krok, na którym model wygrał; LOST modelu = brak WIN w każdym oknie.
 - **Bank +3** gra w każdym cyklu tylko pierwsze 3 zakłady modelu, **bank +5** — pierwsze 5.
 - Model trafi w tych zakładach → **WIN banku na kroku = przeniesione kroki + W**, bank wraca na k1.
