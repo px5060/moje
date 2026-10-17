@@ -14,8 +14,8 @@
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.35 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
 header{position:sticky;top:0;z-index:10;background:var(--pan);border-bottom:1px solid var(--bd);padding:8px 12px}
-header .t{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-header h1{font-size:16px;margin:0}header .n{color:var(--mu);font-size:12px}
+header .t{display:flex;justify-content:space-between;align-items:center;gap:8px}
+header h1{font-size:16px;margin:0}header .n{color:var(--mu);font-size:10px;position:absolute;right:6px;bottom:1px}header{position:sticky}header .t{position:relative;padding-bottom:6px}
 main{padding:10px 12px 90px;max-width:760px;margin:0 auto}
 .btn{background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:8px 12px;font-size:14px;font-weight:600}
 .btn.pri{background:var(--or);border-color:var(--or);color:#fff}.btn.ok{background:#1f8a4c;border-color:#1f8a4c;color:#fff}
@@ -50,7 +50,8 @@ details.sec>summary{list-style:none}[data-lp]{-webkit-user-select:none;user-sele
 .rw.abust .graj{background:#8e2a2a}
 .rw.Sp{border-left-color:#7030a0}.rw.R{border-left-color:#1f8a4c}.rw.B{border-left-color:#b3261e}.rw.now{background:#3a2a1c}
 .rw .l1{display:flex;align-items:center;gap:6px;font-size:14px}.rw .l1 .sp{flex:1}.rw .l1 .zl{min-width:52px;text-align:right}.rw .l1 .btn{padding:3px 9px}.rw .l1 .ok{font-weight:800;padding:0 6px}
-.rw .l2{color:var(--mu);font-size:12px;margin-top:2px}.rw.now .l2{color:#ffd0a8}.rw .bdg{margin-right:0}
+.rw .l2{color:var(--mu);font-size:12px;margin-top:2px}
+.rw .l3{color:var(--mu);font-size:11.5px;margin-top:3px;display:flex;align-items:center;gap:3px;flex-wrap:wrap}.rw .l3 b{margin:0 2px}.rw .l3 i{font-style:normal;font-weight:700;font-size:11px;color:#fff;border-radius:4px;padding:1px 5px;background:#2b7a4b}.rw .l3 i.x{background:#8e2a2a}.rw.now .l2{color:#ffd0a8}.rw .bdg{margin-right:0}
 .flt{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
 /* wpis kodów */
 .kod{background:var(--pan);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin-bottom:8px}
@@ -129,10 +130,27 @@ nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-r
 .cyc b.hi{background:#7a5a1a}.cyc b.hh{background:#a0521a}
 table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:11px;border-top:0}
 .respop .h{font-size:20px;font-weight:900}.respop .i{padding:3px 0;border-top:1px solid #ffffff33;font-size:13px}.respop .x{font-size:11px;opacity:.75;margin-top:5px;text-align:right}
+#appbar{display:flex;gap:3px;flex-wrap:wrap;padding:3px 0;min-width:0}#appbar::-webkit-scrollbar{display:none}#appbar a,#appbar b{flex:none;font:700 11px/1 system-ui,sans-serif;border-radius:6px;padding:5px 4px;text-decoration:none;color:#e8ebf2;border:1.5px solid;background:transparent}#appbar b{color:#fff;border-color:transparent}#appbar a{transition:transform .15s}#appbar a.big{transform:scale(1.45);background:#2b3245;position:relative;z-index:5;box-shadow:0 0 0 2px #fff6}header .t #appbar{flex:1}
 </style>
 </head>
 <body>
-<header><div class="t"><h1>MOJE · wszystkie gry</h1><span class="n" id="ver"></span></div></header>
+<header><div class="t"><div id="appbar"></div><span class="n" id="ver"></span></div></header>
+<script>
+(function () {   // pasek aplikacji: przyciski otwierające pozostałe aplikacje (ten sam adres px5060.github.io, wspólne kody)
+  const A = [['/moje/', 'MOJE', '#c97a45'], ['/t50razem/', 'R50', '#2e7d4f'], ['/all60/', 'R60', '#2e7d4f'], ['/szukaj50/', 'S50', '#2e75b6'], ['/szukaj60/', 'S60', '#2e75b6'],
+    ['/szukaj50plus/', 'S+50', '#7a3fb0'], ['/szukaj60plus/', 'S+60', '#7a3fb0'], ['/szukajbust50/', 'L50', '#8e2a2a'], ['/szukajbust60/', 'L60', '#8e2a2a']];
+  const el = document.getElementById('appbar'), here = location.pathname.replace(/index\.html$/, '');
+  if (el) el.innerHTML = [...A.filter(([u]) => here.endsWith(u)), ...A.filter(([u]) => !here.endsWith(u))].map(([u, l, c]) => here.endsWith(u) ? `<b style="background:${c}">${l}</b>` : `<a href="${u}" style="border-color:${c}">${l}</a>`).join('');
+  // 1. dotknięcie powiększa przycisk, 2. dotknięcie powiększonego otwiera aplikację (żeby nie przełączyć przez przypadek)
+  if (el) el.addEventListener('click', e => {
+    const a = e.target.closest('a'); if (!a) return;
+    if (a.classList.contains('big')) return;
+    e.preventDefault(); el.querySelectorAll('a.big').forEach(x => x.classList.remove('big')); a.classList.add('big');
+    clearTimeout(el._t); el._t = setTimeout(() => a.classList.remove('big'), 4000);
+  });
+})();
+</script>
+
 <main id="main"></main>
 <nav>
   <button data-v="teraz" class="on" id="navT">TERAZ</button>
@@ -144,7 +162,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.19.1';
+const APP_VER = '1.19.3';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -586,6 +604,20 @@ function shortPh(it) {
   if (r.ph === 1) return r.st === 1 ? `STEP był · czeka na STEP2` : `STEP był · czeka na TRIGGER${TN(m) > 1 ? ` ${r.tc + 1}/${TN(m)}` : ''}`;
   return `czeka na STEP${m[0] === 'S' && m[2] > 1 && r.cnt ? ` (${r.cnt}/${m[2]})` : ''}`;
 }
+// statystyka na karcie: WIN · LOST na całej tabeli + 3 ostatnie cykle (kwadraciki jak w SZUKAJ)
+const _cyc = new Map();
+function cycOf(it) {
+  if (!it.rz) return { nw: it.r.nw || 0, nl: it.r.nbu || 0, l3: (it.r.ev || []).slice(-3).map(e => e[1] === 1 ? e[2] || 0 : -1) };
+  const n = D[it.t].n, key = it.uid + '@' + n; if (_cyc.has(key)) return _cyc.get(key);
+  const X = rzA(it); if (!X) return null;   // RAZEM: z linijek tabeli w RAZEM (wiersz z WIN / LOST)
+  const ev = []; for (let i = 0; i < n; i++) { let c = {}; try { c = X.A.cell(X.mi, i) || {}; } catch (e) {} const t = c.gra ? c.gra.t : c.stan ? c.stan.t : '', k = t && rzCls(t);
+    if (k === 'k6') { const m = /k\s?(\d+)/i.exec(t); ev.push(m ? +m[1] : 0); } else if (k === 'k8') ev.push(-1); }
+  const o = { nw: ev.filter(v => v >= 0).length, nl: ev.filter(v => v < 0).length, l3: ev.slice(-3) }; _cyc.set(key, o); return o;
+}
+function cycLine(it) {
+  const c = cycOf(it); if (!c || !(c.nw + c.nl)) return '';
+  return `<div class="l3">WIN <b class="pos">${c.nw}</b> · LOST <b class="neg">${c.nl}</b>${c.l3.length ? ` · ostatnie: ${c.l3.map(v => v >= 0 ? `<i>W${v || ''}</i>` : '<i class="x">L</i>').join('')}` : ''}</div>`;
+}
 function row(it, extra, asLost) {
   const r = it.r, pend = betsOf(it).filter(x => x.res === 'pend'), saved = r.ph === 2 && pend.some(x => x.b.row === r.wz), canBet = r.ph === 2 && it.d <= 3 && (it.grp !== 'done' || it.inBust && view === 'bust');
   const bu = it.inBust && (view === 'bust' || asLost), bnow = bu && it.d === 1, stk = it.rz ? r.stake : ST[r.bs];
@@ -593,7 +625,7 @@ function row(it, extra, asLost) {
     ${bnow ? `<div class="graj">GRAJ Nr ${fmtN(r.wz + 1)} · k${r.bs + 1} · ${stk} zł${it.rz ? '' : ' na ' + it.tg}</div>` : ''}
     <div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b>${it.tg !== 'x1x' ? `<span class="mu">${it.tg}</span>` : ''}<span class="sp"></span>${it.grp === 'done' && !(it.inBust && view === 'bust') ? '' : `<span class="kk">k${r.bs + 1}</span><b class="zl">${stk} zł</b>`}
     ${canBet ? (saved ? '<span class="pos ok">✓</span>' : `<button class="btn sm ${it.d === 1 ? 'pri' : ''}" data-fo="${esc(it.uid)}">💰</button>`) : ''}</div>
-    <div class="l2">${extra != null ? extra : shortPh(it)}${pend.length ? ` · <span style="color:var(--bl)">● postawiony k${pend[pend.length - 1].b.step} ${pend[pend.length - 1].b.stake} zł</span>` : ''}</div>
+    <div class="l2">${extra != null ? extra : shortPh(it)}${pend.length ? ` · <span style="color:var(--bl)">● postawiony k${pend[pend.length - 1].b.step} ${pend[pend.length - 1].b.stake} zł</span>` : ''}</div>${cycLine(it)}
     ${formU === it.uid && canBet ? betForm(it) : ''}</div>`;
 }
 // grupy zwijane / rozwijane (GRAJ TERAZ, ZA CHWILĘ, CZEKAJĄ …): stan każdej grupy zapamiętany (klucz data-fold), zostaje po odświeżeniu ekranu
@@ -718,8 +750,8 @@ const rzCls = t => /^\s*(STEP|TRIGGER)[^W]*✓/.test(t) ? 'k3' : /LOST|BUST/.tes
 function rzRows(it) {
   const X = rzA(it); if (!X) return '';
   const n = D[it.t].n, r = it.r, nx = it.d === 1, L = [];
-  for (let i = n - 1; i >= Math.max(0, n - 30); i--) { let c = {}; try { c = X.A.cell(X.mi, i) || {}; } catch (e) {} const t = c.gra ? c.gra.t : c.stan ? c.stan.t : ''; L.push(`<tr class="${rzCls(t)}"><td class="nr">${fmtN(i + 1)}</td><td class="cd">${code(it.t, i)}</td><td>${t ? esc(t) : '<span class="mu">—</span>'}</td></tr>`); }
-  return `<div class="box"><h4>Ostatnie 30 wierszy (najnowszy na górze)</h4><table class="rows">
+  for (let i = n - 1; i >= Math.max(0, n - 20); i--) { let c = {}; try { c = X.A.cell(X.mi, i) || {}; } catch (e) {} const t = c.gra ? c.gra.t : c.stan ? c.stan.t : ''; L.push(`<tr class="${rzCls(t)}"><td class="nr">${fmtN(i + 1)}</td><td class="cd">${code(it.t, i)}</td><td>${t ? esc(t) : '<span class="mu">—</span>'}</td></tr>`); }
+  return `<div class="box"><h4>Ostatnie 20 wierszy (najnowszy na górze)</h4><table class="rows">
     ${r.ph === 2 ? `<tr class="${nx ? 'nx' : 'k5'}"><td class="nr">Nr ${fmtN(r.wz + 1)}</td><td class="cd">?</td><td>${nx ? 'GRAJ TERAZ' : 'tu będzie zakład'} · k${r.bs + 1} · ${r.stake} zł</td></tr>` : ''}${L.join('')}</table></div>`;
 }
 function rzHow(it) {
@@ -739,10 +771,10 @@ function rzModel(it) {
     <div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (wynik zobaczysz w ZAKŁADY):</div>${betForm(it, 1)}</div>
     ${rzHow(it)}
     ${rows.length ? `<div class="box"><h4>Statystyki modelu (RAZEM ${TABS[it.t].name})</h4><table class="rows st">${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td style="text-align:right;font-weight:700">${esc(v)}</td></tr>`).join('')}</table></div>` : ''}
+    ${B.length ? `<div class="box"><h4>Moje zakłady na tym modelu</h4>${B.map(x => `<div class="bt ${x.res}"><div>Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł <span class="mu">(${ago(x.b.t)})</span></div><div class="r">${x.res === 'pend' ? 'czeka' : x.res === 'none' ? '<span class="mu">nie grał</span>' : zl(betVal(x))} <button class="btn sm" data-delbet="${bets.indexOf(x)}">✕</button></div></div>`).join('')}</div>` : ''}
     ${rzRows(it)}
     ${c ? `<div class="box"><h4>Co pokazuje RAZEM</h4>${(c.meta || []).map(m => `<div class="mu" style="font-size:12px">${esc(m)}</div>`).join('')}
       ${c.lines.map(l => `<div class="bt ${l.p === 1 ? 'pend' : l.p === 4 ? 'pend' : 'none'}" style="cursor:default"><div>${esc(l.txt || '')}<div class="mu" style="font-size:11px">${esc(l.sub || '')}</div></div></div>`).join('')}</div>` : ''}
-    ${B.length ? `<div class="box"><h4>Moje zakłady na tym modelu</h4>${B.map(x => `<div class="bt ${x.res}"><div>Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł <span class="mu">(${ago(x.b.t)})</span></div><div class="r">${x.res === 'pend' ? 'czeka' : x.res === 'none' ? '<span class="mu">nie grał</span>' : zl(betVal(x))} <button class="btn sm" data-delbet="${bets.indexOf(x)}">✕</button></div></div>`).join('')}</div>` : ''}
     <a class="btn wide" href="${RZ[it.t].url}">Otwórz RAZEM ${TABS[it.t].name}</a>
     <button class="btn wide" data-untrack="1" style="color:var(--rd)">✕ Usuń z MOJE</button>`;
 }
@@ -776,14 +808,16 @@ function model() {
     <div class="cyc">${last.map(e => e[1] === 1 ? `<b>W${e[2]}</b>` : '<b class="x">B</b>').join('')}</div>
     ${r.bl.length ? `<div class="hint" style="margin-top:8px">BUST-y w wierszach: ${r.bl.slice(-6).map(b => 'Nr ' + fmtN(b[0] + 1)).join(' · ')}${gaps.length ? `<br>odstępy między nimi w cyklach: ${gaps.join(' · ')}` : ''}</div>` : ''}</div>`;
   if (back !== 'bank') h += bankBox(it);
-  const rows = []; for (let i = n - 1; i >= Math.max(0, n - 30); i--) rows.push(i);
-  const nx = r.ph === 2 && r.wz === n;
-  h += `<div class="box"><h4>Ostatnie 30 wierszy (najnowszy na górze)</h4><table class="rows">
-    ${r.ph === 2 ? `<tr class="${nx ? 'nx' : 'k5'}"><td class="nr">Nr ${fmtN(r.wz + 1)}</td><td class="cd">?</td><td>${nx ? 'GRAJ TERAZ' : 'tu będzie zakład'} · k${r.bs + 1} · ${ST[r.bs]} zł</td></tr>` : ''}
-    ${rows.map(i => `<tr class="k${lab.K[i]}"><td class="nr">${fmtN(i + 1)}</td><td class="cd">${code(it.t, i)}</td><td>${LT(it, lab.K[i], lab.A[i], lab.B[i], i)}</td></tr>`).join('')}</table></div>`;
   const B = betsOf(it).sort((a, b) => b.b.row - a.b.row);
   if (B.length) h += `<div class="box"><h4>Moje zakłady na tym modelu</h4>${B.map(x => `<div class="bt ${x.res}"><div>Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł <span class="mu">(${ago(x.b.t)})</span></div><div class="r">${x.res === 'pend' ? 'czeka' : x.res === 'none' ? '<span class="mu">nie grał</span>' : zl(betVal(x))} <button class="btn sm" data-delbet="${bets.indexOf(x)}">✕</button></div></div>`).join('')}</div>`;
-  h += `<a class="btn wide" href="${it.s.url[it.t]}">Otwórz ${esc(it.s.name)} ${TABS[it.t].name}</a>
+  const rows = []; for (let i = n - 1; i >= Math.max(0, n - 20); i--) rows.push(i);
+  const nx = r.ph === 2 && r.wz === n;
+  h += `<div class="box"><h4>Ostatnie 20 wierszy (najnowszy na górze)</h4><table class="rows">
+    ${r.ph === 2 ? `<tr class="${nx ? 'nx' : 'k5'}"><td class="nr">Nr ${fmtN(r.wz + 1)}</td><td class="cd">?</td><td>${nx ? 'GRAJ TERAZ' : 'tu będzie zakład'} · k${r.bs + 1} · ${ST[r.bs]} zł</td></tr>` : ''}
+    ${rows.map(i => `<tr class="k${lab.K[i]}"><td class="nr">${fmtN(i + 1)}</td><td class="cd">${code(it.t, i)}</td><td>${LT(it, lab.K[i], lab.A[i], lab.B[i], i)}</td></tr>`).join('')}</table></div>`;
+  const dl = v => `${it.s.url[it.t]}?model=${encodeURIComponent(it.g.m.join('|'))}&tgt=${it.tg}&v=${v}`;   // SZUKAJ otwiera od razu ten model
+  h += `<a class="btn wide pri" href="${dl('stat')}">📊 Otwórz ten model w ${esc(it.s.name)} ${TABS[it.t].name} (statystyki)</a>
+    <a class="btn wide" href="${dl('tab')}">📋 Otwórz tabelę tego modelu w ${esc(it.s.name)} ${TABS[it.t].name}</a>
     <button class="btn wide" data-untrack="1" style="color:var(--rd)">${it.gone ? 'Ukryj ten BUST' : '✕ Usuń z MOJE'}</button>`;
   return h;
 }
@@ -837,7 +871,7 @@ function bankRow(it) {   // jeden model listy BANK = zwarty wiersz jak na TERAZ:
     : `bank przegrał k${B.ws - w}–k${B.ws - 1} · model gra dalej bez banku (k${r.bs + 1}) · po WIN modelu bank gra <b>k${B.ws}–k${B.we}</b> (${pct(B.p1)})`;
   const pl = r.sinceB === 0;   // model po LOST-cie (od LOST-u bez WIN) — biało-czerwona ramka jak na LOST
   return `<div class="rw ${it.s.cls}${st === 'now' ? ' now' : ''}${pl ? ' abust' : ''}" data-bkm="${esc(it.uid)}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b>${it.tg !== 'x1x' ? `<span class="mu">${it.tg}</span>` : ''}<span class="sp"></span><span class="kk">k${B.next}</span><b class="zl">${fmtN(bStake(B.next))} zł</b></div>
-    <div class="l2">${pl ? `<span class="neg">po LOST (Nr ${fmtN(r.lbr + 1)})</span> · ` : ''}${l2}</div></div>`;
+    <div class="l2">${pl ? `<span class="neg">po LOST (Nr ${fmtN(r.lbr + 1)})</span> · ` : ''}${l2}</div>${cycLine(it)}</div>`;
 }
 // ===== lista BANK: modele dodane przyciskiem „➕ Dodaj do BANK” (z wyszukiwarki albo z ekranu modelu) — niezależnie od MOJE =====
 const BKK = 'moje_v1_bank', BKI = {};   // BKI: uid → model pokazany na ekranie (dla przycisku dodaj / usuń)
