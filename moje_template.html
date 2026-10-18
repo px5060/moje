@@ -88,6 +88,7 @@ details.sec>summary{list-style:none}[data-lp]{-webkit-user-select:none;user-sele
 .bdg.S{background:#2e75b6}.bdg.R{background:#1f8a4c}.bdg.Sp{background:#7030a0}.bdg.B{background:#b3261e}
 .kk{display:inline-block;border-radius:5px;padding:0 6px;background:#3d4760;font-weight:800;font-size:12.5px}
 .pos{color:var(--gr)}.neg{color:var(--rd)}.mu{color:var(--mu)}
+.nxk{color:var(--bl);font-size:12.5px}.nxk b{color:var(--tx)}
 .ocg{font-size:12px;font-weight:800;padding:1px 6px;border-radius:7px;background:var(--pan);border:1px solid var(--bd);white-space:nowrap;color:var(--mu)}.ocg i{font-style:normal}.ocg .g{color:var(--gr)}.ocg .o{color:var(--ye)}.ocg .x{color:var(--rd)}
 .empty{background:var(--pan);border:1px dashed var(--bd);border-radius:10px;padding:14px;color:var(--mu);text-align:center}
 details{margin-top:10px}summary{cursor:pointer;font-weight:700;color:var(--mu);padding:6px 0}
@@ -173,7 +174,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.24.2';
+const APP_VER = '1.24.3';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -786,6 +787,8 @@ function zaklady() {
   if (CH.length || CHB.length) {
     const n = D[only].n, lb = it => zakLb(M.get(it.uid));
     const ex = it => `${it.d === 1 ? '' : shortPh(it) + '<br>'}${lb(it)}`;
+    const nxt = (k, zl0) => `<br><span class="nxk">➜ następny zakład: <b>k${k} · ${fmtN(zl0)} zł</b> — gdy przyjdzie TRIGGER</span>`;   // CZEKAJĄ: ile postawię przy następnym TRIGGERZE
+    const exW = it => ex(it) + (it.rz ? '' : nxt(it.r.bs + 1, ST[it.r.bs]));
     const now = CH.filter(it => it.d === 1).sort(byApp), soon = CH.filter(it => it.d >= 2).sort((a, b) => a.d - b.d || byApp(a, b)), wait = CH.filter(it => !(it.d >= 1)).sort(byApp);
     const lostF = it => it.inBust ? 2 : 0;   // tylko model po LOST-cie (od LOST-u bez WIN) → ramka LOST
     const bG = g => CHB.filter(e => (g === 'now' ? bkD(e) === 1 : g === 'soon' ? bkD(e) >= 2 : !(bkD(e) >= 1))).sort((a, b) => (bkD(a) || 99) - (bkD(b) || 99));
@@ -793,7 +796,8 @@ function zaklady() {
     h += `<div class="hint" style="margin:0 0 6px">Modele po zakładzie — gram dalej kolejny krok, aż wejdzie WIN:</div>`;
     h += sec(`🟧 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, now.length ? `razem ${fmtN(now.reduce((a, it) => a + (it.rz ? it.r.stake : ST[it.r.bs]), 0))} zł` : '', now, Object.assign({ cls: 'snow', empty: `Na Nr ${fmtN(n + 1)} żaden z tych modeli nie gra.`, extra: ex, lost: lostF }, bT(bNow)));
     if (soon.length || bSoon.length) h += sec('🟨 ZA CHWILĘ', 'TRIGGER już był', soon, Object.assign({ cls: 'ssoon', extra: ex, lost: lostF }, bT(bSoon)));
-    if (wait.length || bWait.length) h += sec('🟦 CZEKAJĄ', 'na STEP / TRIGGER', wait, Object.assign({ cls: 'swait', extra: ex, key: 'zakwait', open: 1, lost: lostF }, bT(bWait)));
+    const bTW = A => ({ tail: A.map(e => { const B = e.b.bk[e.w]; return zakBankRow(e, zakLb(e.x) + nxt(B.next, bStake(B.next))); }).join(''), tailN: A.length });
+    if (wait.length || bWait.length) h += sec('🟦 CZEKAJĄ', 'na STEP / TRIGGER', wait, Object.assign({ cls: 'swait', extra: exW, key: 'zakwait', open: 1, lost: lostF }, bTW(bWait)));
   }
   if (!L.length) return h + '<div class="empty">Brak zapisanych zakładów w tej grupie. Na karcie „GRAJ TERAZ” dotknij <b>💰 Zapisz zakład</b>.</div>';
   if (ZK.length || ZKB.length) h += `<details class="sec sdone" ${foldAt('zakdone', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${ZK.length + ZKB.length}</span><span class="m">WIN po zakładzie</span></summary>${ZK.map(x => row(x.it,
