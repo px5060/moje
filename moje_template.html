@@ -172,7 +172,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.23.3';
+const APP_VER = '1.23.4';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -878,7 +878,7 @@ function model() {
   const gaps = r.bl.slice(-6).map((b, i, a) => i ? b[1] - a[i - 1][1] : null).slice(1);
   h += `<div class="box"><h4>Statystyki na całej tabeli (${fmtN(n)} wierszy)</h4>
     <div class="kv"><div><b>${cyc}</b>cykli</div><div><b class="pos">${r.nw}</b>WIN</div><div><b class="neg">${r.nbu}</b>BUST</div><div><b>${zl(r.pnl)}</b>bilans</div></div>
-    <table class="rows st" style="margin-top:8px">${ocRow('Ocena modelu (pkt z 9)', ocOf(it))}${[3, 5].map(w => { const o = ocOf(it, w); return o ? `<tr><td>BANK +${w}: zamknięte w k1–${w}</td><td style="text-align:right"><b>${OC.pct(o.first)}</b><br><span class="mu">${o.ser} serii · ${ovTxt(o)} · max k${o.maxk}</span></td></tr>` + ocRow(`Ocena BANK +${w} (pkt z 9)`, o) : ''; }).join('')}</table>
+    <table class="rows st" style="margin-top:8px">${ocRow('Ocena modelu – prosta progresja do k8 (pkt z 9)', ocOf(it))}</table>
     <div class="hint" style="margin-top:8px">Na którym kroku przychodził WIN (ostatni słupek = BUST):</div>
     <div class="bars" style="margin-top:18px">${dist.map(v => `<div style="height:${100 * v / mx}%"><span>${v}</span></div>`).join('')}<div style="height:${100 * r.nbu / mx}%;background:#b3261e"><span>${r.nbu}</span></div></div>
     <div class="bl">${dist.map((_, i) => `<span>k${i + 1}</span>`).join('')}<span>BUST</span></div>
