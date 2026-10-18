@@ -173,7 +173,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.24.0';
+const APP_VER = '1.24.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -837,9 +837,20 @@ function rzHow(it) {
   d = d || (it.c && it.c.rule) || '';
   return d ? `<div class="box"><h4>Jak gra ten model</h4><div style="font-size:13.5px">${esc(d)}</div><div class="hint" style="margin-top:6px">Tabela <span>${esc(it.lab)}</span> w RAZEM ${TABS[it.t].name}. Przegrana → następny krok; WIN → od nowa k1; przegrany krok 8 = LOST.</div></div>` : '';
 }
+// historia zakładów na modelu (na górze ekranu modelu): każdy zapisany zakład — Nr wiersza, krok, kwota, wynik; zakłady banku z oznaczeniem 🏦 +3 / +5
+function betHist(it) {
+  const B = betsOf(it).sort((a, b) => b.b.row - a.b.row || b.b.t - a.b.t); if (!B.length) return '';
+  const done = B.filter(x => x.res === 'win' || x.res === 'lost'), put = B.reduce((a, x) => a + x.b.stake, 0), res = done.reduce((a, x) => a + betVal(x), 0), pend = B.filter(x => x.res === 'pend');
+  const rs = x => x.res === 'win' ? `<b class="pos">✔ WIN ${zl(betVal(x))}</b>` : x.res === 'lost' ? `<b class="neg">✖ przegrany ${zl(betVal(x))}</b>` : x.res === 'pend' ? '<b style="color:var(--or2)">● czeka na wynik</b>' : '<span class="mu">model nie grał w tym wierszu</span>';
+  return `<div class="box" style="border-color:var(--bl)"><h4>💰 Historia zakładów na tym modelu · ${B.length}</h4>
+    <div class="kv"><div><b>${fmtN(put)} zł</b>postawione</div><div><b>${zl(res)}</b>wynik</div><div><b class="pos">${done.filter(x => x.res === 'win').length}</b>WIN</div><div><b class="neg">${done.filter(x => x.res === 'lost').length}</b>przegrane</div></div>
+    ${pend.length ? `<div class="hint" style="margin-top:6px">czeka na wynik: ${pend.map(x => `Nr ${fmtN(x.b.row + 1)} · ${x.b.stake} zł`).join(' · ')}</div>` : ''}
+    <table class="rows hist" style="margin-top:8px"><tr class="mu"><td>Nr</td><td>krok</td><td style="text-align:right">kwota</td><td>wynik</td><td></td></tr>
+    ${B.map(x => `<tr><td class="nr">${fmtN(x.b.row + 1)}</td><td>${x.b.bank ? `<span class="bw w${x.b.bank}">🏦 +${x.b.bank}</span> ` : ''}k${x.b.step}</td><td style="text-align:right"><b>${fmtN(x.b.stake)} zł</b></td><td>${rs(x)}<div class="mu" style="font-size:11px">${ago(x.b.t)}</div></td><td><button class="btn sm" data-delbet="${bets.indexOf(x)}">✕</button></td></tr>`).join('')}</table></div>`;
+}
 function rzModel(it) {
   let rows = []; try { rows = it.c && it.c.stats ? it.c.stats() || [] : []; } catch (e) {}   // statystyki modelu z RAZEM (te same co po przytrzymaniu karty w RAZEM)
-  const c = it.c, r = it.r, B = betsOf(it).sort((a, b) => b.b.row - a.b.row);
+  const c = it.c, r = it.r;
   return `<button class="btn back" data-go="${back}">← wróć</button>
     <div class="box" style="border-color:var(--or)"><div style="display:flex;justify-content:space-between"><b style="font-size:17px"><span class="bdg R">R${it.t.slice(1)}</span>${esc(it.g.id)}</b><span class="mu">RAZEM ${TABS[it.t].name} · <span>${esc(it.lab)}</span></span></div>
     ${c ? `<div class="mu" style="font-size:12px;margin:3px 0 6px">${esc(c.rule || '')}</div>` : '<div class="neg">Nie ma karty tego modelu w RAZEM.</div>'}
@@ -847,9 +858,9 @@ function rzModel(it) {
     ${it.res ? `<div style="margin-top:4px">Od dodania: ${it.res.win ? '✔ WIN' : '✖ BUST / LOSS'} w Nr ${fmtN(it.res.i + 1)}${it.after ? ` · potem WIN w Nr ${fmtN(it.after.i + 1)}` : ''}</div>` : ''}
     <div class="hint">Śledzę od Nr ${fmtN((it.g.start || 0) + 1)}${it.g.t ? ` · dodany ${ago(it.g.t)}` : ''}</div>
     <div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (wynik zobaczysz w ZAKŁADY):</div>${betForm(it, 1)}</div>
+    ${betHist(it)}
     ${rzHow(it)}
     ${rows.length ? `<div class="box"><h4>Statystyki modelu (RAZEM ${TABS[it.t].name})</h4><table class="rows st">${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td style="text-align:right;font-weight:700">${esc(v)}</td></tr>`).join('')}</table></div>` : ''}
-    ${B.length ? `<div class="box"><h4>Moje zakłady na tym modelu</h4>${B.map(x => `<div class="bt ${x.res}"><div>Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł <span class="mu">(${ago(x.b.t)})</span></div><div class="r">${x.res === 'pend' ? 'czeka' : x.res === 'none' ? '<span class="mu">nie grał</span>' : zl(betVal(x))} <button class="btn sm" data-delbet="${bets.indexOf(x)}">✕</button></div></div>`).join('')}</div>` : ''}
     ${rzRows(it)}
     ${c ? `<div class="box"><h4>Co pokazuje RAZEM</h4>${(c.meta || []).map(m => `<div class="mu" style="font-size:12px">${esc(m)}</div>`).join('')}
       ${c.lines.map(l => `<div class="bt ${l.p === 1 ? 'pend' : l.p === 4 ? 'pend' : 'none'}" style="cursor:default"><div>${esc(l.txt || '')}<div class="mu" style="font-size:11px">${esc(l.sub || '')}</div></div></div>`).join('')}</div>` : ''}
@@ -868,6 +879,7 @@ function model() {
     ${it.res ? `<div style="margin-top:4px">Moja gra: ${it.res.win ? `✔ WIN k${it.res.k}` : '✖ BUST'} w Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}</div>` : ''}
     ${it.gone ? '' : `<div class="hint">Śledzę od Nr ${fmtN((it.g.start || 0) + 1)} (wejście na k${it.g.s0 || 1})${it.g.t ? ` · dodany ${ago(it.g.t)}` : ''}</div>`}
     <div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (możesz zmienić Nr, krok i kwotę):</div>${betForm(it, 1)}<div style="margin-top:8px">${moveBtn(it)}</div></div>`;
+  h += betHist(it);
   if (back === 'bank') h += bankBox(it);   // z zakładki BANK: bank na górze
   h += `<div class="box"><h4>Jak gra ten model</h4><ol>
     <li><b>STEP</b>: czekam, aż wypadnie ${esc(stepTxt(m))}.</li>
@@ -887,8 +899,6 @@ function model() {
     <div class="cyc">${last.map(e => e[1] === 1 ? `<b>W${e[2]}</b>` : '<b class="x">B</b>').join('')}</div>
     ${r.bl.length ? `<div class="hint" style="margin-top:8px">BUST-y w wierszach: ${r.bl.slice(-6).map(b => 'Nr ' + fmtN(b[0] + 1)).join(' · ')}${gaps.length ? `<br>odstępy między nimi w cyklach: ${gaps.join(' · ')}` : ''}</div>` : ''}</div>`;
   if (back !== 'bank') h += bankBox(it);
-  const B = betsOf(it).sort((a, b) => b.b.row - a.b.row);
-  if (B.length) h += `<div class="box"><h4>Moje zakłady na tym modelu</h4>${B.map(x => `<div class="bt ${x.res}"><div>Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł <span class="mu">(${ago(x.b.t)})</span></div><div class="r">${x.res === 'pend' ? 'czeka' : x.res === 'none' ? '<span class="mu">nie grał</span>' : zl(betVal(x))} <button class="btn sm" data-delbet="${bets.indexOf(x)}">✕</button></div></div>`).join('')}</div>`;
   const rows = []; for (let i = n - 1; i >= Math.max(0, n - 20); i--) rows.push(i);
   const nx = r.ph === 2 && r.wz === n;
   h += `<div class="box"><h4>Ostatnie 20 wierszy (najnowszy na górze)</h4><table class="rows">
