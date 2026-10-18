@@ -173,7 +173,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.24.1';
+const APP_VER = '1.24.2';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -867,6 +867,23 @@ function rzModel(it) {
     <a class="btn wide" href="${RZ[it.t].url}">Otwórz RAZEM ${TABS[it.t].name}</a>
     <button class="btn wide" data-untrack="1" style="color:var(--rd)">✕ Usuń z MOJE</button>`;
 }
+// ostatnie 20 wierszy tabeli modelu (najnowszy na górze); bk = z zakładami banków +3 / +5 (krok i stawka banku w wierszach, w których bank gra)
+function rows20(it, bk) {
+  const r = it.r, lab = labOf(it), n = D[it.t].n, rows = []; for (let i = n - 1; i >= Math.max(0, n - 20); i--) rows.push(i);
+  const nx = r.ph === 2 && r.wz === n;
+  let bt = () => '';
+  if (bk) {   // przeniesione kroki banku na początku każdego cyklu modelu → krok banku = przeniesione + krok modelu (gdy krok modelu ≤ okno banku)
+    const ev = r.ev, C = { 3: [], 5: [] };
+    [3, 5].forEach(w => { let c = 0; ev.forEach(e => { C[w].push(c); c = e[1] === 1 && e[2] <= w ? 0 : c + w; }); C[w].push(c); });
+    const cycAt = i => { let lo = 0, hi = ev.length; while (lo < hi) { const m = (lo + hi) >> 1; if (ev[m][0] >= i) hi = m; else lo = m + 1; } return lo; };
+    bt = (i, s, K) => [3, 5].filter(w => s <= w).map(w => { const k = C[w][cycAt(i)] + s;
+      return `<span class="bw w${w}">🏦 +${w}</span> k${k} ${fmtN(bStake(k))} zł${K === 6 ? ' <b class="pos">WIN</b>' : K === 7 || K === 8 ? ' <span class="neg">✖</span>' : ''}`; }).join('<br>');
+  }
+  const bcell = i => { const K = lab.K[i]; return bk && (K === 6 || K === 7 || K === 8) ? bt(i, lab.A[i], K) : ''; };
+  return `<div class="box"><h4>Ostatnie 20 wierszy (najnowszy na górze)</h4><table class="rows">
+    ${r.ph === 2 ? `<tr class="${nx ? 'nx' : 'k5'}"><td class="nr">Nr ${fmtN(r.wz + 1)}</td><td class="cd">?</td><td>${nx ? 'GRAJ TERAZ' : 'tu będzie zakład'} · k${r.bs + 1} · ${ST[r.bs]} zł${(b => b ? '<div style="font-size:12px;margin-top:2px">' + b + '</div>' : '')(bk ? bt(r.wz, r.bs + 1, 0) : '')}</td></tr>` : ''}
+    ${rows.map(i => `<tr class="k${lab.K[i]}"><td class="nr">${fmtN(i + 1)}</td><td class="cd">${code(it.t, i)}</td><td>${LT(it, lab.K[i], lab.A[i], lab.B[i], i)}${(b => b ? '<div style="font-size:12px;margin-top:2px">' + b + '</div>' : '')(bcell(i))}</td></tr>`).join('')}</table></div>`;
+}
 function model() {
   const it = items.find(x => x.uid === sel);
   if (!it) { view = 'teraz'; return teraz(); }
@@ -899,11 +916,7 @@ function model() {
     <div class="cyc">${last.map(e => e[1] === 1 ? `<b>W${e[2]}</b>` : '<b class="x">B</b>').join('')}</div>
     ${r.bl.length ? `<div class="hint" style="margin-top:8px">BUST-y w wierszach: ${r.bl.slice(-6).map(b => 'Nr ' + fmtN(b[0] + 1)).join(' · ')}${gaps.length ? `<br>odstępy między nimi w cyklach: ${gaps.join(' · ')}` : ''}</div>` : ''}</div>`;
   if (back !== 'bank') h += bankBox(it);
-  const rows = []; for (let i = n - 1; i >= Math.max(0, n - 20); i--) rows.push(i);
-  const nx = r.ph === 2 && r.wz === n;
-  h += `<div class="box"><h4>Ostatnie 20 wierszy (najnowszy na górze)</h4><table class="rows">
-    ${r.ph === 2 ? `<tr class="${nx ? 'nx' : 'k5'}"><td class="nr">Nr ${fmtN(r.wz + 1)}</td><td class="cd">?</td><td>${nx ? 'GRAJ TERAZ' : 'tu będzie zakład'} · k${r.bs + 1} · ${ST[r.bs]} zł</td></tr>` : ''}
-    ${rows.map(i => `<tr class="k${lab.K[i]}"><td class="nr">${fmtN(i + 1)}</td><td class="cd">${code(it.t, i)}</td><td>${LT(it, lab.K[i], lab.A[i], lab.B[i], i)}</td></tr>`).join('')}</table></div>`;
+  h += rows20(it);
   const dl = v => `${it.s.url[it.t]}?model=${encodeURIComponent(it.g.m.join('|'))}&tgt=${it.tg}&v=${v}`;   // SZUKAJ otwiera od razu ten model
   h += `<a class="btn wide pri" href="${dl('stat')}">📊 Otwórz ten model w ${esc(it.s.name)} ${TABS[it.t].name} (statystyki)</a>
     <a class="btn wide" href="${dl('tab')}">📋 Otwórz tabelę tego modelu w ${esc(it.s.name)} ${TABS[it.t].name}</a>
@@ -1165,7 +1178,7 @@ function bankView() {
 }
 function bankModel() {   // model z listy BANK
   const it = bitems.find(x => x.uid === sel); if (!it) { view = 'bank'; return bankView(); }
-  return '<button class="btn back" data-go="bank">← wróć</button>' + bqDet(it);
+  return '<button class="btn back" data-go="bank">← wróć</button>' + bqDet(it) + rows20(it, 1);
 }
 function bankDet(it, B) {
   const r = it.r, w = B.w;
