@@ -172,7 +172,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.22.6';
+const APP_VER = '1.23.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -878,6 +878,7 @@ function model() {
   const gaps = r.bl.slice(-6).map((b, i, a) => i ? b[1] - a[i - 1][1] : null).slice(1);
   h += `<div class="box"><h4>Statystyki na całej tabeli (${fmtN(n)} wierszy)</h4>
     <div class="kv"><div><b>${cyc}</b>cykli</div><div><b class="pos">${r.nw}</b>WIN</div><div><b class="neg">${r.nbu}</b>BUST</div><div><b>${zl(r.pnl)}</b>bilans</div></div>
+    <table class="rows st" style="margin-top:8px">${ocRow('Ocena modelu (pkt z 9)', ocOf(it))}${[3, 5].map(w => { const o = ocOf(it, w); return o ? `<tr><td>BANK +${w}: zamknięte w k1–${w}</td><td style="text-align:right"><b>${OC.pct(o.first)}</b> <span class="mu">(${o.ser} serii, max k${o.maxk})</span></td></tr>` + ocRow(`Ocena BANK +${w} (pkt z 9)`, o) : ''; }).join('')}</table>
     <div class="hint" style="margin-top:8px">Na którym kroku przychodził WIN (ostatni słupek = BUST):</div>
     <div class="bars" style="margin-top:18px">${dist.map(v => `<div style="height:${100 * v / mx}%"><span>${v}</span></div>`).join('')}<div style="height:${100 * r.nbu / mx}%;background:#b3261e"><span>${r.nbu}</span></div></div>
     <div class="bl">${dist.map((_, i) => `<span>k${i + 1}</span>`).join('')}<span>BUST</span></div>
@@ -903,6 +904,58 @@ function model() {
 // (przeniesione kroki + krok modelu), bank od k1. Nie trafi (wyższy krok albo LOST) → bank przegrywa swoje 3 (5) kroki,
 // czeka do końca cyklu modelu i w następnym cyklu gra dalej od kolejnego kroku (+3 / +5).
 const BKW = [3, 5], BKN = { 3: 3, 5: 2 };   // ile okien w tabeli szans: bank +3 — 3 okna (9 kroków), bank +5 — 2 okna (10 kroków)
+// ===== OCENA (pkt z 9) — liczona w telefonie, jak w RAZEM: bootstrap i permutacja (5000×), 5 okresów, LOST przy K7 / K8, ostatnie 40% =====
+const OC = (() => {
+  const MST = [8, 8, 16, 32, 64, 128, 256, 512], ODDS = 3;
+  const BST = k => k <= 8 ? MST[k - 1] : 512 * 2 ** (k - 8);   // stawki banku: jak model, dalej ×2
+  const cum = (S, k) => { let s = 0; for (let i = 1; i <= k; i++) s += S(i); return s; };
+  function prog(o, Kl, S) {   // o = kolejne zakłady (true = WIN) · progresja do Kl, przegrany Kl = LOST
+    let bs = 0, W = 0, B = 0, p = 0;
+    for (const x of o) { if (x) { p += Math.trunc(S(bs + 1) * ODDS) - cum(S, bs + 1); W++; bs = 0; } else { bs++; if (bs === Kl) { p -= cum(S, Kl); B++; bs = 0; } } }
+    return [W, B, p];
+  }
+  function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  const med = a => { const s = a.slice().sort((x, y) => x - y), L = s.length; return L % 2 ? s[(L - 1) / 2] : (s[L / 2 - 1] + s[L / 2]) / 2; };
+  function boot(o, Kl, S) {
+    const rnd = rng(42), n = o.length, IT = 5000, bb = [], pb = [];
+    for (let it = 0; it < IT; it++) { const s = new Array(n); for (let j = 0; j < n; j++) s[j] = o[Math.floor(rnd() * n)]; bb.push(prog(s, Kl, S)[2]); }
+    for (let it = 0; it < IT; it++) { const a = o.slice(); for (let j = n - 1; j > 0; j--) { const q = Math.floor(rnd() * (j + 1)), t = a[j]; a[j] = a[q]; a[q] = t; } pb.push(prog(a, Kl, S)[1]); }
+    return { bootMed: med(bb), bootP: bb.filter(v => v <= 0).length / IT, permMed: med(pb) };
+  }
+  function periods(o, b, N, Kl, S) {
+    const per = []; for (let s = 0; s < 5; s++) { const lo = Math.floor(s * N / 5), hi = Math.floor((s + 1) * N / 5); per.push(prog(o.filter((_, j) => b[j] >= lo && b[j] < hi), Kl, S)[2]); }
+    return per.filter(p => p > 0).length;
+  }
+  const verdict = s => s >= 7 ? 'GRAĆ' : s >= 5 ? 'OBSERWUJ' : 'ODRZUĆ';
+  // model: cykle [krok WIN 1–8 albo 9 = LOST, wiersz rozliczenia]
+  function model(cyc, N) {
+    const o = [], b = []; cyc.forEach(([K, er]) => { const n = Math.min(K, 8); for (let k = 1; k <= n; k++) { o.push(K <= 8 && k === K); b.push(er); } });
+    if (o.length < 20) return null;
+    const okresy = periods(o, b, N, 8, i => MST[i - 1]), cut = Math.trunc(N * 0.6), [, Bo, Po] = prog(o.filter((_, j) => b[j] >= cut), 8, i => MST[i - 1]);
+    const k7 = prog(o, 7, i => MST[i - 1])[1], B = prog(o, 8, i => MST[i - 1])[1], bt = boot(o, 8, i => MST[i - 1]);
+    const pts = { 'boot med > 0': bt.bootMed > 0 ? 2 : 0, 'P(straty) < 0,35': bt.bootP < 0.35 ? 1 : 0, '5 okresów': okresy === 5 ? 2 : okresy === 4 ? 1 : 0,
+      'LOST przy K7': k7 <= 3 ? 2 : k7 <= 5 ? 1 : 0, '40%: 0 LOST, +': Bo === 0 && Po > 0 ? 1 : 0, '0 LOST K8': B === 0 ? 1 : 0 };
+    const score = Object.values(pts).reduce((a, v) => a + v, 0);
+    return { score, v: verdict(score), pts, okresy, k7, B, ...bt };
+  }
+  // bank +w: kolejne cykle modelu (krok WIN albo 9+ = LOST) → serie banku; ocena przy limicie k12 (seria dłuższa = strata całej serii)
+  function bank(cyc, N, w) {
+    const o = [], b = [], ser = []; let carry = 0;
+    cyc.forEach(([K, er]) => { const n = Math.min(K, w); for (let s = 1; s <= n; s++) { o.push(s === K); b.push(er); } if (K <= w) { ser.push(carry + K); carry = 0; } else carry += w; });
+    if (ser.length < 10) return null;
+    const first = ser.filter(k => k <= w).length / ser.length, maxk = Math.max(...ser, carry), okresy = periods(o, b, N, 12, BST), bt = boot(o, 12, BST);
+    const pts = { 'boot med > 0': bt.bootMed > 0 ? 2 : 0, 'P(straty) < 0,35': bt.bootP < 0.35 ? 1 : 0, '5 okresów': okresy === 5 ? 2 : okresy === 4 ? 1 : 0,
+      [`k1–${w} ≥ 80%`]: first >= 0.8 ? 2 : first >= 0.7 ? 1 : 0, 'max krok ≤ k9': maxk <= 9 ? 2 : maxk <= 12 ? 1 : 0 };
+    const score = Object.values(pts).reduce((a, v) => a + v, 0);
+    return { score, v: verdict(score), pts, first, maxk, ser: ser.length, okresy, ...bt };
+  }
+  const pct = v => Math.round(v * 1000) / 10 + '%';
+  const det = s => Object.entries(s.pts).map(([k, v]) => `${k} ${v}`).join(' · ') + ` · boot P(≤0) ${s.bootP.toFixed(2)}`;
+  return { model, bank, pct, det };
+})();
+const _oc = new Map();   // ocena liczy się raz na model i liczbę kodów (bootstrap 5000×)
+function ocOf(it, w) { const k = it.uid + '|' + D[it.t].n + '|' + (w || 0); if (!_oc.has(k)) { const c = (it.r.ev || []).map(e => [e[1] === 1 ? e[2] : 9, e[0]]); _oc.set(k, w ? OC.bank(c, D[it.t].n, w) : OC.model(c, D[it.t].n)); } return _oc.get(k); }
+const ocRow = (lab, o, extra) => o ? `<tr><td>${lab}</td><td style="text-align:right"><b class="${o.score >= 7 ? 'pos' : o.score >= 5 ? '' : 'neg'}">${o.v} · ${o.score}/9 pkt</b>${extra || ''}<div class="mu" style="font-size:10.5px">${OC.det(o)}</div></td></tr>` : '';
 const BST = [8, 8, 16, 32, 64, 128, 256, 512];   // progresja modelu; bez limitu: dalej każdy krok ×2
 const bStake = k => k <= BST.length ? BST[k - 1] : BST[BST.length - 1] * 2 ** (k - BST.length);
 function bCum(k) { let s = 0; for (let j = 1; j <= k; j++) s += bStake(j); return s; }
@@ -1091,7 +1144,8 @@ function bankDet(it, B) {
     <tr><td colspan="3" class="mu">nie zamknie do k${last.k} · seria −${fmtN(bCum(last.k))} zł</td><td class="c"><b>${pct(1 - last.cum)}</b></td></tr></table>
     <div class="hint" style="margin-top:3px">szansa = na krokach, które zostały w tym oknie (od teraz) · <span style="color:var(--bl)">(od k1)</span> = od początku gry: ile serii banku zamknęło się na krokach k1 do końca tego okna (np. k1–6 = k1–3 + k4–6)</div>` : '<div class="hint">Model nie ma jeszcze zakończonych cykli — brak szans.</div>'}
     <div class="hint" style="margin-top:4px">Gdzie bank się zamykał: ${Object.keys(grp).sort((a, b) => a - b).map(g => `<b>${rng((g - 1) * w + 1, g * w)}</b> ${pct(grp[g] / B.res.length)}`).join(' · ')}</div>
-    <div class="hint">najwyższy krok k${B.maxk} (seria do niego ${fmtN(bCum(B.maxk))} zł) · bilans bez limitu od Nr 1: ${zl(B.pnl)}</div>`;
+    <div class="hint">najwyższy krok k${B.maxk} (seria do niego ${fmtN(bCum(B.maxk))} zł) · bilans bez limitu od Nr 1: ${zl(B.pnl)}</div>
+    ${(o => o ? `<table class="rows st" style="margin-top:6px"><tr><td>Zamknięte w k1–${w}</td><td style="text-align:right"><b>${OC.pct(o.first)}</b> <span class="mu">(${o.ser} serii)</span></td></tr>${ocRow(`Ocena BANK +${w} (pkt z 9)`, o)}</table><div class="hint">Ocena banku: bootstrap serii przy limicie k12 (2+1), 5 okresów na plus (2), k1–${w} ≥ 80% (2; ≥ 70% = 1), najwyższy krok ≤ k9 (2; ≤ k12 = 1).</div>` : '')(ocOf(it, w))}`;
 }
 function bankBox(it) {
   if (it.rz) return '';
