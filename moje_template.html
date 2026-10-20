@@ -88,6 +88,13 @@ details.sec>summary{list-style:none}[data-lp]{-webkit-user-select:none;user-sele
 .bdg.S{background:#2e75b6}.bdg.R{background:#1f8a4c}.bdg.Sp{background:#7030a0}.bdg.B{background:#b3261e}
 .kk{display:inline-block;border-radius:5px;padding:0 6px;background:#3d4760;font-weight:800;font-size:12.5px}
 .pos{color:var(--gr)}.neg{color:var(--rd)}.mu{color:var(--mu)}
+.nxpop{position:fixed;left:50%;top:max(12px,env(safe-area-inset-top));transform:translate(-50%,-140%);transition:transform .3s;z-index:60;width:min(94vw,560px);border-radius:12px;padding:10px 14px;color:#fff;background:#c97a45;box-shadow:0 8px 30px #000a;cursor:pointer}.nxpop.in{transform:translate(-50%,0)}
+.nx-hd{font-size:22px;font-weight:900}.nx-s{font-size:13.5px;margin-top:2px}.nx-l{margin-top:6px;font-size:12.5px;max-height:60vh;overflow:auto}.nx-x{font-size:11px;opacity:.8;margin-top:5px;text-align:right}
+.nx-g{margin-top:6px;border-radius:8px;padding:4px 8px;background:#0003}.nx-g.g{border-left:5px solid #5fd38a}.nx-g.o{border-left:5px solid #FFD700}.nx-g.x{border-left:5px solid #ff6b6b}.nx-g.r{border-left:5px solid #2e7d4f}.nx-g.q{border-left:5px solid #ffffff66}
+.nx-h{font-size:14px}.nx-h span{opacity:.8;font-size:12px}.nx-h .nx-r{display:block;opacity:.9;font-size:12px}.nx-p{font-size:11px;opacity:.85;margin-left:4px}
+.nx-i{display:flex;align-items:center;gap:6px;flex-wrap:wrap;white-space:nowrap;padding:3px 0;border-top:1px solid #ffffff33}.nx-b{border:1.5px solid #fff;background:#ffffff26;color:#fff;border-radius:7px;padding:1px 7px;font-size:14px;cursor:pointer}.nx-ok{white-space:nowrap;font-size:11px;font-weight:800;background:#1f8a4c;border-radius:6px;padding:1px 6px}
+.nx-all{display:block;width:100%;margin:4px 0 2px;border:1.5px solid #fff;background:#ffffff26;color:#fff;border-radius:8px;padding:5px;font-weight:800;font-size:13px;cursor:pointer}
+#appbar .nxb{font-weight:800;color:inherit;white-space:nowrap}#appbar .nxb.on{background:#c97a45;border-color:#c97a45;color:#fff}
 .nxk{color:var(--bl);font-size:12.5px}.nxk b{color:var(--tx)}
 .ocg{font-size:12px;font-weight:800;padding:1px 6px;border-radius:7px;background:var(--pan);border:1px solid var(--bd);white-space:nowrap;color:var(--mu)}.ocg i{font-style:normal}.ocg .g{color:var(--gr)}.ocg .o{color:var(--ye)}.ocg .x{color:var(--rd)}
 .empty{background:var(--pan);border:1px dashed var(--bd);border-radius:10px;padding:14px;color:var(--mu);text-align:center}
@@ -174,7 +181,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.24.3';
+const APP_VER = '1.25.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1223,7 +1230,46 @@ function pomoc() {
     <div class="box"><h4>Dodawanie modeli</h4>W aplikacji SZUKAJ przytrzymaj kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. Aplikacja doda model i otworzy go tutaj.</div>
     <div class="hint">MOJE ${APP_VER}</div>`;
 }
+// ===== pasek: 💰 = co gram na następnym wierszu (wybrana tabela T50 / T60): moje modele, po zakładzie, PO LOST i banki +3 / +5 — w grupach wg oceny, z zapisem zakładu =====
+function nxtList() {
+  const t = only, n = D[t].n, out = [], seen = new Set();
+  const near = [...vitems.filter(it => it.t === t && it.grp !== 'done' && it.r.ph === 2), ...zakState(bets.filter(x => x.t === t)).CH];
+  near.forEach(it => { if (it.d !== 1 || seen.has(it.uid)) return; seen.add(it.uid); out.push({ it, w: 0, step: it.rz ? it.r.bs + 1 : it.r.bs + 1, stake: it.rz ? it.r.stake : ST[it.r.bs] }); });
+  bitems.filter(b => b.t === t).forEach(b => [3, 5].forEach(w => { if (bState(b, w) === 'now') { const B = b.bk[w]; out.push({ it: b, w, step: B.next, stake: bStake(B.next) }); } }));
+  return { n, out };
+}
+const _rzs = new Map();   // ocena modelu RAZEM (pkt z 9) z jego statystyk w RAZEM — null, gdy brak
+function rzScore(it) { const k = it.uid + '@' + D[it.t].n; if (!_rzs.has(k)) { let v = null; try { const r = (it.c && it.c.stats ? it.c.stats() : []).find(r => /^Ocena \(pkt/.test(r[0])), m = r && /(\d+)\/9/.exec(String(r[1])); v = m ? +m[1] : null; } catch (e) {} _rzs.set(k, v); } return _rzs.get(k); }
+const nxSaved = (x, n) => betsOf(x.it).some(y => y.b.row === n && (y.b.bank || 0) === x.w);
+function nxtPop() {
+  const old = $('nxPop'); if (old) { old.remove(); return; }
+  const d = document.createElement('div'); d.id = 'nxPop'; d.className = 'nxpop';
+  d.onclick = e => {
+    const b = e.target.closest('[data-nb],[data-ng]'); if (!b) return d.remove();
+    e.stopPropagation(); const { n, out } = nxtList(), ids = b.dataset.nb !== undefined ? [b.dataset.nb] : (d._grp[b.dataset.ng] || []);
+    out.forEach((x, i) => { if (ids.includes(String(i)) && !nxSaved(x, n)) saveBet(x.it, n, x.step, x.stake, x.w || undefined); });
+    nxtFill();
+  };
+  document.body.appendChild(d); nxtFill(); setTimeout(() => d.classList.add('in'), 10);
+}
+function nxtFill() {
+  const d = $('nxPop'); if (!d) return;
+  const { n, out } = nxtList(), sum = out.reduce((a, x) => a + x.stake, 0);
+  const sc = x => { if (x.it.rz) return rzScore(x.it); ocTag(x.it); const v = OCT.get(x.it.uid); return v ? v[x.w === 3 ? 2 : x.w === 5 ? 3 : 1] : undefined; };   // null = RAZEM (bez oceny) · undefined = liczę
+  const G = [['GRAĆ', 'g', s => s >= 7, '7–9 pkt'], ['OBSERWUJ', 'o', s => s >= 5 && s < 7, '5–6 pkt'], ['NIE GRAĆ', 'x', s => s !== null && s !== undefined && s < 5, 'poniżej 5 pkt'], ['bez oceny', 'r', s => s === null, ''], ['liczę ocenę…', 'q', s => s === undefined, '']];
+  d._grp = {};
+  const grp = ([nm, c, f, pk]) => { const A = out.map((x, i) => [x, i]).filter(([x]) => f(sc(x))); if (!A.length) return ''; const s = A.reduce((a, [x]) => a + x.stake, 0), free = A.filter(([x]) => !nxSaved(x, n)); d._grp[c] = free.map(([, i]) => String(i));
+    return `<div class="nx-g ${c}"><div class="nx-h"><b>${nm}</b>${pk ? ` <span>(${pk})</span>` : ''} · ${A.length} · <b>${fmtN(s)} zł</b><span class="nx-r">trafi: +${fmtN(2 * s)} · nie: −${fmtN(s)}</span></div>
+      ${free.length > 1 ? `<button class="nx-all" data-ng="${c}">💰 zapisz zakład na wszystkie ${free.length} (${fmtN(free.reduce((a, [x]) => a + x.stake, 0))} zł)</button>` : ''}
+      ${A.map(([x, i]) => `<div class="nx-i">${nxSaved(x, n) ? '<span class="nx-ok">✓ zapisany</span>' : `<button class="nx-b" data-nb="${i}">💰</button>`}${srcBdg(x.it)}<b>${esc(x.it.rz ? x.it.label || x.it.g.id : x.it.g.id)}</b>${x.w ? ` <span class="bw w${x.w}">🏦 +${x.w}</span>` : ''} · k${x.step} — <b>${fmtN(x.stake)} zł</b>${typeof sc(x) === 'number' ? ` <span class="nx-p">${Math.max(sc(x), 0)}/9</span>` : ''}</div>`).join('')}</div>`; };
+  d.innerHTML = `<div class="nx-hd">GRAJ Nr ${fmtN(n + 1)} · ${TABS[only].name}</div>
+    <div class="nx-s">${out.length ? `${out.length} zakład(y) · wszystkie razem <b>${fmtN(sum)} zł</b> · trafi: <b>+${fmtN(2 * sum)} zł</b> · nie: <b>−${fmtN(sum)} zł</b>` : `na Nr ${fmtN(n + 1)} nie gra żaden mój model ani bank`}</div>
+    ${out.length ? `<div class="nx-l">${G.map(grp).join('')}</div>` : ''}<div class="nx-x">💰 = zapisz zakład (→ ZAKŁADY) · ocena: zwykła progresja, przy banku ocena BANK +3 / +5 · dotknij poza przyciskiem, żeby zamknąć</div>`;
+}
+function nxtBtnUpd() { const b = $('nxtBtn'); if (!b || !D[only]) return; let s = 0; try { s = nxtList().out.reduce((a, x) => a + x.stake, 0); } catch (e) {} b.textContent = s ? `💰 ${fmtN(s)}` : '💰'; b.classList.toggle('on', s > 0); }
+{ const el = $('appbar'); if (el) { const b = document.createElement('button'); b.id = 'nxtBtn'; b.className = 'thm nxb'; b.title = 'ile postawić na następnym wierszu'; b.textContent = '💰'; b.onclick = nxtPop; el.insertBefore(b, el.querySelector('.thm')); } }
 function render() {
+  try { nxtBtnUpd(); nxtFill(); } catch (e) {}
   $('ver').textContent = APP_VER;
   const v = view === 'model' ? back : view === 'bankm' ? 'bank' : view;
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
