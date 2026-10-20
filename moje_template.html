@@ -181,7 +181,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.25.0';
+const APP_VER = '1.25.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1238,6 +1238,8 @@ function nxtList() {
   bitems.filter(b => b.t === t).forEach(b => [3, 5].forEach(w => { if (bState(b, w) === 'now') { const B = b.bk[w]; out.push({ it: b, w, step: B.next, stake: bStake(B.next) }); } }));
   return { n, out };
 }
+const _rzs = new Map();   // ocena modelu RAZEM (pkt z 9) z jego statystyk w RAZEM — null, gdy brak
+function rzScore(it) { const k = it.uid + '@' + D[it.t].n; if (!_rzs.has(k)) { let v = null; try { const r = (it.c && it.c.stats ? it.c.stats() : []).find(r => /^Ocena \(pkt/.test(r[0])), m = r && /(\d+)\/9/.exec(String(r[1])); v = m ? +m[1] : null; } catch (e) {} _rzs.set(k, v); } return _rzs.get(k); }
 const nxSaved = (x, n) => betsOf(x.it).some(y => y.b.row === n && (y.b.bank || 0) === x.w);
 function nxtPop() {
   const old = $('nxPop'); if (old) { old.remove(); return; }
@@ -1253,8 +1255,8 @@ function nxtPop() {
 function nxtFill() {
   const d = $('nxPop'); if (!d) return;
   const { n, out } = nxtList(), sum = out.reduce((a, x) => a + x.stake, 0);
-  const sc = x => { if (x.it.rz) return null; ocTag(x.it); const v = OCT.get(x.it.uid); return v ? v[x.w === 3 ? 2 : x.w === 5 ? 3 : 1] : undefined; };   // null = RAZEM (bez oceny) · undefined = liczę
-  const G = [['GRAĆ', 'g', s => s >= 7, '7–9 pkt'], ['OBSERWUJ', 'o', s => s >= 5 && s < 7, '5–6 pkt'], ['NIE GRAĆ', 'x', s => s !== null && s !== undefined && s < 5, 'poniżej 5 pkt'], ['RAZEM (ocena w aplikacji RAZEM)', 'r', s => s === null, ''], ['liczę ocenę…', 'q', s => s === undefined, '']];
+  const sc = x => { if (x.it.rz) return rzScore(x.it); ocTag(x.it); const v = OCT.get(x.it.uid); return v ? v[x.w === 3 ? 2 : x.w === 5 ? 3 : 1] : undefined; };   // null = RAZEM (bez oceny) · undefined = liczę
+  const G = [['GRAĆ', 'g', s => s >= 7, '7–9 pkt'], ['OBSERWUJ', 'o', s => s >= 5 && s < 7, '5–6 pkt'], ['NIE GRAĆ', 'x', s => s !== null && s !== undefined && s < 5, 'poniżej 5 pkt'], ['bez oceny', 'r', s => s === null, ''], ['liczę ocenę…', 'q', s => s === undefined, '']];
   d._grp = {};
   const grp = ([nm, c, f, pk]) => { const A = out.map((x, i) => [x, i]).filter(([x]) => f(sc(x))); if (!A.length) return ''; const s = A.reduce((a, [x]) => a + x.stake, 0), free = A.filter(([x]) => !nxSaved(x, n)); d._grp[c] = free.map(([, i]) => String(i));
     return `<div class="nx-g ${c}"><div class="nx-h"><b>${nm}</b>${pk ? ` <span>(${pk})</span>` : ''} · ${A.length} · <b>${fmtN(s)} zł</b><span class="nx-r">trafi: +${fmtN(2 * s)} · nie: −${fmtN(s)}</span></div>
