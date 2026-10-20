@@ -88,7 +88,7 @@ details.sec>summary{list-style:none}[data-lp]{-webkit-user-select:none;user-sele
 .bdg.S{background:#2e75b6}.bdg.R{background:#1f8a4c}.bdg.Sp{background:#7030a0}.bdg.B{background:#b3261e}
 .kk{display:inline-block;border-radius:5px;padding:0 6px;background:#3d4760;font-weight:800;font-size:12.5px}
 .pos{color:var(--gr)}.neg{color:var(--rd)}.mu{color:var(--mu)}
-.famadd{display:flex;gap:6px;margin:6px 0}.famadd select{flex:1;min-width:0;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:6px}.fam-t{display:inline-block;font-size:12px;font-weight:800;border-radius:7px;padding:2px 7px;background:var(--card);border:1px solid var(--bd);margin:2px 2px 0 0}.fam-t.g{background:#1f8a4c;color:#fff;border-color:#1f8a4c}.fam-t.o{background:#c97a45;color:#fff;border-color:#c97a45}
+.famadd{display:flex;gap:6px;margin:6px 0}.famadd select{flex:1;min-width:0;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:6px}.fam-t{display:inline-block;font-size:12px;font-weight:800;border-radius:7px;padding:2px 7px;background:var(--card);border:1px solid var(--bd);margin:2px 2px 0 0}.fam-t.g{background:#1f8a4c;color:#fff;border-color:#1f8a4c}.fam-t.o{background:#c97a45;color:#fff;border-color:#c97a45}.fam-b{display:flex;align-items:center;gap:8px;margin-top:4px}.fam-k{font-size:11px;font-weight:800;border-radius:6px;padding:1px 5px;background:#3a2f55;color:#e0d4ff;white-space:nowrap}.fam-w{background:#3d2a14;border:1px solid #c97a45;border-radius:8px;padding:6px 8px;margin:6px 0;font-size:13px}.nx-fw{background:#0004;border-radius:8px;padding:5px 8px;margin-top:6px;font-size:12.5px}.rw[data-fstat]{cursor:pointer}
 .nxpop{position:fixed;left:50%;top:max(12px,env(safe-area-inset-top));transform:translate(-50%,-140%);transition:transform .3s;z-index:60;width:min(94vw,560px);border-radius:12px;padding:10px 14px;color:#fff;background:#c97a45;box-shadow:0 8px 30px #000a;cursor:pointer}.nxpop.in{transform:translate(-50%,0)}
 .nx-hd{font-size:22px;font-weight:900}.nx-s{font-size:13.5px;margin-top:2px}.nx-l{margin-top:6px;font-size:12.5px;max-height:60vh;overflow:auto}.nx-x{font-size:11px;opacity:.8;margin-top:5px;text-align:right}
 .nx-g{margin-top:6px;border-radius:8px;padding:4px 8px;background:#0003}.nx-g.g{border-left:5px solid #5fd38a}.nx-g.o{border-left:5px solid #FFD700}.nx-g.x{border-left:5px solid #ff6b6b}.nx-g.r{border-left:5px solid #2e7d4f}.nx-g.q{border-left:5px solid #ffffff66}
@@ -182,7 +182,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.26.0';
+const APP_VER = '1.27.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -659,7 +659,7 @@ function row0(it, extra, asLost, zk) {
   const bu = asLost === 2 || it.inBust && (view === 'bust' || asLost), bnow = bu && it.d === 1, stk = it.rz ? r.stake : ST[r.bs];
   return `<div class="rw ${it.s.cls}${it.d === 1 && it.grp !== 'done' ? ' now' : ''}${bu ? (bnow ? ' bnow' : ' abust') : ''}" data-u="${esc(it.uid)}">
     ${bnow ? `<div class="graj">GRAJ Nr ${fmtN(r.wz + 1)} · k${r.bs + 1} · ${stk} zł${it.rz ? '' : ' na ' + it.tg}</div>` : ''}
-    <div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b>${it.tg !== 'x1x' ? `<span class="mu">${it.tg}</span>` : ''}${ocTag(it)}<span class="sp"></span>${it.grp === 'done' && !(it.inBust && view === 'bust') && view !== 'zak' && !zk ? '' : `<span class="kk">k${r.bs + 1}</span><b class="zl">${stk} zł</b>`}
+    <div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b>${it.tg !== 'x1x' ? `<span class="mu">${it.tg}</span>` : ''}${ocTag(it)}${famTag(it)}<span class="sp"></span>${it.grp === 'done' && !(it.inBust && view === 'bust') && view !== 'zak' && !zk ? '' : `<span class="kk">k${r.bs + 1}</span><b class="zl">${stk} zł</b>`}
     ${canBet ? (saved ? '<span class="pos ok">✓</span>' : `<button class="btn sm ${it.d === 1 ? 'pri' : ''}" data-fo="${esc(it.uid)}">💰</button>`) : ''}</div>
     <div class="l2">${extra != null ? extra : shortPh(it)}${pend.length ? ` · <span style="color:var(--bl)">● postawiony k${pend[pend.length - 1].b.step} ${pend[pend.length - 1].b.stake} zł</span>` : ''}</div>${cycLine(it)}
     ${formU === it.uid && canBet ? betForm(it) : ''}</div>`;
@@ -688,6 +688,7 @@ function teraz() {
   const act = L.filter(it => it.grp !== 'done'), play = act.filter(it => it.grp !== 'bust'), now = play.filter(it => it.d === 1).sort(byApp);
   const sum = now.reduce((a, it) => a + ST[it.r.bs], 0);
   // 1. CO GRAM NA NASTĘPNYM WIERSZU — tylko moje modele (LOST, BANK i ZAKŁADY mają swoje zakładki; na TERAZ tylko paski z tym, co gra)
+  h += famWarn(t);
   h += sec(`🟧 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, now.length ? `razem ${fmtN(sum)} zł` : '', now, { cls: 'snow', key: 'T-now', open: 1, empty: `Na Nr ${fmtN(n + 1)} żaden mój model nie gra — wpisz kod, gdy padnie.` });
   // 2. ZA CHWILĘ (TRIGGER już był)
   const soon = play.filter(it => it.d >= 2).sort((a, b) => a.d - b.d || byApp(a, b));
@@ -801,10 +802,46 @@ function famAdd(uid) {
   a.push({ t: it.t, a: it.s.a, tg: it.tg, m: it.g.m, id: it.g.id, at: D[it.t].n, mem: out.slice(0, 5), tm: Date.now() }); famSet(a);
   famMsg = `Dodano rodzinę ${it.g.id}: ${out.length > 5 ? '5 najbliższych z ' + out.length : out.length} krewn${out.length === 1 ? 'y' : 'ych'}`; render();
 }
+const _famC = new Map();
 function famItems(F) {
   const s = SRC.find(x => x.a === F.a); if (!s || !D[F.t]) return [];
-  return [{ m: F.m, id: F.id, ov: 100 }, ...F.mem].map(g => { const it = mkItem(F.t, s, F.tg, { m: g.m, id: g.id, start: F.at, s0: 1 }); classify(it); it.ov = g.ov; return it; });
+  const key = [F.t, F.a, F.tg, F.id, F.at, D[F.t].n].join('~'); if (_famC.has(key)) return _famC.get(key); if (_famC.size > 60) _famC.clear();
+  const A = [{ m: F.m, id: F.id, ov: 100 }, ...F.mem].map(g => { const it = mkItem(F.t, s, F.tg, { m: g.m, id: g.id, start: F.at, s0: 1 }); classify(it); it.ov = g.ov; it.seed = g.id === F.id; return it; });
+  _famC.set(key, A); return A;
 }
+const famOf = uid => famGet().map((F, i) => [F, i]).filter(([F]) => famItems(F).some(it => it.uid === uid));   // rodziny, do których należy model
+const inMoje = uid => items.some(x => x.uid === uid && !x.gone);
+const famDl = it => `${it.s.url[it.t]}?model=${encodeURIComponent(it.g.m.slice(0, it.s.nf).join('|'))}&tgt=${it.tg}&v=stat`;
+function famAddMoje(F, id) {   // członek rodziny → MOJE GRY (lista aplikacji SZUKAJ, jak „Gram ten model”)
+  const it = famItems(F).find(x => x.g.id === id); if (!it || inMoje(it.uid)) return;
+  const key = MYK(it.t, it.s, it.tg), a = jget(key); a.push({ m: it.g.m.slice(0, it.s.nf), id: it.g.id, start: D[it.t].n, s0: it.r.bs + 1, t: Date.now() });
+  if (!lsSet(key, JSON.stringify(a))) { alert('BŁĄD zapisu pamięci telefonu!'); return; }
+  toast(`${esc(it.g.id)} dodany do MOJE (k${it.r.bs + 1}, ${ST[it.r.bs]} zł)`); reload();
+}
+function famNow(F) { const A = famItems(F); return { A, now: A.filter(it => it.d === 1), set: A.filter(it => it.r.ph === 2) }; }
+function famCard(F, fi, compact) {
+  const A = famItems(F); if (!A.length) return ''; const t = F.t, n = D[t].n, { now, set } = famNow(F), steps = [...new Set(A.map(it => it.r.bs + 1))];
+  const tag = steps.length === 1 ? `<span class="fam-t g">wszyscy na k${steps[0]}</span>` : `<span class="fam-t">kroki: ${A.map(it => 'k' + (it.r.bs + 1)).join(' · ')}</span>`;
+  const nx = now.length ? `<span class="fam-t o">GRAJ Nr ${fmtN(n + 1)}: ${now.length === A.length ? 'wszyscy razem' : now.length + ' z ' + A.length}</span>` : set.length ? `<span class="fam-t">zakład ustawiony: ${set.length} z ${A.length}</span>` : '';
+  let h = `<div class="sec fam"><div class="sh"><b>👪 ${esc(F.id)} · ${A.length} ${A.length < 5 ? 'modele' : 'modeli'}</b><span class="m">${esc(A[0].s.name)} ${TABS[t].name} · ${F.tg} · TRIGGER ${esc(norm(F.m)[3])} · +${norm(F.m)[4]}</span></div>
+    <div style="margin:2px 0 6px">${tag} ${nx}</div>
+    ${A.map(it => `<div class="rw ${it.s.cls}${it.d === 1 ? ' now' : ''}" data-fstat="${esc(famDl(it))}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b><span class="mu">${it.seed ? 'model rodziny' : it.ov + '% wspólnych'}</span><span class="sp"></span><span class="kk">k${it.r.bs + 1}</span><b class="zl">${ST[it.r.bs]} zł</b></div>
+      <div class="l2">${shortPh(it)} · BUST w historii: <b class="${it.r.nbu ? 'neg' : 'pos'}">${it.r.nbu}</b></div>${cycLine(it)}
+      <div class="fam-b">${inMoje(it.uid) ? '<span class="fam-t g">✓ w MOJE</span>' : `<button class="btn sm" data-fmoje="${fi}#${esc(it.g.id)}">▶ do MOJE</button>`}<span class="mu" style="font-size:12px">dotknij → statystyki w ${esc(it.s.name)} ${TABS[t].name}</span></div></div>`).join('')}`;
+  if (compact) return h + '</div>';
+  const S = famStats(F, A, F.at), H = famStats(F, A, 0);
+  return h + `<div class="hint" style="margin-top:6px">Od dodania (Nr ${fmtN(F.at + 1)}): wiersze z grą ${S.rows} · wszyscy grali razem ${S.all} · tylko część ${S.solo} · <b class="neg">BUST u wszystkich naraz: ${S.bAll}</b> · BUST tylko u części: ${S.bPart}${S.last.length ? ' · ostatnio: ' + S.last.map(x => 'Nr ' + fmtN(x[1] + 1) + (x[0] === 'all' ? ' (wszyscy)' : ' (część)')).join(', ') : ''}</div>
+    <div class="hint">Cała historia tabeli: BUST u wszystkich naraz <b class="neg">${H.bAll}</b> · BUST tylko u części <b>${H.bPart}</b> (pozostali grali ten wiersz niżej albo wcale)</div>
+    <button class="btn sm" data-fdel="${fi}" style="margin-top:6px">✕ usuń rodzinę</button></div>`;
+}
+// znaczek rodziny na kafelku: ile członków ma ustawiony zakład
+function famTag(it) { if (it.rz) return ''; const L = famOf(it.uid); if (!L.length) return ''; const [F] = L[0], { A, set } = famNow(F); return ` <span class="fam-k">👪 ${esc(F.id)} · ${set.length}/${A.length}</span>`; }
+// GRAJ TERAZ: krewni grający ten sam wiersz = jeden zakład, nie kilka
+function famWarn(t) {
+  const out = []; famGet().filter(F => F.t === t).forEach(F => { const { now } = famNow(F), mine = now.filter(it => inMoje(it.uid)); if (now.length >= 2) out.push(`<div class="fam-w">⚠ 👪 <b>${esc(F.id)}</b>: ${now.length} krewnych gra razem Nr ${fmtN(D[t].n + 1)} (${now.map(it => esc(it.g.id) + ' k' + (it.r.bs + 1)).join(', ')})${mine.length >= 2 ? ` — w MOJE masz ${mine.length}: to <b>ten sam kod</b>, razem ${fmtN(mine.reduce((a, it) => a + ST[it.r.bs], 0))} zł` : ' — ten sam kod, wygrają albo przegrają razem'}</div>`); });
+  return out.join('');
+}
+function famBadge(t) { const F = famGet().filter(F => F.t === t); let now = 0; const ds = []; F.forEach(f => { const { now: N, set } = famNow(f); if (N.length) now++; set.forEach(it => ds.push(it.d)); }); return bdg(now, ds); }
 function famStats(F, A, from) {   // od wiersza from: wiersze z grą, busty u wszystkich naraz / tylko u części
   const n = D[F.t].n, LL = A.map(it => labels(D[F.t], it.m, it.tg).K); let rows = 0, all = 0, solo = 0; const last = [];
   for (let i = from; i < n; i++) { const st = LL.map(K => K[i]), pl = st.filter(K => K === 6 || K === 7 || K === 8).length; if (!pl) continue; rows++; if (pl === A.length) all++; else solo++;
@@ -817,19 +854,7 @@ function famView() {
     <div class="famadd"><select id="famSel">${mine.length ? mine.map(it => `<option value="${esc(it.uid)}">${esc(it.s.a + t.slice(1) + ' ' + it.g.id + (it.tg !== 'x1x' ? ' · ' + it.tg : ''))}</option>`).join('') : '<option value="">— dodaj najpierw model do MOJE —</option>'}</select><button class="btn sm pri" data-fadd="1">👪 znajdź krewnych</button></div>
     ${famMsg ? `<div class="hint" style="margin:4px 2px 8px">${esc(famMsg)}</div>` : ''}`;
   if (!FA.length) return h + '<div class="empty">Brak rodzin w tej tabeli. Wybierz model i dotknij „znajdź krewnych”.</div>';
-  FA.forEach(([F, fi]) => {
-    const A = famItems(F); if (!A.length) return; const S = famStats(F, A, F.at), H = famStats(F, A, 0), n = D[t].n;
-    const play = A.filter(it => it.r.ph === 2), now = A.filter(it => it.d === 1), steps = [...new Set(A.map(it => it.r.bs + 1))];
-    const tag = steps.length === 1 ? `<span class="fam-t g">wszyscy na k${steps[0]}</span>` : `<span class="fam-t">kroki: ${A.map(it => 'k' + (it.r.bs + 1)).join(' · ')}</span>`;
-    const nx = now.length ? `<span class="fam-t o">GRAJ Nr ${fmtN(n + 1)}: ${now.length === A.length ? 'wszyscy razem' : now.length + ' z ' + A.length}</span>` : play.length ? `<span class="fam-t">zakład ustawiony: ${play.length} z ${A.length}</span>` : '';
-    h += `<div class="sec fam"><div class="sh"><b>👪 ${esc(F.id)} · ${A.length} ${A.length < 5 ? 'modele' : 'modeli'}</b><span class="m">${esc(A[0].s.name)} · ${F.tg} · TRIGGER ${esc(norm(F.m)[3])} · +${norm(F.m)[4]}</span></div>
-      <div style="margin:2px 0 6px">${tag} ${nx}</div>
-      ${A.map(it => `<div class="rw ${it.s.cls}${it.d === 1 ? ' now' : ''}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b><span class="mu">${it.ov === 100 && it.g.id === F.id ? 'model z MOJE' : it.ov + '% wspólnych'}</span><span class="sp"></span><span class="kk">k${it.r.bs + 1}</span><b class="zl">${ST[it.r.bs]} zł</b></div>
-        <div class="l2">${shortPh(it)} · BUST w historii: <b class="${it.r.nbu ? 'neg' : 'pos'}">${it.r.nbu}</b></div>${cycLine(it)}</div>`).join('')}
-      <div class="hint" style="margin-top:6px">Od dodania (Nr ${fmtN(F.at + 1)}): wiersze z grą ${S.rows} · wszyscy grali razem ${S.all} · tylko część ${S.solo} · <b class="neg">BUST u wszystkich naraz: ${S.bAll}</b> · BUST tylko u części: ${S.bPart}${S.last.length ? ' · ostatnio: ' + S.last.map(x => 'Nr ' + fmtN(x[1] + 1) + (x[0] === 'all' ? ' (wszyscy)' : ' (część)')).join(', ') : ''}</div>
-      <div class="hint">Cała historia tabeli: BUST u wszystkich naraz <b class="neg">${H.bAll}</b> · BUST tylko u części <b>${H.bPart}</b> (pozostali grali ten wiersz niżej albo wcale)</div>
-      <button class="btn sm" data-fdel="${fi}" style="margin-top:6px">✕ usuń rodzinę</button></div>`;
-  });
+  FA.forEach(([F, fi]) => { h += famCard(F, fi); });
   return h;
 }
 function zaklady() {
@@ -839,9 +864,9 @@ function zaklady() {
   const L = LA.filter(x => ZG(x) === zsrc).sort((a, b) => b.b.t - a.b.t);
   const done = L.filter(x => x.res === 'win' || x.res === 'lost'), put = done.reduce((a, x) => a + x.b.stake, 0), res = done.reduce((a, x) => a + betVal(x), 0);
   const day = new Date(); day.setHours(0, 0, 0, 0); const today = done.filter(x => x.b.t >= day.getTime()).reduce((a, x) => a + betVal(x), 0);
-  let h = zt + `<div class="tsw sub zs">${zb('R', '🧮 RAZEM')}${zb('S', '🔎 SZUKAJ')}${zb('L', '🔻 SZUKAJ LOST')}<button class="${zsrc === 'F' ? 'on' : ''}" data-zsrc="F">👪 RODZINY <small>· ${famGet().filter(F => F.t === only).length}</small></button></div><div class="sum"><div><b>${zl(res)}</b>wynik łącznie</div><div><b>${fmtN(put)} zł</b>postawione (rozliczone)</div><div><b>${zl(today)}</b>dziś</div></div>
+  let h = zt + `<div class="tsw sub zs">${zb('R', '🧮 RAZEM')}${zb('S', '🔎 SZUKAJ')}${zb('L', '🔻 SZUKAJ LOST')}<button class="${zsrc === 'F' ? 'on' : ''}" data-zsrc="F">👪 RODZINY <small>· ${famGet().filter(F => F.t === only).length}</small>${famBadge(only)}</button></div><div class="sum"><div><b>${zl(res)}</b>wynik łącznie</div><div><b>${fmtN(put)} zł</b>postawione (rozliczone)</div><div><b>${zl(today)}</b>dziś</div></div>
     <div class="hint" style="margin:-4px 0 10px">WIN = +2 × stawka (kurs 3,0), przegrana = −stawka. Zakłady zapisane tutaj albo w aplikacjach SZUKAJ.</div>`;
-  if (zsrc === 'F') return zt + `<div class="tsw sub zs">${zb('R', '🧮 RAZEM')}${zb('S', '🔎 SZUKAJ')}${zb('L', '🔻 SZUKAJ LOST')}<button class="on" data-zsrc="F">👪 RODZINY <small>· ${famGet().filter(F => F.t === only).length}</small></button></div>` + famView();
+  if (zsrc === 'F') return zt + `<div class="tsw sub zs">${zb('R', '🧮 RAZEM')}${zb('S', '🔎 SZUKAJ')}${zb('L', '🔻 SZUKAJ LOST')}<button class="on" data-zsrc="F">👪 RODZINY <small>· ${famGet().filter(F => F.t === only).length}</small>${famBadge(only)}</button></div>` + famView();
   // modele, których ostatni zakład przegrał albo czeka — dopóki model nie trafi WIN po tym zakładzie, gram dalej kolejny krok
   const { M, CH, ZK, CHB, ZKB } = zakState(L);
   if (CH.length || CHB.length) {
@@ -961,6 +986,7 @@ function model() {
     ${it.gone ? '' : `<div class="hint">Śledzę od Nr ${fmtN((it.g.start || 0) + 1)} (wejście na k${it.g.s0 || 1})${it.g.t ? ` · dodany ${ago(it.g.t)}` : ''}</div>`}
     <div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (możesz zmienić Nr, krok i kwotę):</div>${betForm(it, 1)}<div style="margin-top:8px">${moveBtn(it)}</div></div>`;
   h += betHist(it);
+  famOf(it.uid).forEach(([F, fi]) => { h += famCard(F, fi, 1); });
   if (back === 'bank') h += bankBox(it);   // z zakładki BANK: bank na górze
   h += `<div class="box"><h4>Jak gra ten model</h4><ol>
     <li><b>STEP</b>: czekam, aż wypadnie ${esc(stepTxt(m))}.</li>
@@ -1317,6 +1343,7 @@ function nxtFill() {
       ${A.map(([x, i]) => `<div class="nx-i">${nxSaved(x, n) ? '<span class="nx-ok">✓ zapisany</span>' : `<button class="nx-b" data-nb="${i}">💰</button>`}${srcBdg(x.it)}<b>${esc(x.it.rz ? x.it.label || x.it.g.id : x.it.g.id)}</b>${x.w ? ` <span class="bw w${x.w}">🏦 +${x.w}</span>` : ''} · k${x.step} — <b>${fmtN(x.stake)} zł</b>${typeof sc(x) === 'number' ? ` <span class="nx-p">${Math.max(sc(x), 0)}/9</span>` : ''}</div>`).join('')}</div>`; };
   d.innerHTML = `<div class="nx-hd">GRAJ Nr ${fmtN(n + 1)} · ${TABS[only].name}</div>
     <div class="nx-s">${out.length ? `${out.length} zakład(y) · wszystkie razem <b>${fmtN(sum)} zł</b> · trafi: <b>+${fmtN(2 * sum)} zł</b> · nie: <b>−${fmtN(sum)} zł</b>` : `na Nr ${fmtN(n + 1)} nie gra żaden mój model ani bank`}</div>
+    ${(w => w ? `<div class="nx-fw">${w}</div>` : '')(famGet().filter(F => F.t === only).map(F => { const N = famNow(F).now.filter(it => out.some(x => x.it.uid === it.uid)); return N.length >= 2 ? `👪 ${esc(F.id)} ×${N.length} — ${fmtN(N.reduce((a, it) => a + ST[it.r.bs], 0))} zł to <b>jeden kod</b> (${N.map(it => esc(it.g.id)).join(', ')})` : ''; }).filter(Boolean).join('<br>'))}
     ${out.length ? `<div class="nx-l">${G.map(grp).join('')}</div>` : ''}<div class="nx-x">💰 = zapisz zakład (→ ZAKŁADY) · ocena: zwykła progresja, przy banku ocena BANK +3 / +5 · dotknij poza przyciskiem, żeby zamknąć</div>`;
 }
 function nxtBtnUpd() { const b = $('nxtBtn'); if (!b || !D[only]) return; let s = 0; try { s = nxtList().out.reduce((a, x) => a + x.stake, 0); } catch (e) {} b.textContent = s ? `💰 ${fmtN(s)}` : '💰'; b.classList.toggle('on', s > 0); }
@@ -1358,6 +1385,8 @@ document.addEventListener('click', e => {
   if ((b = q('[data-restbet]'))) { e.stopPropagation(); document.querySelectorAll('.toast').forEach(t => t.remove()); return restBet(); }
   if ((b = q('[data-delbet]'))) { e.stopPropagation(); return delBet(bets[+b.dataset.delbet]); }
   if ((b = q('[data-untrack]'))) { const it = items.find(x => x.uid === sel); if (it) untrack(it); return; }
+  if ((b = q('[data-fmoje]'))) { e.stopPropagation(); const v = b.dataset.fmoje, F = famGet()[+v.slice(0, v.indexOf('#'))]; if (F) famAddMoje(F, v.slice(v.indexOf('#') + 1)); return; }
+  if ((b = q('[data-fstat]'))) { location.href = b.dataset.fstat; return; }
   if ((b = q('[data-fadd]'))) { const v = ($('famSel') || {}).value; if (v) famAdd(v); return; }
   if ((b = q('[data-fdel]'))) { const a = famGet(); a.splice(+b.dataset.fdel, 1); famSet(a); famMsg = ''; return render(); }
   if ((b = q('[data-zsrc]'))) { zsrc = b.dataset.zsrc; lsSet('moje_v1_zsrc', zsrc); return render(); }
