@@ -88,7 +88,7 @@ details.sec>summary{list-style:none}[data-lp]{-webkit-user-select:none;user-sele
 .bdg.S{background:#2e75b6}.bdg.R{background:#1f8a4c}.bdg.Sp{background:#7030a0}.bdg.B{background:#b3261e}
 .kk{display:inline-block;border-radius:5px;padding:0 6px;background:#3d4760;font-weight:800;font-size:12.5px}
 .pos{color:var(--gr)}.neg{color:var(--rd)}.mu{color:var(--mu)}
-.famadd{display:flex;gap:6px;margin:6px 0}.famadd select{flex:1;min-width:0;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:6px}.fam-t{display:inline-block;font-size:12px;font-weight:800;border-radius:7px;padding:2px 7px;background:var(--card);border:1px solid var(--bd);margin:2px 2px 0 0}.fam-t.g{background:#1f8a4c;color:#fff;border-color:#1f8a4c}.fam-t.o{background:#c97a45;color:#fff;border-color:#c97a45}.fam-b{display:flex;align-items:center;gap:8px;margin-top:4px}.fam-k{font-size:11px;font-weight:800;border-radius:6px;padding:1px 5px;background:#3a2f55;color:#e0d4ff;white-space:nowrap}.fam-w{background:#3d2a14;border:1px solid #c97a45;border-radius:8px;padding:6px 8px;margin:6px 0;font-size:13px}.nx-fw{background:#0004;border-radius:8px;padding:5px 8px;margin-top:6px;font-size:12.5px}.rw[data-fstat]{cursor:pointer}
+.famadd{display:flex;gap:6px;margin:6px 0}.famadd select{flex:1;min-width:0;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:6px}.fam-t{display:inline-block;font-size:12px;font-weight:800;border-radius:7px;padding:2px 7px;background:var(--card);border:1px solid var(--bd);margin:2px 2px 0 0}.fam-t.g{background:#1f8a4c;color:#fff;border-color:#1f8a4c}.fam-t.o{background:#c97a45;color:#fff;border-color:#c97a45}.fam-b{display:flex;align-items:center;gap:8px;margin-top:4px}.fam-d{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px;margin-top:3px}.fam-d b{color:var(--tx)}.fam-k{font-size:11px;font-weight:800;border-radius:6px;padding:1px 5px;background:#3a2f55;color:#e0d4ff;white-space:nowrap}.fam-w{background:#3d2a14;border:1px solid #c97a45;border-radius:8px;padding:6px 8px;margin:6px 0;font-size:13px}.nx-fw{background:#0004;border-radius:8px;padding:5px 8px;margin-top:6px;font-size:12.5px}.rw[data-fstat]{cursor:pointer}
 .nxpop{position:fixed;left:50%;top:max(12px,env(safe-area-inset-top));transform:translate(-50%,-140%);transition:transform .3s;z-index:60;width:min(94vw,560px);border-radius:12px;padding:10px 14px;color:#fff;background:#c97a45;box-shadow:0 8px 30px #000a;cursor:pointer}.nxpop.in{transform:translate(-50%,0)}
 .nx-hd{font-size:22px;font-weight:900}.nx-s{font-size:13.5px;margin-top:2px}.nx-l{margin-top:6px;font-size:12.5px;max-height:60vh;overflow:auto}.nx-x{font-size:11px;opacity:.8;margin-top:5px;text-align:right}
 .nx-g{margin-top:6px;border-radius:8px;padding:4px 8px;background:#0003}.nx-g.g{border-left:5px solid #5fd38a}.nx-g.o{border-left:5px solid #FFD700}.nx-g.x{border-left:5px solid #ff6b6b}.nx-g.r{border-left:5px solid #2e7d4f}.nx-g.q{border-left:5px solid #ffffff66}
@@ -182,7 +182,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.27.0';
+const APP_VER = '1.27.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -818,6 +818,12 @@ function famAddMoje(F, id) {   // członek rodziny → MOJE GRY (lista aplikacji
   if (!lsSet(key, JSON.stringify(a))) { alert('BŁĄD zapisu pamięci telefonu!'); return; }
   toast(`${esc(it.g.id)} dodany do MOJE (k${it.r.bs + 1}, ${ST[it.r.bs]} zł)`); reload();
 }
+// częstotliwość zamknięć cykli modelu: WIN na k1–3 / k4–6 / k7–8 albo BUST (cała tabela)
+function famDist(it) {
+  const w = it.r.wk || [], c = (it.r.nw || 0) + (it.r.nbu || 0); if (!c) return '';
+  const g = (a, b) => w.slice(a - 1, b).reduce((x, v) => x + (v || 0), 0), p = v => Math.round(100 * v / c) + '%';
+  return `<div class="fam-d"><span>k1–3 <b>${p(g(1, 3))}</b></span><span>k4–6 <b>${p(g(4, 6))}</b></span><span>k7–8 <b>${p(g(7, 8))}</b></span><span class="neg">BUST <b>${p(it.r.nbu)}</b></span><span class="mu">${c} cykli</span></div>`;
+}
 function famNow(F) { const A = famItems(F); return { A, now: A.filter(it => it.d === 1), set: A.filter(it => it.r.ph === 2) }; }
 function famCard(F, fi, compact) {
   const A = famItems(F); if (!A.length) return ''; const t = F.t, n = D[t].n, { now, set } = famNow(F), steps = [...new Set(A.map(it => it.r.bs + 1))];
@@ -826,7 +832,7 @@ function famCard(F, fi, compact) {
   let h = `<div class="sec fam"><div class="sh"><b>👪 ${esc(F.id)} · ${A.length} ${A.length < 5 ? 'modele' : 'modeli'}</b><span class="m">${esc(A[0].s.name)} ${TABS[t].name} · ${F.tg} · TRIGGER ${esc(norm(F.m)[3])} · +${norm(F.m)[4]}</span></div>
     <div style="margin:2px 0 6px">${tag} ${nx}</div>
     ${A.map(it => `<div class="rw ${it.s.cls}${it.d === 1 ? ' now' : ''}" data-fstat="${esc(famDl(it))}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b><span class="mu">${it.seed ? 'model rodziny' : it.ov + '% wspólnych'}</span><span class="sp"></span><span class="kk">k${it.r.bs + 1}</span><b class="zl">${ST[it.r.bs]} zł</b></div>
-      <div class="l2">${shortPh(it)} · BUST w historii: <b class="${it.r.nbu ? 'neg' : 'pos'}">${it.r.nbu}</b></div>${cycLine(it)}
+      <div class="l2">${shortPh(it)} · BUST w historii: <b class="${it.r.nbu ? 'neg' : 'pos'}">${it.r.nbu}</b></div>${cycLine(it)}${famDist(it)}
       <div class="fam-b">${inMoje(it.uid) ? '<span class="fam-t g">✓ w MOJE</span>' : `<button class="btn sm" data-fmoje="${fi}#${esc(it.g.id)}">▶ do MOJE</button>`}<span class="mu" style="font-size:12px">dotknij → statystyki w ${esc(it.s.name)} ${TABS[t].name}</span></div></div>`).join('')}`;
   if (compact) return h + '</div>';
   const S = famStats(F, A, F.at), H = famStats(F, A, 0);
