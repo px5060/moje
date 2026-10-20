@@ -182,7 +182,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.27.2';
+const APP_VER = '1.27.3';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -834,9 +834,9 @@ function famCard(F, fi, compact) {
   const fk = [F.t, F.a, F.tg, F.id].join('~'), shut = famShut().includes(fk);
   let h = `<div class="sec fam"><div class="sh fam-hd" data-ffold="${esc(fk)}"><b>${shut ? '▸' : '▾'} 👪 ${esc(F.id)} · ${A.length} ${A.length < 5 ? 'modele' : 'modeli'}</b><span class="m">${esc(A[0].s.name)} ${TABS[t].name} · ${F.tg} · TRIGGER ${esc(norm(F.m)[3])} · +${norm(F.m)[4]}</span></div>
     <div style="margin:2px 0 6px">${tag} ${nx}</div>
-    <div class="fam-m${shut ? ' hide' : ''}">${A.map(it => `<div class="rw ${it.s.cls}${it.d === 1 ? ' now' : ''}" data-fstat="${esc(famDl(it))}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b><span class="mu">${it.seed ? 'model rodziny' : it.ov + '% wspólnych'}</span><span class="sp"></span><span class="kk">k${it.r.bs + 1}</span><b class="zl">${ST[it.r.bs]} zł</b></div>
+    <div class="fam-m${shut ? ' hide' : ''}">${A.map(it => ddTag(`<div class="rw ${it.s.cls}${it.d === 1 ? ' now' : ''}${it.inBust ? ' abust' : ''}" data-fstat="${esc(famDl(it))}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b><span class="mu">${it.seed ? 'model rodziny' : it.ov + '% wspólnych'}</span><span class="sp"></span><span class="kk">k${it.r.bs + 1}</span><b class="zl">${ST[it.r.bs]} zł</b></div>
       <div class="l2">${shortPh(it)} · BUST w historii: <b class="${it.r.nbu ? 'neg' : 'pos'}">${it.r.nbu}</b></div>${cycLine(it)}${famDist(it)}
-      <div class="fam-b">${inMoje(it.uid) ? '<span class="fam-t g">✓ w MOJE</span>' : `<button class="btn sm" data-fmoje="${fi}#${esc(it.g.id)}">▶ do MOJE</button>`}<span class="mu" style="font-size:12px">dotknij → statystyki w ${esc(it.s.name)} ${TABS[t].name}</span></div></div>`).join('')}</div>`;
+      <div class="fam-b">${inMoje(it.uid) ? '<span class="fam-t g">✓ w MOJE</span>' : `<button class="btn sm" data-fmoje="${fi}#${esc(it.g.id)}">▶ do MOJE</button>`}<span class="mu" style="font-size:12px">dotknij → statystyki w ${esc(it.s.name)} ${TABS[t].name}</span></div></div>`, it.r.ph === 2 ? it.d : 0)).join('')}</div>`;
   if (compact) return h + '</div>';
   const S = famStats(F, A, F.at), H = famStats(F, A, 0);
   return h + `<div class="hint" style="margin-top:6px">Od dodania (Nr ${fmtN(F.at + 1)}): wiersze z grą ${S.rows} · wszyscy grali razem ${S.all} · tylko część ${S.solo} · <b class="neg">BUST u wszystkich naraz: ${S.bAll}</b> · BUST tylko u części: ${S.bPart}${S.last.length ? ' · ostatnio: ' + S.last.map(x => 'Nr ' + fmtN(x[1] + 1) + (x[0] === 'all' ? ' (wszyscy)' : ' (część)')).join(', ') : ''}</div>
