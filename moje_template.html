@@ -94,7 +94,7 @@ details.sec>summary{list-style:none}[data-lp]{-webkit-user-select:none;user-sele
 .nx-hd{font-size:22px;font-weight:900}.nx-s{font-size:13.5px;margin-top:2px}.nx-l{margin-top:6px;font-size:12.5px;max-height:60vh;overflow:auto}.nx-x{font-size:11px;opacity:.8;margin-top:5px;text-align:right}
 .nx-g{margin-top:6px;border-radius:8px;padding:4px 8px;background:#0003}.nx-g.g{border-left:5px solid #5fd38a}.nx-g.o{border-left:5px solid #FFD700}.nx-g.x{border-left:5px solid #ff6b6b}.nx-g.r{border-left:5px solid #2e7d4f}.nx-g.q{border-left:5px solid #ffffff66}
 .nx-h{font-size:14px}.nx-h span{opacity:.8;font-size:12px}.nx-h .nx-r{display:block;opacity:.9;font-size:12px}.nx-p{font-size:11px;opacity:.85;margin-left:4px}
-.nx-i{display:flex;align-items:center;gap:6px;flex-wrap:wrap;white-space:nowrap;padding:3px 0;border-top:1px solid #ffffff33}.nx-b{border:1.5px solid #fff;background:#ffffff26;color:#fff;border-radius:7px;padding:1px 7px;font-size:14px;cursor:pointer}.nx-ok{white-space:nowrap;font-size:11px;font-weight:800;background:#1f8a4c;border-radius:6px;padding:1px 6px}
+.nx-i[data-nk]{cursor:pointer}.nx-i{display:flex;align-items:center;gap:6px;flex-wrap:wrap;white-space:nowrap;padding:3px 0;border-top:1px solid #ffffff33}.nx-b{border:1.5px solid #fff;background:#ffffff26;color:#fff;border-radius:7px;padding:1px 7px;font-size:14px;cursor:pointer}.nx-ok{white-space:nowrap;font-size:11px;font-weight:800;background:#1f8a4c;border-radius:6px;padding:1px 6px}
 .nx-undo{background:#0003!important;border-style:dashed!important}.nx-u{font-size:13px}
 .nx-all{display:block;width:100%;margin:4px 0 2px;border:1.5px solid #fff;background:#ffffff26;color:#fff;border-radius:8px;padding:5px;font-weight:800;font-size:13px;cursor:pointer}
 #appbar .nxb{font-weight:800;color:inherit;white-space:nowrap}#appbar .nxb.on{background:#c97a45;border-color:#c97a45;color:#fff}
@@ -184,7 +184,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.27.6';
+const APP_VER = '1.27.7';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1343,7 +1343,8 @@ function nxtPop() {
   const old = $('nxPop'); if (old) { old.remove(); return; }
   const d = document.createElement('div'); d.id = 'nxPop'; d.className = 'nxpop';
   d.onclick = e => {
-    const b = e.target.closest('[data-nb],[data-ng],[data-nu],[data-nug]'); if (!b) return d.remove();
+    const b = e.target.closest('[data-nb],[data-ng],[data-nu],[data-nug]');
+    if (!b) { const m = e.target.closest('[data-nk]'); d.remove(); if (m) { const x = nxtList().out[+m.dataset.nk]; if (x) go(x.w ? 'bankm' : 'model', x.it.uid); } return; }   // dotknięcie modelu → jego ekran ze statystykami
     e.stopPropagation(); const { n, out } = nxtList();
     if (b.dataset.nu !== undefined || b.dataset.nug !== undefined) {   // ↶ cofnięcie zapisanych zakładów na następny wiersz (bez pytania — można zapisać ponownie)
       const ids = b.dataset.nu !== undefined ? [b.dataset.nu] : (d._sav[b.dataset.nug] || []); let c = 0;
@@ -1368,11 +1369,11 @@ function nxtFill() {
     return `<div class="nx-g ${c}"><div class="nx-h"><b>${nm}</b>${pk ? ` <span>(${pk})</span>` : ''} · ${A.length} · <b>${fmtN(s)} zł</b><span class="nx-r">trafi: +${fmtN(2 * s)} · nie: −${fmtN(s)}</span></div>
       ${free.length > 1 ? `<button class="nx-all" data-ng="${c}">💰 zapisz zakład na wszystkie ${free.length} (${fmtN(free.reduce((a, [x]) => a + x.stake, 0))} zł)</button>` : ''}
       ${sav.length > 1 ? `<button class="nx-all nx-undo" data-nug="${c}">↶ cofnij zapisane w tej grupie (${sav.length} · ${fmtN(sav.reduce((a, [x]) => a + x.stake, 0))} zł)</button>` : ''}
-      ${A.map(([x, i]) => `<div class="nx-i">${nxSaved(x, n) ? `<span class="nx-ok">✓ zapisany</span><button class="nx-b nx-u" data-nu="${i}">↶</button>` : `<button class="nx-b" data-nb="${i}">💰</button>`}${srcBdg(x.it)}<b>${esc(x.it.rz ? x.it.label || x.it.g.id : x.it.g.id)}</b>${x.w ? ` <span class="bw w${x.w}">🏦 +${x.w}</span>` : ''} · k${x.step} — <b>${fmtN(x.stake)} zł</b>${typeof sc(x) === 'number' ? ` <span class="nx-p">${Math.max(sc(x), 0)}/9</span>` : ''}</div>`).join('')}</div>`; };
+      ${A.map(([x, i]) => `<div class="nx-i" data-nk="${i}">${nxSaved(x, n) ? `<span class="nx-ok">✓ zapisany</span><button class="nx-b nx-u" data-nu="${i}">↶</button>` : `<button class="nx-b" data-nb="${i}">💰</button>`}${srcBdg(x.it)}<b>${esc(x.it.rz ? x.it.label || x.it.g.id : x.it.g.id)}</b>${x.w ? ` <span class="bw w${x.w}">🏦 +${x.w}</span>` : ''} · k${x.step} — <b>${fmtN(x.stake)} zł</b>${typeof sc(x) === 'number' ? ` <span class="nx-p">${Math.max(sc(x), 0)}/9</span>` : ''}</div>`).join('')}</div>`; };
   d.innerHTML = `<div class="nx-hd">GRAJ Nr ${fmtN(n + 1)} · ${TABS[only].name}</div>
     <div class="nx-s">${out.length ? `${out.length} zakład(y) · wszystkie razem <b>${fmtN(sum)} zł</b> · trafi: <b>+${fmtN(2 * sum)} zł</b> · nie: <b>−${fmtN(sum)} zł</b>` : `na Nr ${fmtN(n + 1)} nie gra żaden mój model ani bank`}</div>
     ${(w => w ? `<div class="nx-fw">${w}</div>` : '')(famGet().filter(F => F.t === only).map(F => { const N = famNow(F).now.filter(it => out.some(x => x.it.uid === it.uid)); return N.length >= 2 ? `👪 ${esc(F.id)} ×${N.length} — ${fmtN(N.reduce((a, it) => a + ST[it.r.bs], 0))} zł to <b>jeden kod</b> (${N.map(it => esc(it.g.id)).join(', ')})` : ''; }).filter(Boolean).join('<br>'))}
-    ${out.length ? `<div class="nx-l">${G.map(grp).join('')}</div>` : ''}<div class="nx-x">💰 = zapisz zakład (→ ZAKŁADY) · ocena: zwykła progresja, przy banku ocena BANK +3 / +5 · dotknij poza przyciskiem, żeby zamknąć</div>`;
+    ${out.length ? `<div class="nx-l">${G.map(grp).join('')}</div>` : ''}<div class="nx-x">💰 = zapisz zakład (→ ZAKŁADY) · ocena: zwykła progresja, przy banku ocena BANK +3 / +5 · dotknij model → statystyki · poza listą → zamknij</div>`;
 }
 function nxtBtnUpd() { const b = $('nxtBtn'); if (!b || !D[only]) return; let s = 0; try { s = nxtList().out.reduce((a, x) => a + x.stake, 0); } catch (e) {} b.textContent = s ? `💰 ${fmtN(s)}` : '💰'; b.classList.toggle('on', s > 0); }
 { const el = $('appbar'); if (el) { const b = document.createElement('button'); b.id = 'nxtBtn'; b.className = 'thm nxb'; b.title = 'ile postawić na następnym wierszu'; b.textContent = '💰'; b.onclick = nxtPop; el.insertBefore(b, el.querySelector('.thm')); } }
