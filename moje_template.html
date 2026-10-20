@@ -94,7 +94,7 @@ details.sec>summary{list-style:none}[data-lp]{-webkit-user-select:none;user-sele
 .nx-hd{font-size:22px;font-weight:900}.nx-s{font-size:13.5px;margin-top:2px}.nx-l{margin-top:6px;font-size:12.5px;max-height:60vh;overflow:auto}.nx-x{font-size:11px;opacity:.8;margin-top:5px;text-align:right}
 .nx-g{margin-top:6px;border-radius:8px;padding:4px 8px;background:#0003}.nx-g.g{border-left:5px solid #5fd38a}.nx-g.o{border-left:5px solid #FFD700}.nx-g.x{border-left:5px solid #ff6b6b}.nx-g.r{border-left:5px solid #2e7d4f}.nx-g.q{border-left:5px solid #ffffff66}
 .nx-h{font-size:14px}.nx-h span{opacity:.8;font-size:12px}.nx-h .nx-r{display:block;opacity:.9;font-size:12px}.nx-p{font-size:11px;opacity:.85;margin-left:4px}
-.nx-i[data-nk]{cursor:pointer}.nx-rel{background:#d6eaff;color:#0d2a4a;border-radius:6px;box-shadow:inset 4px 0 #4a9be8;padding-left:8px}.nx-rel .nx-b{border-color:#0d2a4a;color:#0d2a4a;background:#ffffff80}.nx-rl{font-size:11px;font-weight:800;background:#9fd0ff;color:#0d2a4a;border-radius:6px;padding:0 5px}.nx-rh{margin-top:6px;font-size:12px;background:#9fd0ff33;border:1px solid #9fd0ff99;border-radius:8px;padding:4px 8px;white-space:normal}.nx-i{display:flex;align-items:center;gap:6px;flex-wrap:wrap;white-space:nowrap;padding:3px 0;border-top:1px solid #ffffff33}.nx-b{border:1.5px solid #fff;background:#ffffff26;color:#fff;border-radius:7px;padding:1px 7px;font-size:14px;cursor:pointer}.nx-ok{white-space:nowrap;font-size:11px;font-weight:800;background:#1f8a4c;border-radius:6px;padding:1px 6px}
+.nx-i[data-nk]{cursor:pointer;transition:transform .15s}.nx-i.big{transform:scale(1.08);transform-origin:left center;position:relative;z-index:3;border-radius:6px;box-shadow:0 0 0 2px #fff,0 3px 10px #0007;background:#ffffff38}.nx-i.nx-rel.big{background:#d6eaff}.nx-rel{background:#d6eaff;color:#0d2a4a;border-radius:6px;box-shadow:inset 4px 0 #4a9be8;padding-left:8px}.nx-rel .nx-b{border-color:#0d2a4a;color:#0d2a4a;background:#ffffff80}.nx-rl{font-size:11px;font-weight:800;background:#9fd0ff;color:#0d2a4a;border-radius:6px;padding:0 5px}.nx-rh{margin-top:6px;font-size:12px;background:#9fd0ff33;border:1px solid #9fd0ff99;border-radius:8px;padding:4px 8px;white-space:normal}.nx-i{display:flex;align-items:center;gap:6px;flex-wrap:wrap;white-space:nowrap;padding:3px 0;border-top:1px solid #ffffff33}.nx-b{border:1.5px solid #fff;background:#ffffff26;color:#fff;border-radius:7px;padding:1px 7px;font-size:14px;cursor:pointer}.nx-ok{white-space:nowrap;font-size:11px;font-weight:800;background:#1f8a4c;border-radius:6px;padding:1px 6px}
 .nx-undo{background:#0003!important;border-style:dashed!important}.nx-u{font-size:13px}
 .nx-all{display:block;width:100%;margin:4px 0 2px;border:1.5px solid #fff;background:#ffffff26;color:#fff;border-radius:8px;padding:5px;font-weight:800;font-size:13px;cursor:pointer}
 #appbar .nxb{font-weight:800;color:inherit;white-space:nowrap}#appbar .nxb.on{background:#c97a45;border-color:#c97a45;color:#fff}
@@ -184,7 +184,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.27.8';
+const APP_VER = '1.27.9';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1364,7 +1364,7 @@ function nxtPop() {
   const d = document.createElement('div'); d.id = 'nxPop'; d.className = 'nxpop';
   d.onclick = e => {
     const b = e.target.closest('[data-nb],[data-ng],[data-nu],[data-nug]');
-    if (!b) { const m = e.target.closest('[data-nk]'); d.remove(); if (m) { const x = nxtList().out[+m.dataset.nk]; if (x) go(x.w ? 'bankm' : 'model', x.it.uid); } return; }   // dotknięcie modelu → jego ekran ze statystykami
+    if (!b) { const m = e.target.closest('[data-nk]'); if (m) { if (!m.classList.contains('big')) { e.stopPropagation(); d.querySelectorAll('.nx-i.big').forEach(x => x.classList.remove('big')); m.classList.add('big'); d._big = m.dataset.nk; return; } } d.remove(); if (m) { const x = nxtList().out[+m.dataset.nk]; if (x) go(x.w ? 'bankm' : 'model', x.it.uid); } return; }   // dotknięcie modelu → jego ekran ze statystykami
     e.stopPropagation(); const { n, out } = nxtList();
     if (b.dataset.nu !== undefined || b.dataset.nug !== undefined) {   // ↶ cofnięcie zapisanych zakładów na następny wiersz (bez pytania — można zapisać ponownie)
       const ids = b.dataset.nu !== undefined ? [b.dataset.nu] : (d._sav[b.dataset.nug] || []); let c = 0;
@@ -1396,7 +1396,8 @@ function nxtFill() {
     <div class="nx-s">${out.length ? `${out.length} zakład(y) · wszystkie razem <b>${fmtN(sum)} zł</b> · trafi: <b>+${fmtN(2 * sum)} zł</b> · nie: <b>−${fmtN(sum)} zł</b>` : `na Nr ${fmtN(n + 1)} nie gra żaden mój model ani bank`}</div>
     ${(w => w ? `<div class="nx-fw">${w}</div>` : '')(famGet().filter(F => F.t === only).map(F => { const N = famNow(F).now.filter(it => out.some(x => x.it.uid === it.uid)); return N.length >= 2 ? `👪 ${esc(F.id)} ×${N.length} — ${fmtN(N.reduce((a, it) => a + ST[it.r.bs], 0))} zł to <b>jeden kod</b> (${N.map(it => esc(it.g.id)).join(', ')})` : ''; }).filter(Boolean).join('<br>'))}
     ${RS.length ? `<div class="nx-rh">🔗 spokrewnione (≥90% wspólnych wierszy zakładu w historii — grają prawie zawsze to samo): ${RS.join(' · ')}</div>` : ''}
-    ${out.length ? `<div class="nx-l">${G.map(grp).join('')}</div>` : ''}<div class="nx-x">💰 = zapisz zakład (→ ZAKŁADY) · ocena: zwykła progresja, przy banku ocena BANK +3 / +5 · niebieskie 🔗 = spokrewnione · dotknij model → statystyki · poza listą → zamknij</div>`;
+    ${out.length ? `<div class="nx-l">${G.map(grp).join('')}</div>` : ''}<div class="nx-x">💰 = zapisz zakład (→ ZAKŁADY) · ocena: zwykła progresja, przy banku ocena BANK +3 / +5 · niebieskie 🔗 = spokrewnione · dotknij model → powiększ, jeszcze raz → statystyki · poza listą → zamknij</div>`;
+  if (d._big != null) { const r = d.querySelector(`.nx-i[data-nk="${d._big}"]`); if (r) r.classList.add('big'); }   // powiększony model zostaje po odświeżeniu listy
 }
 function nxtBtnUpd() { const b = $('nxtBtn'); if (!b || !D[only]) return; let s = 0; try { s = nxtList().out.reduce((a, x) => a + x.stake, 0); } catch (e) {} b.textContent = s ? `💰 ${fmtN(s)}` : '💰'; b.classList.toggle('on', s > 0); }
 { const el = $('appbar'); if (el) { const b = document.createElement('button'); b.id = 'nxtBtn'; b.className = 'thm nxb'; b.title = 'ile postawić na następnym wierszu'; b.textContent = '💰'; b.onclick = nxtPop; el.insertBefore(b, el.querySelector('.thm')); } }
