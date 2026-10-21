@@ -184,7 +184,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.28.0';
+const APP_VER = '1.28.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -686,7 +686,7 @@ function teraz() {
   if (rzSt[t] === 'wczytuję') h += `<div class="hint" style="margin:-2px 0 8px">⏳ Wczytuję modele z RAZEM ${TABS[t].name}…</div>`;
   if (rzSt[t] === 'błąd') h += `<div class="hint neg" style="margin:-2px 0 8px">Nie udało się wczytać RAZEM ${TABS[t].name} — otwórz MOJE ponownie.</div>`;
   const L = vitems.filter(it => it.t === t);
-  if (!vitems.length && !bitems.length && rzSt[t] !== 'wczytuję') return h + `<div class="empty">Brak modeli w MOJE.<br><br>W SZUKAJ, SZUKAJ+ albo SZUKAJ BUST przytrzymaj kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. W RAZEM: przytrzymaj kartę → <b>▶ Gram — dodaj do aplikacji MOJE</b>.</div>`;
+  if (!vitems.length && !bitems.length && rzSt[t] !== 'wczytuję') return h + `<div class="empty">Brak modeli w MOJE.<br><br>W SZUKAJ, SZUKAJ+ albo SZUKAJ BUST dotknij kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. W RAZEM: przytrzymaj kartę → <b>▶ Gram — dodaj do aplikacji MOJE</b>.</div>`;
   const act = L.filter(it => it.grp !== 'done'), play = act.filter(it => it.grp !== 'bust'), now = play.filter(it => it.d === 1).sort(byApp);
   const sum = now.reduce((a, it) => a + ST[it.r.bs], 0);
   // 1. CO GRAM NA NASTĘPNYM WIERSZU — tylko moje modele (LOST, BANK i ZAKŁADY mają swoje zakładki; na TERAZ tylko paski z tym, co gra)
@@ -933,7 +933,7 @@ function rzRows(it) {
   const X = rzA(it); if (!X) return '';
   const n = D[it.t].n, r = it.r, nx = it.d === 1, L = [];
   for (let i = n - 1; i >= Math.max(0, n - 20); i--) { let c = {}; try { c = X.A.cell(X.mi, i) || {}; } catch (e) {} const t = c.gra ? c.gra.t : c.stan ? c.stan.t : ''; L.push(`<tr class="${rzCls(t)}"><td class="nr">${fmtN(i + 1)}</td><td class="cd">${code(it.t, i)}</td><td>${t ? esc(t) : '<span class="mu">—</span>'}</td></tr>`); }
-  return `<div class="box"><h4>Ostatnie 20 wierszy (najnowszy na górze)</h4><table class="rows">
+  return `<div class="box" id="mtab"><h4>Ostatnie 20 wierszy (najnowszy na górze)</h4><table class="rows">
     ${r.ph === 2 ? `<tr class="${nx ? 'nx' : 'k5'}"><td class="nr">Nr ${fmtN(r.wz + 1)}</td><td class="cd">?</td><td>${nx ? 'GRAJ TERAZ' : 'tu będzie zakład'} · k${r.bs + 1} · ${r.stake} zł</td></tr>` : ''}${L.join('')}</table></div>`;
 }
 function rzHow(it) {
@@ -984,7 +984,7 @@ function rows20(it, bk) {
       return `<span class="bw w${w}">🏦 +${w}</span> k${k} ${fmtN(bStake(k))} zł${K === 6 ? ' <b class="pos">WIN</b>' : K === 7 || K === 8 ? ' <span class="neg">✖</span>' : ''}`; }).join('<br>');
   }
   const bcell = i => { const K = lab.K[i]; return bk && (K === 6 || K === 7 || K === 8) ? bt(i, lab.A[i], K) : ''; };
-  return `<div class="box"><h4>Ostatnie 20 wierszy (najnowszy na górze)</h4><table class="rows">
+  return `<div class="box" id="mtab"><h4>Ostatnie 20 wierszy (najnowszy na górze)</h4><table class="rows">
     ${r.ph === 2 ? `<tr class="${nx ? 'nx' : 'k5'}"><td class="nr">Nr ${fmtN(r.wz + 1)}</td><td class="cd">?</td><td>${nx ? 'GRAJ TERAZ' : 'tu będzie zakład'} · k${r.bs + 1} · ${ST[r.bs]} zł${(b => b ? '<div style="font-size:12px;margin-top:2px">' + b + '</div>' : '')(bk ? bt(r.wz, r.bs + 1, 0) : '')}</td></tr>` : ''}
     ${rows.map(i => `<tr class="k${lab.K[i]}"><td class="nr">${fmtN(i + 1)}</td><td class="cd">${code(it.t, i)}</td><td>${LT(it, lab.K[i], lab.A[i], lab.B[i], i)}${(b => b ? '<div style="font-size:12px;margin-top:2px">' + b + '</div>' : '')(bcell(i))}</td></tr>`).join('')}</table></div>`;
 }
@@ -1321,7 +1321,7 @@ function pomoc() {
     <div class="box"><h4>Kopia kodów</h4>Co 10 nowych kodów (licząc od ostatniego eksportu) MOJE samo zapisuje plik kopii (T50 TRÓJKA, T60 PIKOFF) do Pobranych — przy wpisaniu kodu tutaj. Gdy telefon wyczyści pamięć, wczytaj go w KODY → Import pliku. Wyłączysz to w KODY.</div>
     <div class="box"><h4>Zakładka BANK</h4>Bank +3 / +5 (bez limitu) dla modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST. Bank gra w każdym cyklu modelu tylko pierwsze 3 (5) zakłady; model trafi → WIN banku (przeniesione kroki + krok modelu) i bank od k1; nie trafi → bank przegrywa 3 (5) kroki, czeka i w następnym cyklu gra dalej. Stawki 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512, dalej ×2.<br>Model jest <b>albo na TERAZ</b> (prosta progresja k1–k8), <b>albo w BANK</b> (+3 / +5) — nigdy w obu. Przełącznik przy modelu (ekran modelu i <b>🔎 wyszukiwarka</b>): <b>🏦 Przenieś do BANK</b> / <b>🟧 Przenieś do TERAZ</b>. „✕ usuń z BANK” usuwa model całkiem (też z MOJE). Na TERAZ grupy <b>🟥 PO BUST</b> i <b>🏦 BANK</b> (zwijane jak pozostałe) pokazują to, co gra na następnym wierszu; <b>przytrzymanie</b> nagłówka przenosi do zakładki LOST / BANK. Przełącznik <b>BANK +3 / BANK +5</b> wybiera, który bank prowadzi listę. Droga modelu jak na TERAZ: 🟦 CZEKAJĄ (okno banku trwa, czeka na STEP / TRIGGER) → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ. WIN → bank od k1 i znowu CZEKAJĄ. Bank przegrał swoje 3 (5) kroki → <b>⏸ CZEKAJĄ NA BANK</b>, aż model skończy cykl (WIN albo LOST) — potem znowu CZEKAJĄ, już na kolejnym oknie (np. k4–k6). Znaczki przy BANK, T50 / T60 i +3 / +5: żółty = za ile wierszy zakład banku, pomarańczowy = ile gra na następnym. Dotknięcie modelu → szanse zamknięcia banku na kolejnych krokach, stawki, gdzie bank się zamykał (% dla okien) i usunięcie z listy.</div>
     <div class="box"><h4>Zakłady</h4>„💰 Zapisz zakład” zapisuje zakład w MOJE ZAKŁADY aplikacji, z której jest model — widać go tu i tam. Wynik liczy się sam po wpisaniu kodu.</div>
-    <div class="box"><h4>Dodawanie modeli</h4>W aplikacji SZUKAJ przytrzymaj kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. Aplikacja doda model i otworzy go tutaj.</div>
+    <div class="box"><h4>Dodawanie modeli</h4>W aplikacji SZUKAJ dotknij kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. Tutaj: dotknięcie kafelka → statystyki modelu, przytrzymanie → tabela wierszy. Aplikacja doda model i otworzy go tutaj.</div>
     <div class="hint">MOJE ${APP_VER}</div>`;
 }
 // ===== pasek: 💰 = co gram na następnym wierszu (wybrana tabela T50 / T60): moje modele, po zakładzie, PO LOST i banki +3 / +5 — w grupach wg oceny, z zapisem zakładu =====
@@ -1469,14 +1469,16 @@ document.addEventListener('change', e => {
   const fr = new FileReader(); fr.onload = () => { e.target.value = ''; importFile(t, String(fr.result), f.name); }; fr.readAsText(f);
 });
 // przytrzymanie nagłówka [data-lp] → zakładka (krótkie dotknięcie zwija / rozwija grupę)
+// kafelek modelu: dotknięcie → ekran modelu (statystyki u góry), przytrzymanie → ten sam ekran od razu na tabeli wierszy
 let lpT = null, lpOn = false, lpUp = 0, lpXY = null;   // lpOn = przytrzymanie zadziałało, palec jeszcze na ekranie
 const lpStop = () => { clearTimeout(lpT); lpT = null; };
-document.addEventListener('pointerdown', e => { const s = e.target.closest && e.target.closest('[data-lp]'); if (!s) return; lpXY = [e.clientX, e.clientY]; lpStop();
-  lpT = setTimeout(() => { lpT = null; lpOn = true; try { navigator.vibrate && navigator.vibrate(30); } catch (x) {} go(s.dataset.lp); }, 550); });
+document.addEventListener('pointerdown', e => { const c = e.target.closest ? x => e.target.closest(x) : () => null, s = c('[data-lp]'), u = !s && !c('button,input,select,a,label') && c('.mc[data-u],.rw[data-u]'); if (!s && !u) return; lpXY = [e.clientX, e.clientY]; lpStop();
+  lpT = setTimeout(() => { lpT = null; lpOn = true; try { navigator.vibrate && navigator.vibrate(30); } catch (x) {} if (s) return go(s.dataset.lp);
+    go('model', u.dataset.u); setTimeout(() => { const t = $('mtab'); if (t) t.scrollIntoView({ block: 'start' }); }, 30); }, 550); });
 document.addEventListener('pointerup', () => { lpStop(); if (lpOn) { lpOn = false; lpUp = Date.now(); } }); document.addEventListener('pointercancel', () => { lpStop(); lpOn = false; });
 document.addEventListener('pointermove', e => { if (lpT && lpXY && Math.hypot(e.clientX - lpXY[0], e.clientY - lpXY[1]) > 12) lpStop(); });
 document.addEventListener('click', e => { if (lpOn || Date.now() - lpUp < 350) { e.preventDefault(); e.stopPropagation(); lpUp = 0; } }, true);   // „klik” z puszczenia palca po przytrzymaniu — nie zwijaj i nie klikaj w nowym ekranie
-document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('[data-lp]')) e.preventDefault(); });
+document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('[data-lp],.mc[data-u],.rw[data-u]')) e.preventDefault(); });
 window.addEventListener('storage', () => reload());
 document.addEventListener('visibilitychange', () => { if (!document.hidden) reload(); });
 setInterval(() => { if (!document.hidden && !(document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName))) render(); }, 30000);
