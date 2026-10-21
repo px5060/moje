@@ -184,7 +184,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.27.9';
+const APP_VER = '1.28.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -728,21 +728,17 @@ function teraz() {
 function gapTxt(r) { const b = r.bl; return b.length >= 2 ? ` · poprzedni BUST ${b[b.length - 1][1] - b[b.length - 2][1]} cykli wcześniej` : ' · pierwszy BUST modelu'; }
 let bsrc = lsGet('moje_v1_bsrc', 'M') === 'B' ? 'B' : 'M';
 let bsub = lsGet('moje_v1_bsub', 'gra') === 'czekaj' ? 'czekaj' : 'gra';
-let bks = (() => { try { const v = JSON.parse(lsGet('moje_v1_bks', '[]')); return Array.isArray(v) ? v : []; } catch (e) { return []; } })();   // [] = wszystkie kroki
 function bustBadges(L) {
   const now = L.filter(it => it.d === 1).length, soon = [...new Set(L.map(it => it.d).filter(d => d >= 2 && d <= 3))].sort();
   return (soon.length ? `<b class="soon">${soon.join(',')}</b>` : '') + (now ? `<i class="nb">${now}</i>` : '');
 }
 function busty() {
   const isB = it => it.s.a === 'L', all = vitems.filter(it => it.inBust && it.t === only), A = all.filter(it => bsrc === 'B' ? isB(it) : !isB(it));
-  const L = A.filter(it => !bks.length || bks.includes(it.r.bs + 1)).sort((a, b) => (a.d || 99) - (b.d || 99) || b.r.lbr - a.r.lbr);
+  const L = A.slice().sort((a, b) => (a.d || 99) - (b.d || 99) || b.r.lbr - a.r.lbr);
   const nB = all.filter(isB), nM = all.filter(it => !isB(it));
   let h = tabSwitch(it => it.inBust) + `<div class="tsw sub src"><button class="${bsrc !== 'B' ? 'on' : ''}" data-bsrc="M">💥 MOJE MODELE <small>· ${nM.length}</small>${bustBadges(nM)}</button><button class="${bsrc === 'B' ? 'on' : ''}" data-bsrc="B">🔻 SZUKAJ LOST <small>· ${nB.length}</small>${bustBadges(nB)}</button></div>
-    <div class="flt"><span class="mu" style="font-size:12px;align-self:center">krok:</span><button class="chip ${!bks.length ? 'on' : ''}" data-bk="0">wszystkie · ${A.length}</button>
-    ${ST.map((z, i) => { const k = i + 1, G = A.filter(it => it.r.bs + 1 === k); return `<button class="chip ${bks.includes(k) ? 'on' : ''}" data-bk="${k}">k${k} ${z} zł · ${G.length}${bustBadges(G)}</button>`; }).join('')}</div>
     <div class="hint" style="margin:-4px 0 10px">${bsrc === 'B' ? 'BUST-y modeli z aplikacji SZUKAJ BUST' : 'BUST-y moich modeli z SZUKAJ, SZUKAJ+ i RAZEM'} (krok 8, 512 zł bez trafienia) — aż do pierwszego WIN. W ZAKOŃCZONE są też.</div>`;
   if (!A.length) h += '<div class="empty">Brak BUST-ów w moich modelach — żaden nie przegrał kroku 8 bez późniejszego WIN.</div>';
-  else if (!L.length) h += '<div class="empty">Na wybranych krokach nie ma BUST-ów.</div>';
   else {
     // ta sama droga co na TERAZ: 🟦 CZEKAJĄ → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ (kolejne kroki po BUST-cie, do WIN)
     const n = D[only].n, ex = it => it.rz ? `${it.d === 1 ? '' : shortPh(it) + '<br>'}<span class="neg">BUST / LOSS Nr ${fmtN(it.res.i + 1)}</span>` : `${it.d === 1 ? '' : shortPh(it) + '<br>'}<span class="neg">BUST Nr ${fmtN(it.r.lbr + 1)}</span>${gapTxt(it.r)}${it.gone ? ' · usunięty z MOJE' : ''}`;
@@ -898,7 +894,7 @@ function zaklady() {
     const bG = g => CHB.filter(e => (g === 'now' ? bkD(e) === 1 : g === 'soon' ? bkD(e) >= 2 : !(bkD(e) >= 1))).sort((a, b) => (bkD(a) || 99) - (bkD(b) || 99));
     const bT = A => ({ tail: A.map(e => zakBankRow(e, zakLb(e.x))).join(''), tailN: A.length }), bNow = bG('now'), bSoon = bG('soon'), bWait = bG('wait');
     h += `<div class="hint" style="margin:0 0 6px">Modele po zakładzie — gram dalej kolejny krok, aż wejdzie WIN:</div>`;
-    h += sec(`🟧 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, now.length ? `razem ${fmtN(now.reduce((a, it) => a + (it.rz ? it.r.stake : ST[it.r.bs]), 0))} zł` : '', now, Object.assign({ cls: 'snow', empty: `Na Nr ${fmtN(n + 1)} żaden z tych modeli nie gra.`, extra: ex, lost: lostF }, bT(bNow)));
+    h += sec(`🟧 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, now.length ? `razem ${fmtN(now.reduce((a, it) => a + (it.rz ? it.r.stake : ST[it.r.bs]), 0))} zł` : '', now, Object.assign({ cls: 'snow', key: 'Z-now', open: 1, empty: `Na Nr ${fmtN(n + 1)} żaden z tych modeli nie gra.`, extra: ex, lost: lostF }, bT(bNow)));
     if (soon.length || bSoon.length) h += sec('🟨 ZA CHWILĘ', 'TRIGGER już był', soon, Object.assign({ cls: 'ssoon', extra: ex, lost: lostF }, bT(bSoon)));
     const bTW = A => ({ tail: A.map(e => { const B = e.b.bk[e.w]; return zakBankRow(e, zakLb(e.x) + nxt(B.next, bStake(B.next))); }).join(''), tailN: A.length });
     if (wait.length || bWait.length) h += sec('🟦 CZEKAJĄ', 'na STEP / TRIGGER', wait, Object.assign({ cls: 'swait', extra: exW, key: 'zakwait', open: 1, lost: lostF }, bTW(bWait)));
@@ -1446,7 +1442,6 @@ document.addEventListener('click', e => {
   if ((b = q('[data-zsrc]'))) { zsrc = b.dataset.zsrc; lsSet('moje_v1_zsrc', zsrc); return render(); }
   if ((b = q('[data-bsrc]'))) { bsrc = b.dataset.bsrc; lsSet('moje_v1_bsrc', bsrc); return render(); }
   if ((b = q('[data-bsub]'))) { bsub = b.dataset.bsub; lsSet('moje_v1_bsub', bsub); return render(); }
-  if ((b = q('[data-bk]'))) { const k = +b.dataset.bk; bks = !k ? [] : bks.includes(k) ? bks.filter(x => x !== k) : [...bks, k].sort(); lsSet('moje_v1_bks', JSON.stringify(bks)); return render(); }
   if ((b = q('[data-u2]'))) return go('model', b.dataset.u2);
   if ((b = q('[data-move]'))) return moveTo(b.dataset.mu, b.dataset.move);
   if ((b = q('[data-bkdel]'))) return bankDel(b.dataset.bkdel);
