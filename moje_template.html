@@ -185,7 +185,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.28.4';
+const APP_VER = '1.28.6';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -674,7 +674,7 @@ const foldAt = (k, d) => `data-fold="${k}"${isOpen(k, d) ? ' open' : ''}`;
 document.addEventListener('toggle', e => { const k = e.target && e.target.dataset && e.target.dataset.fold; if (!k || FOLD[k] === +e.target.open) return; FOLD[k] = +e.target.open; lsSet(FOLDK, JSON.stringify(FOLD)); }, true);
 function sec(title, sub, L, opt) {
   opt = opt || {};
-  const tn = opt.tailN || 0, body = (L.length ? L.map(it => row(it, opt.extra ? opt.extra(it) : null, opt.lost ? opt.lost(it) : 0)).join('') : tn ? '' : `<div class="none">${opt.empty || 'nic'}</div>`) + (opt.tail || '');
+  const tn = opt.tailN || 0, body = (L.length ? L.map(it => row(it, opt.extra ? opt.extra(it) + (opt.after ? opt.after(it) : '') : null, opt.lost ? opt.lost(it) : 0)).join('') : tn ? '' : `<div class="none">${opt.empty || 'nic'}</div>`) + (opt.tail || '');
   const head = `<span>${title}${L.length + tn ? ` · ${L.length + tn}` : ''}</span><span class="m">${sub}</span>`;
   return opt.fold || opt.key ? `<details class="sec ${opt.cls || ''}" ${opt.key ? foldAt(opt.key, opt.open) : opt.open ? 'open' : ''}><summary class="sh">${head}</summary>${body}</details>` : `<div class="sec ${opt.cls || ''}"><div class="sh">${head}</div>${body}</div>`;
 }
@@ -722,7 +722,7 @@ function teraz() {
   if (zc.length) h += `<details class="sec szak" ${foldAt('T-zak', 1)}><summary class="sh" data-lp="zak"><span>💰 ZAKŁADY · ${zc.length}${bustBadges(zc)}</span><span class="m">przytrzymaj → ZAKŁADY</span></summary>
     ${zNear.length ? zNear.map(it => ddTag(row(it, zakLb(ZS.M.get(it.uid)), 0, 1), it.d)).join('') : none('żaden model po zakładzie')}</details>`;
   const Z = L.filter(it => it.grp === 'done');
-  if (Z.length) h += sec('✅ ZAKOŃCZONE', 'WIN albo BUST (krok 8)', Z, { key: 'T-done', cls: 'sdone', extra: it => (it.rz ? `${it.res.win ? '✔ WIN' : '<span class="neg">✖ BUST / LOSS</span>'} · Nr ${fmtN(it.res.i + 1)}` : `${it.res.win ? `✔ WIN k${it.res.k}` : '<span class="neg">✖ BUST k8</span>'} · Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}`) + (it.res.win ? '' : it.inBust ? ' · <b>w zakładce BUST</b>' : ' · potem WIN') + (it.rz ? '' : `<br><span class="sertx">▶ start: Nr ${fmtN((it.g.start || 0) + 1)}${it.g.t ? ' · ' + ago(it.g.t) + ' (' + when(it.g.t) + ')' : ''} · <b>k${it.g.s0 || 1} → k${it.res.win ? it.res.k : 8}</b></span>`) });
+  if (Z.length) h += sec('✅ ZAKOŃCZONE', 'WIN albo BUST (krok 8)', Z, { key: 'T-done', cls: 'sdone', after: rsBtn, extra: it => (it.rz ? `${it.res.win ? '✔ WIN' : '<span class="neg">✖ BUST / LOSS</span>'} · Nr ${fmtN(it.res.i + 1)}` : `${it.res.win ? `✔ WIN k${it.res.k}` : '<span class="neg">✖ BUST k8</span>'} · Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}`) + (it.res.win ? '' : it.inBust ? ' · <b>w zakładce BUST</b>' : ' · potem WIN') + (it.rz ? '' : `<br><span class="sertx">▶ start: Nr ${fmtN((it.g.start || 0) + 1)}${it.g.t ? ' · ' + ago(it.g.t) + ' (' + when(it.g.t) + ')' : ''} · <b>k${it.g.s0 || 1} → k${it.res.win ? it.res.k : 8}</b></span>`) });
   return h;
 }
 // ===== BUST: BUST-y moich modeli (od dodania do MOJE, bez WIN po nich) — filtr po kroku, na którym model gra teraz =====
@@ -768,6 +768,15 @@ function busty() {
 const ZG = x => x.s.a === 'R' ? 'R' : x.s.a === 'L' ? 'L' : 'S';   // grupa zakładu: RAZEM · SZUKAJ (S i S+) · SZUKAJ LOST
 let zsrc = (v => ['R', 'S', 'L', 'F'].includes(v) ? v : 'R')(lsGet('moje_v1_zsrc', 'R'));
 // modele po zakładzie: ostatni zakład przegrany / czeka / model nie grał — dopóki po nim nie wejdzie WIN (wtedy ZAKOŃCZONE)
+// ▶ graj od nowa: model z ZAKOŃCZONE (po WIN) wraca do gry od teraz — w MOJE GRY aplikacji źródłowej start = teraz, wejście od bieżącego kroku (po WIN = k1)
+const rsBtn = it => it && !it.rz && it.res && it.res.win ? `<br><button class="btn sm ok" data-restart="${esc(it.uid)}" style="margin-top:5px">▶ graj od nowa (k${it.r.bs + 1})</button>` : '';
+function restartMy(uid) {
+  const it = items.find(x => x.uid === uid && !x.rz); if (!it) return;
+  const key = MYK(it.t, it.s, it.tg), a = jget(key), g = a.find(x => x && Array.isArray(x.m) && spec(x.m) === spec(it.m)); if (!g) return toast('Modelu nie ma już w MOJE GRY');
+  Object.assign(g, { start: D[it.t].n, s0: it.r.bs + 1, t: Date.now(), auto: 0 });
+  if (!lsSet(key, JSON.stringify(a))) { alert('BŁĄD zapisu pamięci telefonu!'); return; }
+  toast(`${esc(it.g.id)} gram od nowa — k${it.r.bs + 1}, w CZEKAJĄ do następnej gry`); reload();
+}
 const wonAfter = x => (x.it.r.ev || []).find(e => e[1] === 1 && e[0] >= x.b.row);   // WIN modelu od wiersza zakładu
 function zakState(L) {
   const M = new Map(); L.forEach(x => { if (!x.it || x.b.bank) return;   // zakłady banku liczy zakładka BANK
@@ -777,7 +786,8 @@ function zakState(L) {
   const bw = x => (BKMAP.get(x.uid).r.ev || []).find(e => e[1] === 1 && e[0] >= x.b.row);
   const CHB = [...MB.values()].filter(x => x.res !== 'win' && !bw(x)).map(x => ({ x, b: BKMAP.get(x.uid), w: x.b.bank }));
   const ZKB = [...MB.values()].filter(x => x.res === 'win' || bw(x)).map(x => ({ x, b: BKMAP.get(x.uid), w: x.b.bank }));
-  return { M, CH: [...M.values()].filter(x => x.res !== 'win' && !wonAfter(x)).map(x => x.it), ZK: [...M.values()].filter(x => x.res === 'win' || wonAfter(x)).sort((a, b) => b.b.row - a.b.row), CHB, ZKB };
+  const again = x => !x.it.rz && (x.it.g.start || 0) > x.b.row && !x.it.first;   // ▶ graj od nowa po WIN (start po tym zakładzie, jeszcze bez wyniku)
+  return { M, CH: [...M.values()].filter(x => (x.res !== 'win' && !wonAfter(x)) || again(x)).map(x => x.it), ZK: [...M.values()].filter(x => (x.res === 'win' || wonAfter(x)) && !again(x)).sort((a, b) => b.b.row - a.b.row), CHB, ZKB };
 }
 const bkD = e => { const st = bState(e.b, e.w); return st === 'now' ? 1 : st === 'soon' ? e.b.d : 0; };   // za ile wierszy gra bank (1 = następny)
 function zakBadges(A) { const Z = zakState(A); return bdg(Z.CH.filter(it => it.d === 1).length + Z.CHB.filter(e => bkD(e) === 1).length, [...Z.CH.map(it => it.d), ...Z.CHB.map(bkD)]); }
@@ -907,7 +917,7 @@ function zaklady() {
   }
   if (!L.length) return h + '<div class="empty">Brak zapisanych zakładów w tej grupie. Na karcie „GRAJ TERAZ” dotknij <b>💰 Zapisz zakład</b>.</div>';
   h += `<details class="sec sdone" ${foldAt('zakdone', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${ZK.length + ZKB.length}</span><span class="m">WIN po zakładzie</span></summary>${ZK.map(x => row(x.it,
-    (x.res === 'win' ? `<span class="pos">✔ WIN na zakładzie</span> Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł · ${zl(betVal(x))}` : (w => `ostatni zakład Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł · potem <span class="pos">WIN modelu k${w[2]}</span> w Nr ${fmtN(w[0] + 1)} (bez zakładu)`)(wonAfter(x))) + serTxt(x))).join('')}${ZKB.map(e => zakBankRow(e, e.x.res === 'win' ? `<span class="pos">✔ WIN na zakładzie banku</span> Nr ${fmtN(e.x.b.row + 1)} · k${e.x.b.step} · ${e.x.b.stake} zł · ${zl(betVal(e.x))}` : `ostatni zakład banku Nr ${fmtN(e.x.b.row + 1)} · potem <span class="pos">WIN modelu</span>`)).join('')}${ZK.length + ZKB.length ? '' : '<div class="none">Jeszcze żaden model nie skończył serii zakładów WIN.</div>'}</details>`;
+    (x.res === 'win' ? `<span class="pos">✔ WIN na zakładzie</span> Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł · ${zl(betVal(x))}` : (w => `ostatni zakład Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł · potem <span class="pos">WIN modelu k${w[2]}</span> w Nr ${fmtN(w[0] + 1)} (bez zakładu)`)(wonAfter(x))) + serTxt(x) + rsBtn(x.it))).join('')}${ZKB.map(e => zakBankRow(e, e.x.res === 'win' ? `<span class="pos">✔ WIN na zakładzie banku</span> Nr ${fmtN(e.x.b.row + 1)} · k${e.x.b.step} · ${e.x.b.stake} zł · ${zl(betVal(e.x))}` : `ostatni zakład banku Nr ${fmtN(e.x.b.row + 1)} · potem <span class="pos">WIN modelu</span>`)).join('')}${ZK.length + ZKB.length ? '' : '<div class="none">Jeszcze żaden model nie skończył serii zakładów WIN.</div>'}</details>`;
   const all = L.map((x, i) => `<div class="bt ${x.res}${x.it && x.it.inBust ? ' lsrc' : ''}" data-bi="${bets.indexOf(x)}"><span class="bdg ${x.s.cls}">${x.s.a}${x.t.slice(1)}</span><div>${esc(x.b.id)}${x.tg ? `<span class="tgt">${x.tg}</span>` : ""}${x.b.bank ? ` · <b style="color:var(--bl)">🏦 +${x.b.bank}</b>` : ''} · Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł<div class="mu" style="font-size:11px">zapisany ${ago(x.b.t)} (${when(x.b.t)})</div></div>
     <div class="r">${x.res === 'pend' ? '<span style="color:var(--or2)">czeka</span>' : x.res === 'win' ? zl(betVal(x)) : x.res === 'lost' ? zl(betVal(x)) : '<span class="mu">model nie grał</span>'}<br><button class="ub" data-delbet="${bets.indexOf(x)}">↶ cofnij</button></div></div>`).join('');
   h += `<details class="sec" ${foldAt('zakall', 0)}><summary class="sh"><span>📋 WSZYSTKIE ZAKŁADY · ${L.length}</span><span class="m">najnowszy na górze</span></summary>${all}</details>`;
@@ -1287,7 +1297,8 @@ function bankView() {
   if (G.held.length) h += sec('K-held', '⏸ CZEKAJĄ NA BANK', 'okno przegrane · czeka na WIN modelu', G.held, 'sheld', '', byK(G.held));
   // ✅ ZAKOŃCZONE: ostatni WIN banku modelu (seria banku zamknięta) od dodania do BANK — bank gra dalej od k1, więc model jest też w CZEKAJĄ
   { const D0 = L.map(it => { const R = it.bk[bkw].res, x = R[R.length - 1], from = it.bat != null ? it.bat : n - 100; return x && x.row >= from ? { it, x } : null; }).filter(Boolean).sort((a, b) => b.x.row - a.x.row);
-    h += `<details class="sec sdone" ${foldAt('K-done', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${D0.length}</span><span class="m">WIN banku +${bkw}</span></summary>${D0.length ? D0.map(({ it, x }) => `<div class="rw ${it.s.cls}" data-bkm="${esc(it.uid)}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b><span class="tgt">${it.tg}</span><span class="sp"></span><span class="pos">✔ WIN k${x.k}</span></div><div class="l2">bank +${bkw} zamknięty w Nr ${fmtN(x.row + 1)} · seria ${zl(bSer(x.k))} · teraz znowu od k1</div></div>`).join('') : `<div class="none">Od dodania do BANK żaden bank +${bkw} nie zamknął się WIN.</div>`}</details>`; }
+    const hid = jget('moje_v1_bkdone'); for (let i = D0.length - 1; i >= 0; i--) if (hid.includes(`${D0[i].it.uid}#${bkw}#${D0[i].x.row}`)) D0.splice(i, 1);   // ▶ graj od nowa = schowany z ZAKOŃCZONE
+    h += `<details class="sec sdone" ${foldAt('K-done', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${D0.length}</span><span class="m">WIN banku +${bkw}</span></summary>${D0.length ? D0.map(({ it, x }) => `<div class="rw ${it.s.cls}" data-bkm="${esc(it.uid)}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b><span class="tgt">${it.tg}</span><span class="sp"></span><span class="pos">✔ WIN k${x.k}</span></div><div class="l2">bank +${bkw} zamknięty w Nr ${fmtN(x.row + 1)} · seria ${zl(bSer(x.k))}<br><button class="btn sm ok" data-bkagain="${esc(it.uid)}#${bkw}#${x.row}" style="margin-top:5px">▶ graj od nowa (k1)</button></div></div>`).join('') : `<div class="none">Od dodania do BANK żaden bank +${bkw} nie zamknął się WIN.</div>`}</details>`; }
   return h + `<div class="hint" style="margin-bottom:8px">Droga modelu w banku +${bkw}: 🟦 CZEKAJĄ → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ. WIN → bank od k1 (znowu CZEKAJĄ). Przegrane ${bkw} kroki okna → ⏸ CZEKAJĄ NA BANK, aż model skończy cykl (WIN albo LOST); potem znowu CZEKAJĄ na kolejnym oknie. Dotknij modelu → szanse, stawki i usunięcie z listy.</div>` + bankRules();
 }
 function bankModel() {   // model z listy BANK
@@ -1454,9 +1465,11 @@ document.addEventListener('click', e => {
   if ((b = q('[data-u2]'))) return go('model', b.dataset.u2);
   if ((b = q('[data-move]'))) return moveTo(b.dataset.mu, b.dataset.move);
   if ((b = q('[data-bkdel]'))) return bankDel(b.dataset.bkdel);
+  if ((b = q('[data-bkagain]'))) { e.stopPropagation(); const a = jget('moje_v1_bkdone'); a.push(b.dataset.bkagain); lsSet('moje_v1_bkdone', JSON.stringify(a.slice(-300))); toast('Bank gra od nowa od k1 — w CZEKAJĄ'); return render(); }   // bank po WIN i tak gra od k1: tylko zdejmij z ZAKOŃCZONE
   if ((b = q('[data-bkm]'))) return go('bankm', b.dataset.bkm);
   if ((b = q('[data-go]'))) return go(b.dataset.go);
   if ((b = q('[data-bq]'))) { bqSel = b.dataset.bq; return bqUpd(); }
+  if ((b = q('[data-restart]'))) { e.stopPropagation(); return restartMy(b.dataset.restart); }
   if ((b = q('.mc[data-u],.rw[data-u]'))) return go('model', b.dataset.u);
   if ((b = q('.bt[data-bi]'))) { const x = bets[+b.dataset.bi]; if (x && x.it) go('model', x.it.uid); else toast('Tego modelu nie ma już w MOJE'); }
 });
