@@ -187,7 +187,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.28.8';
+const APP_VER = '1.28.9';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -553,11 +553,11 @@ function betForm(it, wide) {
 }
 let lastDel = null;   // ostatnio cofnięty zakład — do przywrócenia z komunikatu
 function delBet(x) {
-  if (!x || !confirm(`Cofnąć zakład ${x.b.id} (Nr ${fmtN(x.b.row + 1)}, k${x.b.step}, ${x.b.stake} zł)?\nZniknie z ZAKŁADÓW i z wyniku.`)) return;
+  if (!x || !confirm(`Usunąć zakład ${x.b.id} (Nr ${fmtN(x.b.row + 1)}, k${x.b.step}, ${x.b.stake} zł)?\nZniknie z ZAKŁADÓW i z wyniku.`)) return;
   if (x.rz) { const w = rzWin(x.t); if (w) try { w.__MOJE.delBet(x.b.t); } catch (e) {} }
-  else { const key = BTK(x.t, x.s, x.tg); lsSet(key, JSON.stringify(jget(key).filter(b => b.t !== x.b.t))); }
+  else { const key = BTK(x.t, x.s, x.tg); lsSet(key, JSON.stringify(jget(key).filter(b => !(b.t === x.b.t && b.row === x.b.row && Array.isArray(b.m) && spec(b.m) === spec(x.b.m))))); }   // ten sam czas zapisu mają zakłady z „💰 zapisz na wszystkie” — usuń tylko ten jeden
   lastDel = x; reload();
-  toast(`Cofnięto zakład ${esc(x.b.id)} · Nr ${fmtN(x.b.row + 1)} · ${x.b.stake} zł <button class="ub" data-restbet="1">↶ Przywróć</button>`, 7000);
+  toast(`Usunięto zakład ${esc(x.b.id)} · Nr ${fmtN(x.b.row + 1)} · ${x.b.stake} zł <button class="ub" data-restbet="1">↶ Przywróć</button>`, 7000);
 }
 function restBet() {
   const x = lastDel; lastDel = null; if (!x) return;
@@ -796,6 +796,14 @@ let zsrc = (v => ['R', 'S', 'L', 'F'].includes(v) ? v : 'R')(lsGet('moje_v1_zsrc
 // modele po zakładzie: ostatni zakład przegrany / czeka / model nie grał — dopóki po nim nie wejdzie WIN (wtedy ZAKOŃCZONE)
 // ▶ graj od nowa: model z ZAKOŃCZONE (po WIN) wraca do gry od teraz — w MOJE GRY aplikacji źródłowej start = teraz, wejście od bieżącego kroku (po WIN = k1)
 const rsBtn = it => it && !it.rz && it.res && it.res.win ? `<br><button class="btn sm ok" data-restart="${esc(it.uid)}" style="margin-top:5px">▶ graj od nowa (k${it.r.bs + 1})</button>` : '';
+function toCzekaj(x) {   // WSZYSTKIE ZAKŁADY: model usunięty z MOJE / zakończony → z powrotem w grze od teraz (CZEKAJĄ), bez nowego zakładu
+  if (!x || x.rz || x.b.bank) return; if (x.it) return restartMy(x.it.uid);
+  const it = mkItem(x.t, x.s, x.tg, { m: x.b.m, id: x.b.id, start: D[x.t].n, s0: 1 }), key = MYK(x.t, x.s, x.tg);
+  const a = jget(key).filter(g => !(g && Array.isArray(g.m) && spec(g.m) === spec(x.b.m)));
+  a.push({ m: x.b.m.slice(0, x.s.nf), id: x.b.id, start: D[x.t].n, s0: it.r.bs + 1, t: Date.now() });
+  if (!lsSet(key, JSON.stringify(a))) { alert('BŁĄD zapisu pamięci telefonu!'); return; }
+  toast(`${esc(x.b.id)} znowu w MOJE — od k${it.r.bs + 1}, w CZEKAJĄ do następnej gry`); reload();
+}
 function restartMy(uid) {
   const it = items.find(x => x.uid === uid && !x.rz); if (!it) return;
   const key = MYK(it.t, it.s, it.tg), a = jget(key), g = a.find(x => x && Array.isArray(x.m) && spec(x.m) === spec(it.m)); if (!g) return toast('Modelu nie ma już w MOJE GRY');
@@ -953,8 +961,9 @@ function zaklady() {
     if (M.get(x.it.uid) !== x) return 'wcześniejszy zakład serii';
     return zkS.has(x) ? '→ ✅ ZAKOŃCZONE' : '→ ' + secOf(x.it);
   };
-  const all = L.map((x, i) => `<div class="bt ${x.res}${x.it && x.it.inBust ? ' lsrc' : ''}" data-bi="${bets.indexOf(x)}"><span class="bdg ${x.s.cls}">${x.s.a}${x.t.slice(1)}</span><div>${esc(x.b.id)}${x.tg ? `<span class="tgt">${x.tg}</span>` : ""}${x.b.bank ? ` · <b style="color:var(--bl)">🏦 +${x.b.bank}</b>` : ''} · Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł<div class="mu" style="font-size:11px">zapisany ${ago(x.b.t)} (${when(x.b.t)})</div><div class="zwh">${whereOf(x)}</div></div>
-    <div class="r">${x.res === 'pend' ? '<span style="color:var(--or2)">czeka</span>' : x.res === 'win' ? zl(betVal(x)) : x.res === 'lost' ? zl(betVal(x)) : '<span class="mu">model nie grał</span>'}<br><button class="ub" data-delbet="${bets.indexOf(x)}">↶ cofnij</button></div></div>`).join('');
+  const canBack = x => !x.rz && !x.b.bank && (!x.it || zkS.has(x));
+  const all = L.map((x, i) => `<div class="bt ${x.res}${x.it && x.it.inBust ? ' lsrc' : ''}" data-bi="${bets.indexOf(x)}"><span class="bdg ${x.s.cls}">${x.s.a}${x.t.slice(1)}</span><div>${esc(x.b.id)}${x.tg ? `<span class="tgt">${x.tg}</span>` : ""}${x.b.bank ? ` · <b style="color:var(--bl)">🏦 +${x.b.bank}</b>` : ''} · Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł<div class="mu" style="font-size:11px">zapisany ${ago(x.b.t)} (${when(x.b.t)})</div><div class="zwh">${whereOf(x)}</div>${canBack(x) ? `<button class="btn sm ok" data-tocz="${bets.indexOf(x)}" style="margin-top:4px">▶ do CZEKAJĄ (gram od teraz)</button>` : ''}</div>
+    <div class="r">${x.res === 'pend' ? '<span style="color:var(--or2)">czeka</span>' : x.res === 'win' ? zl(betVal(x)) : x.res === 'lost' ? zl(betVal(x)) : '<span class="mu">model nie grał</span>'}<br><button class="ub" data-delbet="${bets.indexOf(x)}">✕ usuń</button></div></div>`).join('');
   h += `<details class="sec" ${foldAt('zakall', 0)}><summary class="sh"><span>📋 WSZYSTKIE ZAKŁADY · ${L.length}</span><span class="m">najnowszy na górze</span></summary><div class="hint" style="margin:2px 0 6px">Tu każdy zakład osobno — wyżej każdy model raz (z ostatnim zakładem). Pod zakładem: gdzie jest jego model.</div>${all}</details>`;
   return h;
 }
@@ -1421,7 +1430,7 @@ function nxtPop() {
       const ids = b.dataset.nu !== undefined ? [b.dataset.nu] : (d._sav[b.dataset.nug] || []); let c = 0;
       out.forEach((x, i) => { if (!ids.includes(String(i))) return; betsOf(x.it).filter(y => y.b.row === n && (y.b.bank || 0) === x.w).forEach(y => { c++;
         if (y.rz) { const w = rzWin(y.t); if (w) try { w.__MOJE.delBet(y.b.t); } catch (e) {} }
-        else { const key = BTK(y.t, y.s, y.tg); lsSet(key, JSON.stringify(jget(key).filter(q => q.t !== y.b.t))); } }); });
+        else { const key = BTK(y.t, y.s, y.tg); lsSet(key, JSON.stringify(jget(key).filter(q => !(q.t === y.b.t && q.row === y.b.row && Array.isArray(q.m) && spec(q.m) === spec(y.b.m))))); } }); });
       toast(`Cofnięto ${c} zakład(y) na Nr ${fmtN(n + 1)}`); reload(); return;
     }
     const ids = b.dataset.nb !== undefined ? [b.dataset.nb] : (d._grp[b.dataset.ng] || []);
@@ -1488,6 +1497,7 @@ document.addEventListener('click', e => {
   if ((b = q('[data-fo]'))) { formU = formU === b.dataset.fo ? null : b.dataset.fo; return render(); }
   if (q('.btf')) return;   // pola formularza zakładu — nie otwieraj modelu
   if ((b = q('[data-restbet]'))) { e.stopPropagation(); document.querySelectorAll('.toast').forEach(t => t.remove()); return restBet(); }
+  if ((b = q('[data-tocz]'))) { e.stopPropagation(); return toCzekaj(bets[+b.dataset.tocz]); }
   if ((b = q('[data-delbet]'))) { e.stopPropagation(); return delBet(bets[+b.dataset.delbet]); }
   if ((b = q('[data-untrack]'))) { const it = items.find(x => x.uid === sel); if (it) untrack(it); return; }
   if ((b = q('[data-ffold]'))) { const k = b.dataset.ffold, a = famShut(); lsSet('moje_v1_famshut', JSON.stringify(a.includes(k) ? a.filter(x => x !== k) : [...a, k])); return render(); }
