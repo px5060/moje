@@ -62,6 +62,8 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 
 ## Aplikacja MOJE (repo `moje`, adres `/moje/`)
 
+- Na pasku aplikacji przycisk **📓 ZESZYT** (`/zeszyt/`, repo `zeszyt`) — karty z papierowego zeszytu TRÓJKA.
+
 - Zbiera MOJE (modele, które gram) i MOJE ZAKŁADY ze wszystkich SZUKAJ / SZUKAJ+ / BUST, T50 i T60 — czyta wspólną pamięć telefonu, nic nie kopiuje.
 - Przycisk w oknie statystyk SZUKAJ / SZUKAJ+ „⇢ Gram — dodaj do MOJE i otwórz” zastąpił dawne „Dodaj do RAZEM — zakładka SZUKAJ”.
 - Poza tym przyciskiem aplikacji źródłowych **nie zmieniamy** pod MOJE.
