@@ -94,6 +94,7 @@ details.sec>summary{list-style:none}[data-lp]{-webkit-user-select:none;user-sele
 .nx-hd{font-size:22px;font-weight:900}.nx-s{font-size:13.5px;margin-top:2px}.nx-l{margin-top:6px;font-size:12.5px;max-height:60vh;overflow:auto}.nx-x{font-size:11px;opacity:.8;margin-top:5px;text-align:right}
 .nx-g{margin-top:6px;border-radius:8px;padding:4px 8px;background:#0003}.nx-g.g{border-left:5px solid #5fd38a}.nx-g.o{border-left:5px solid #FFD700}.nx-g.x{border-left:5px solid #ff6b6b}.nx-g.r{border-left:5px solid #2e7d4f}.nx-g.q{border-left:5px solid #ffffff66}
 .nx-h{font-size:14px}.nx-h span{opacity:.8;font-size:12px}.nx-h .nx-r{display:block;opacity:.9;font-size:12px}.nx-p{font-size:11px;opacity:.85;margin-left:4px}
+.tgt{display:inline-block;font-size:11px;font-weight:800;line-height:1.3;border:1px solid var(--bd);border-radius:5px;padding:0 4px;margin-left:5px;color:var(--mu);vertical-align:middle}
 .nx-i[data-nk]{cursor:pointer;transition:transform .15s}.nx-i.big{transform:scale(1.08);transform-origin:left center;position:relative;z-index:3;border-radius:6px;box-shadow:0 0 0 2px #fff,0 3px 10px #0007;background:#ffffff38}.nx-i.nx-rel.big{background:#d6eaff}.nx-rel{background:#d6eaff;color:#0d2a4a;border-radius:6px;box-shadow:inset 4px 0 #4a9be8;padding-left:8px}.nx-rel .nx-b{border-color:#0d2a4a;color:#0d2a4a;background:#ffffff80}.nx-rl{font-size:11px;font-weight:800;background:#9fd0ff;color:#0d2a4a;border-radius:6px;padding:0 5px}.nx-rh{margin-top:6px;font-size:12px;background:#9fd0ff33;border:1px solid #9fd0ff99;border-radius:8px;padding:4px 8px;white-space:normal}.nx-i{display:flex;align-items:center;gap:6px;flex-wrap:wrap;white-space:nowrap;padding:3px 0;border-top:1px solid #ffffff33}.nx-b{border:1.5px solid #fff;background:#ffffff26;color:#fff;border-radius:7px;padding:1px 7px;font-size:14px;cursor:pointer}.nx-ok{white-space:nowrap;font-size:11px;font-weight:800;background:#1f8a4c;border-radius:6px;padding:1px 6px}
 .nx-undo{background:#0003!important;border-style:dashed!important}.nx-u{font-size:13px}
 .nx-all{display:block;width:100%;margin:4px 0 2px;border:1.5px solid #fff;background:#ffffff26;color:#fff;border-radius:8px;padding:5px;font-weight:800;font-size:13px;cursor:pointer}
@@ -184,7 +185,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.28.1';
+const APP_VER = '1.28.2';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -612,7 +613,7 @@ function card(it) {
   else if (it.grp === 'bust') st = `<b class="neg">BUST w Nr ${fmtN(r.lbr + 1)}</b> · od BUST-u bez WIN${gapTxt(r)}${it.gone ? ' · <span class="mu">model usunięty z MOJE</span>' : ''}<br>${phaseTxt(it)}`;
   else st = phaseTxt(it);
   const cls = it.grp === 'done' ? (it.res.win ? 'done' : 'donel') : it.grp === 'bust' && it.d === 1 ? 'bust now' : it.grp;
-  return `<div class="mc ${cls}" data-u="${esc(it.uid)}"><div class="h"><span class="id">${srcBdg(it)}${esc(it.g.id)}${it.tg !== 'x1x' ? ` <span class="mu">${it.tg}</span>` : ''} ${ocTag(it)}</span><span class="mu">${esc(it.s.name)} ${TABS[it.t].name}</span></div>
+  return `<div class="mc ${cls}" data-u="${esc(it.uid)}"><div class="h"><span class="id">${srcBdg(it)}${esc(it.g.id)}<span class="tgt">${it.tg}</span> ${ocTag(it)}</span><span class="mu">${esc(it.s.name)} ${TABS[it.t].name}</span></div>
     <div class="rule">${esc(ruleTxt(it.m))}</div><div class="st">${st}</div>
     ${pend.map(x => `<div class="bet">● POSTAWIONY: Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł — czeka na wynik</div>`).join('')}
     ${r.ph === 2 && it.d <= 3 && it.grp !== 'done' ? (saved ? '<div class="row2"><span class="pos">✓ zakład zapisany</span></div>' : betForm(it)) : ''}</div>`;
@@ -661,7 +662,7 @@ function row0(it, extra, asLost, zk) {
   const bu = asLost === 2 || it.inBust && (view === 'bust' || asLost), bnow = bu && it.d === 1, stk = it.rz ? r.stake : ST[r.bs];
   return `<div class="rw ${it.s.cls}${it.d === 1 && it.grp !== 'done' ? ' now' : ''}${bu ? (bnow ? ' bnow' : ' abust') : ''}" data-u="${esc(it.uid)}">
     ${bnow ? `<div class="graj">GRAJ Nr ${fmtN(r.wz + 1)} · k${r.bs + 1} · ${stk} zł${it.rz ? '' : ' na ' + it.tg}</div>` : ''}
-    <div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b>${it.tg !== 'x1x' ? `<span class="mu">${it.tg}</span>` : ''}${ocTag(it)}${famTag(it)}<span class="sp"></span>${it.grp === 'done' && !(it.inBust && view === 'bust') && view !== 'zak' && !zk ? '' : `<span class="kk">k${r.bs + 1}</span><b class="zl">${stk} zł</b>`}
+    <div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b><span class="tgt">${it.tg}</span>${ocTag(it)}${famTag(it)}<span class="sp"></span>${it.grp === 'done' && !(it.inBust && view === 'bust') && view !== 'zak' && !zk ? '' : `<span class="kk">k${r.bs + 1}</span><b class="zl">${stk} zł</b>`}
     ${canBet ? (saved ? '<span class="pos ok">✓</span>' : `<button class="btn sm ${it.d === 1 ? 'pri' : ''}" data-fo="${esc(it.uid)}">💰</button>`) : ''}</div>
     <div class="l2">${extra != null ? extra : shortPh(it)}${pend.length ? ` · <span style="color:var(--bl)">● postawiony k${pend[pend.length - 1].b.step} ${pend[pend.length - 1].b.stake} zł</span>` : ''}</div>${cycLine(it)}
     ${formU === it.uid && canBet ? betForm(it) : ''}</div>`;
@@ -840,7 +841,7 @@ function famCard(F, fi, compact) {
   const fk = [F.t, F.a, F.tg, F.id].join('~'), shut = famShut().includes(fk);
   let h = `<div class="sec fam"><div class="sh fam-hd" data-ffold="${esc(fk)}"><b>${shut ? '▸' : '▾'} 👪 ${esc(F.id)} · ${A.length} ${A.length < 5 ? 'modele' : 'modeli'}</b><span class="m">${esc(A[0].s.name)} ${TABS[t].name} · ${F.tg} · TRIGGER ${esc(norm(F.m)[3])} · +${norm(F.m)[4]}</span></div>
     <div style="margin:2px 0 6px">${tag} ${nx}</div>
-    <div class="fam-m${shut ? ' hide' : ''}">${A.map(it => ddTag(`<div class="rw ${it.s.cls}${it.d === 1 ? ' now' : ''}${it.inBust ? ' abust' : ''}" data-fstat="${esc(famDl(it))}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b><span class="mu">${it.seed ? 'model rodziny' : it.ov + '% wspólnych'}</span><span class="sp"></span><span class="kk">k${it.r.bs + 1}</span><b class="zl">${ST[it.r.bs]} zł</b></div>
+    <div class="fam-m${shut ? ' hide' : ''}">${A.map(it => ddTag(`<div class="rw ${it.s.cls}${it.d === 1 ? ' now' : ''}${it.inBust ? ' abust' : ''}" data-fstat="${esc(famDl(it))}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b><span class="tgt">${it.tg}</span><span class="mu">${it.seed ? 'model rodziny' : it.ov + '% wspólnych'}</span><span class="sp"></span><span class="kk">k${it.r.bs + 1}</span><b class="zl">${ST[it.r.bs]} zł</b></div>
       <div class="l2">${shortPh(it)} · BUST w historii: <b class="${it.r.nbu ? 'neg' : 'pos'}">${it.r.nbu}</b></div>${cycLine(it)}${famDist(it)}
       <div class="fam-b">${inMoje(it.uid) ? '<span class="fam-t g">✓ w MOJE</span>' : `<button class="btn sm" data-fmoje="${fi}#${esc(it.g.id)}">▶ do MOJE</button>`}<span class="mu" style="font-size:12px">dotknij → statystyki w ${esc(it.s.name)} ${TABS[t].name}</span></div></div>`, it.r.ph === 2 ? it.d : 0)).join('')}</div>`;
   if (compact) return h + '</div>';
@@ -866,7 +867,7 @@ function famStats(F, A, from) {   // od wiersza from: wiersze z grą, busty u ws
 function famView() {
   const t = only, mine = items.filter(it => it.t === t && !it.rz && !it.gone), FA = famGet().map((F, i) => [F, i]).filter(([F]) => F.t === t);
   let h = `<div class="note"><b>👪 RODZINY</b> — eksperyment: model z MOJE i jego „krewni” z tej samej puli SZUKAJ (ten sam TRIGGER i przesunięcie, ≥90% wspólnych wierszy zakładu). Widać krok każdego, czy grają razem na następnym wierszu i ile razy od dodania BUST był u wszystkich naraz, a ile razy tylko u części. Na wspólnym wierszu wszyscy wygrywają albo przegrywają razem (ten sam kod).</div>
-    <div class="famadd"><select id="famSel">${mine.length ? mine.map(it => `<option value="${esc(it.uid)}"${it.uid === famSelV ? ' selected' : ''}>${esc(it.s.a + t.slice(1) + ' ' + it.g.id + (it.tg !== 'x1x' ? ' · ' + it.tg : ''))}</option>`).join('') : '<option value="">— dodaj najpierw model do MOJE —</option>'}</select><button class="btn sm pri" data-fadd="1">👪 znajdź krewnych</button></div>
+    <div class="famadd"><select id="famSel">${mine.length ? mine.map(it => `<option value="${esc(it.uid)}"${it.uid === famSelV ? ' selected' : ''}>${esc(it.s.a + t.slice(1) + ' ' + it.g.id + ' · ' + it.tg)}</option>`).join('') : '<option value="">— dodaj najpierw model do MOJE —</option>'}</select><button class="btn sm pri" data-fadd="1">👪 znajdź krewnych</button></div>
     ${famMsg ? `<div class="hint" style="margin:4px 2px 8px">${esc(famMsg)}</div>` : ''}`;
   if (!FA.length) return h + '<div class="empty">Brak rodzin w tej tabeli. Wybierz model i dotknij „znajdź krewnych”.</div>';
   FA.forEach(([F, fi]) => { h += famCard(F, fi); });
@@ -902,7 +903,7 @@ function zaklady() {
   if (!L.length) return h + '<div class="empty">Brak zapisanych zakładów w tej grupie. Na karcie „GRAJ TERAZ” dotknij <b>💰 Zapisz zakład</b>.</div>';
   if (ZK.length || ZKB.length) h += `<details class="sec sdone" ${foldAt('zakdone', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${ZK.length + ZKB.length}</span><span class="m">WIN po zakładzie</span></summary>${ZK.map(x => row(x.it,
     (x.res === 'win' ? `<span class="pos">✔ WIN na zakładzie</span> Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł · ${zl(betVal(x))}` : (w => `ostatni zakład Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł · potem <span class="pos">WIN modelu k${w[2]}</span> w Nr ${fmtN(w[0] + 1)} (bez zakładu)`)(wonAfter(x))) + serTxt(x))).join('')}${ZKB.map(e => zakBankRow(e, e.x.res === 'win' ? `<span class="pos">✔ WIN na zakładzie banku</span> Nr ${fmtN(e.x.b.row + 1)} · k${e.x.b.step} · ${e.x.b.stake} zł · ${zl(betVal(e.x))}` : `ostatni zakład banku Nr ${fmtN(e.x.b.row + 1)} · potem <span class="pos">WIN modelu</span>`)).join('')}</details>`;
-  const all = L.map((x, i) => `<div class="bt ${x.res}${x.it && x.it.inBust ? ' lsrc' : ''}" data-bi="${bets.indexOf(x)}"><span class="bdg ${x.s.cls}">${x.s.a}${x.t.slice(1)}</span><div>${esc(x.b.id)}${x.b.bank ? ` · <b style="color:var(--bl)">🏦 +${x.b.bank}</b>` : ''}${x.tg !== 'x1x' ? ' · ' + x.tg : ''} · Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł<div class="mu" style="font-size:11px">zapisany ${ago(x.b.t)} (${when(x.b.t)})</div></div>
+  const all = L.map((x, i) => `<div class="bt ${x.res}${x.it && x.it.inBust ? ' lsrc' : ''}" data-bi="${bets.indexOf(x)}"><span class="bdg ${x.s.cls}">${x.s.a}${x.t.slice(1)}</span><div>${esc(x.b.id)}${x.tg ? `<span class="tgt">${x.tg}</span>` : ""}${x.b.bank ? ` · <b style="color:var(--bl)">🏦 +${x.b.bank}</b>` : ''} · Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł<div class="mu" style="font-size:11px">zapisany ${ago(x.b.t)} (${when(x.b.t)})</div></div>
     <div class="r">${x.res === 'pend' ? '<span style="color:var(--or2)">czeka</span>' : x.res === 'win' ? zl(betVal(x)) : x.res === 'lost' ? zl(betVal(x)) : '<span class="mu">model nie grał</span>'}<br><button class="ub" data-delbet="${bets.indexOf(x)}">↶ cofnij</button></div></div>`).join('');
   h += `<details class="sec" ${foldAt('zakall', 0)}><summary class="sh"><span>📋 WSZYSTKIE ZAKŁADY · ${L.length}</span><span class="m">najnowszy na górze</span></summary>${all}</details>`;
   return h;
@@ -994,7 +995,7 @@ function model() {
   if (it.rz) return rzModel(it);
   const m = it.m, r = it.r, C = D[it.t], lab = labOf(it), n = C.n, cyc = r.nw + r.nbu;
   let h = `<button class="btn back" data-go="${back}">← wróć</button>
-    <div class="box" style="border-color:var(--or)"><div class="h" style="display:flex;justify-content:space-between"><b style="font-size:17px">${srcBdg(it)}${esc(it.g.id)}</b><span class="mu">${esc(it.s.name)} ${TABS[it.t].name} · cel ${it.tg}</span></div>
+    <div class="box" style="border-color:var(--or)"><div class="h" style="display:flex;justify-content:space-between"><b style="font-size:17px">${srcBdg(it)}${esc(it.g.id)}${it.rz ? '' : `<span class="tgt">${it.tg}</span>`}</b><span class="mu">${esc(it.s.name)} ${TABS[it.t].name} · cel ${it.tg}</span></div>
     <div class="rule mu" style="font-size:12px;margin:3px 0 6px">${esc(ruleTxt(m))}</div><div style="font-size:14.5px">Teraz: ${phaseTxt(it)}</div>
     ${it.inBust ? `<div class="neg" style="margin-top:4px">BUST w Nr ${fmtN(r.lbr + 1)} — od niego jeszcze bez WIN</div>` : ''}
     ${it.res ? `<div style="margin-top:4px">Moja gra: ${it.res.win ? `✔ WIN k${it.res.k}` : '✖ BUST'} w Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}</div>` : ''}
@@ -1166,7 +1167,7 @@ function bankRow0(it) {   // jeden model listy BANK = zwarty wiersz jak na TERAZ
     : `bank przegrał k${B.ws - w}–k${B.ws - 1} · model gra dalej bez banku (k${r.bs + 1}) · po WIN modelu bank gra <b>k${B.ws}–k${B.we}</b> (${pct(B.p1)})`;
   const pl = r.sinceB === 0;   // model po LOST-cie (od LOST-u bez WIN) — biało-czerwona ramka jak na LOST
   const fk = `B|${it.uid}|${w}`, canB = (st === 'now' || st === 'soon') && it.d <= 3, savedB = canB && betsOf(it).some(x => x.b.bank === w && x.b.row === r.wz);
-  return `<div class="rw ${it.s.cls}${st === 'now' ? ' now' : ''}${pl ? ' abust' : ''}" data-bkm="${esc(it.uid)}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b>${it.tg !== 'x1x' ? `<span class="mu">${it.tg}</span>` : ''}${ocTag(it)}<span class="sp"></span><span class="kk">k${B.next}</span><b class="zl">${fmtN(bStake(B.next))} zł</b>${canB ? (savedB ? '<span class="pos ok">✓</span>' : `<button class="btn sm ${st === 'now' ? 'pri' : ''}" data-fo="${esc(fk)}">💰</button>`) : ''}</div>
+  return `<div class="rw ${it.s.cls}${st === 'now' ? ' now' : ''}${pl ? ' abust' : ''}" data-bkm="${esc(it.uid)}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b><span class="tgt">${it.tg}</span>${ocTag(it)}<span class="sp"></span><span class="kk">k${B.next}</span><b class="zl">${fmtN(bStake(B.next))} zł</b>${canB ? (savedB ? '<span class="pos ok">✓</span>' : `<button class="btn sm ${st === 'now' ? 'pri' : ''}" data-fo="${esc(fk)}">💰</button>`) : ''}</div>
     <div class="l2">${pl ? `<span class="neg">po LOST (Nr ${fmtN(r.lbr + 1)})</span> · ` : ''}${l2}</div>${cycLine(it)}${formU === fk && canB ? bankBetForm(it, w) : ''}</div>`;
 }
 // ===== lista BANK: modele dodane przyciskiem „➕ Dodaj do BANK” (z wyszukiwarki albo z ekranu modelu) — niezależnie od MOJE =====
@@ -1245,7 +1246,7 @@ function bqFind(t, q) {   // „P1037”, „1037”, „S+1037” (tylko SZUKAJ
 }
 function bqDet(it) {
   const r = it.r;
-  return `<div class="box${r.sinceB === 0 ? ' abust' : ''}" style="border-color:var(--or);margin-top:6px"><div style="display:flex;justify-content:space-between;gap:6px"><b style="font-size:16px">${srcBdg(it)}${esc(it.g.id)} <span class="mu">${it.tg}</span></b><span class="mu">${esc(it.s.name)} ${TABS[it.t].name}</span></div>
+  return `<div class="box${r.sinceB === 0 ? ' abust' : ''}" style="border-color:var(--or);margin-top:6px"><div style="display:flex;justify-content:space-between;gap:6px"><b style="font-size:16px">${srcBdg(it)}${esc(it.g.id)}<span class="tgt">${it.tg}</span></b><span class="mu">${esc(it.s.name)} ${TABS[it.t].name}</span></div>
     <div class="rule mu" style="font-size:12px;margin:3px 0 6px">${esc(ruleTxt(it.m))}</div><div style="font-size:14px">Teraz: ${phaseTxt(it)}</div>${r.sinceB === 0 ? `<div class="neg" style="margin-top:4px">LOST w Nr ${fmtN(r.lbr + 1)} — od niego jeszcze bez WIN</div>` : ''}
     <div class="kv" style="margin-top:6px"><div><b>${r.nw + r.nbu}</b>cykli</div><div><b class="pos">${r.nw}</b>WIN</div><div><b class="neg">${r.nbu}</b>LOST</div><div><b>${zl(r.pnl)}</b>bilans</div></div>
     <div class="hint" style="margin-top:6px">Ostatnie cykle modelu (najnowszy z prawej):</div><div class="cyc">${r.ev.slice(-16).map(e => e[1] === 1 ? `<b>W${e[2]}</b>` : '<b class="x">LOST</b>').join('')}</div><div style="margin-top:8px">${moveBtn(it)}</div></div>` + bankBox(it);
@@ -1382,12 +1383,12 @@ function nxtFill() {
   const G = [['GRAĆ', 'g', s => s >= 7, '7–9 pkt'], ['OBSERWUJ', 'o', s => s >= 5 && s < 7, '5–6 pkt'], ['NIE GRAĆ', 'x', s => s !== null && s !== undefined && s < 5, 'poniżej 5 pkt'], ['bez oceny', 'r', s => s === null, ''], ['liczę ocenę…', 'q', s => s === undefined, '']];
   d._grp = {}; d._sav = {};
   let RG = out.map(() => ''); try { RG = nxRel(out); } catch (e) {}
-  const nm0 = x => esc(x.it.rz ? x.it.label || x.it.g.id : x.it.g.id), RS = [...new Set(RG.filter(Boolean))].sort().map(c => `<b>🔗${c}</b> ${out.filter((x, i) => RG[i] === c).map(nm0).join(', ')}`);
+  const nm0 = x => esc(x.it.rz ? x.it.label || x.it.g.id : x.it.g.id + ' · ' + x.it.tg), RS = [...new Set(RG.filter(Boolean))].sort().map(c => `<b>🔗${c}</b> ${out.filter((x, i) => RG[i] === c).map(nm0).join(', ')}`);
   const grp = ([nm, c, f, pk]) => { const A = out.map((x, i) => [x, i]).filter(([x]) => f(sc(x))); if (!A.length) return ''; const s = A.reduce((a, [x]) => a + x.stake, 0), free = A.filter(([x]) => !nxSaved(x, n)); d._grp[c] = free.map(([, i]) => String(i)); const sav = A.filter(([x]) => nxSaved(x, n)); d._sav[c] = sav.map(([, i]) => String(i));
     return `<div class="nx-g ${c}"><div class="nx-h"><b>${nm}</b>${pk ? ` <span>(${pk})</span>` : ''} · ${A.length} · <b>${fmtN(s)} zł</b><span class="nx-r">trafi: +${fmtN(2 * s)} · nie: −${fmtN(s)}</span></div>
       ${free.length > 1 ? `<button class="nx-all" data-ng="${c}">💰 zapisz zakład na wszystkie ${free.length} (${fmtN(free.reduce((a, [x]) => a + x.stake, 0))} zł)</button>` : ''}
       ${sav.length > 1 ? `<button class="nx-all nx-undo" data-nug="${c}">↶ cofnij zapisane w tej grupie (${sav.length} · ${fmtN(sav.reduce((a, [x]) => a + x.stake, 0))} zł)</button>` : ''}
-      ${A.map(([x, i]) => `<div class="nx-i${RG[i] ? ' nx-rel' : ''}" data-nk="${i}">${nxSaved(x, n) ? `<span class="nx-ok">✓ zapisany</span><button class="nx-b nx-u" data-nu="${i}">↶</button>` : `<button class="nx-b" data-nb="${i}">💰</button>`}${srcBdg(x.it)}<b>${esc(x.it.rz ? x.it.label || x.it.g.id : x.it.g.id)}</b>${RG[i] ? ` <span class="nx-rl">🔗${RG[i]}</span>` : ''}${x.w ? ` <span class="bw w${x.w}">🏦 +${x.w}</span>` : ''} · k${x.step} — <b>${fmtN(x.stake)} zł</b>${typeof sc(x) === 'number' ? ` <span class="nx-p">${Math.max(sc(x), 0)}/9</span>` : ''}</div>`).join('')}</div>`; };
+      ${A.map(([x, i]) => `<div class="nx-i${RG[i] ? ' nx-rel' : ''}" data-nk="${i}">${nxSaved(x, n) ? `<span class="nx-ok">✓ zapisany</span><button class="nx-b nx-u" data-nu="${i}">↶</button>` : `<button class="nx-b" data-nb="${i}">💰</button>`}${srcBdg(x.it)}<b>${esc(x.it.rz ? x.it.label || x.it.g.id : x.it.g.id)}</b>${x.it.rz ? '' : `<span class="tgt">${x.it.tg}</span>`}${RG[i] ? ` <span class="nx-rl">🔗${RG[i]}</span>` : ''}${x.w ? ` <span class="bw w${x.w}">🏦 +${x.w}</span>` : ''} · k${x.step} — <b>${fmtN(x.stake)} zł</b>${typeof sc(x) === 'number' ? ` <span class="nx-p">${Math.max(sc(x), 0)}/9</span>` : ''}</div>`).join('')}</div>`; };
   d.innerHTML = `<div class="nx-hd">GRAJ Nr ${fmtN(n + 1)} · ${TABS[only].name}</div>
     <div class="nx-s">${out.length ? `${out.length} zakład(y) · wszystkie razem <b>${fmtN(sum)} zł</b> · trafi: <b>+${fmtN(2 * sum)} zł</b> · nie: <b>−${fmtN(sum)} zł</b>` : `na Nr ${fmtN(n + 1)} nie gra żaden mój model ani bank`}</div>
     ${(w => w ? `<div class="nx-fw">${w}</div>` : '')(famGet().filter(F => F.t === only).map(F => { const N = famNow(F).now.filter(it => out.some(x => x.it.uid === it.uid)); return N.length >= 2 ? `👪 ${esc(F.id)} ×${N.length} — ${fmtN(N.reduce((a, it) => a + ST[it.r.bs], 0))} zł to <b>jeden kod</b> (${N.map(it => esc(it.g.id)).join(', ')})` : ''; }).filter(Boolean).join('<br>'))}
