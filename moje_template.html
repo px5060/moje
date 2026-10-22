@@ -142,6 +142,7 @@ nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-r
 /* bank +3 / +5 */
 .bkl{margin-top:3px;font-size:12.5px;color:var(--mu)}.bkl b.w{display:inline-block;min-width:46px;color:var(--or2)}.bkl.go{color:#ffd0a8}.bkl.go b.w{color:#fff}
 .bst{display:flex;gap:6px;align-items:center;margin-top:6px}.bst input{flex:1;min-width:0;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:7px 9px;font-size:15px}
+.cyx b{cursor:pointer;transition:transform .15s}.cyx b.big{transform:scale(1.35);position:relative;z-index:2;box-shadow:0 0 0 2px #fff}.cyp{margin-top:8px;padding:7px 9px;border:1px solid var(--bd);border-radius:8px;background:var(--card);font-size:13px}.cyd{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}.cyd span{background:#2b4a37;border-radius:6px;padding:2px 7px}.cyd span.x{background:#8a1f1f}.cyd small{opacity:.8}
 .cyc b.hi{background:#7a5a1a}.cyc b.hh{background:#a0521a}
 table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:11px;border-top:0}
 .respop .h{font-size:20px;font-weight:900}.respop .i{padding:3px 0;border-top:1px solid #ffffff33;font-size:13px}.respop .x{font-size:11px;opacity:.75;margin-top:5px;text-align:right}
@@ -185,7 +186,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.28.6';
+const APP_VER = '1.28.7';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -651,6 +652,30 @@ function cycOf(it) {
     else if (k === 'k6') { const m = /k\s?=?\s?(\d+)/i.exec(t); ev.push(m ? +m[1] : 0); } }
   const o = { nw: ev.filter(v => v >= 0).length, nl: ev.filter(v => v < 0).length, l3: ev.slice(-3) }; _cyc.set(key, o); return o;
 }
+// ostatnie cykle modelu jako kafelki: 1. dotknięcie powiększa, 2. dotknięcie → co było w historii zaraz po takim wyniku (rozkład + kolejno)
+const CYEV = new Map(); let cyS = null;   // cyS = { u, i, open } — wybrany kafelek zostaje po odświeżeniu ekranu
+const cyLab = v => v === 9 ? 'LOST' : 'W' + v;
+function cycHtml(it, nLast, bLab) {
+  const ev = it.r.ev || [], L = ev.slice(-nLast), o = ev.length - L.length; CYEV.set(it.uid, ev);
+  return `<div class="cyc cyx" data-cx="${esc(it.uid)}">${L.map((e, j) => e[1] === 1 ? `<b data-ci="${o + j}">W${e[2]}</b>` : `<b class="x" data-ci="${o + j}">${bLab}</b>`).join('')}</div><div class="cyp" hidden></div>`;
+}
+function cyPanel(u, i) {
+  const ev = CYEV.get(u); if (!ev || !ev[i]) return '';
+  const S = ev.map(e => e[1] === 1 ? e[2] : 9), v = S[i], F = [];
+  for (let j = 0; j < S.length - 1; j++) if (S[j] === v) F.push(S[j + 1]);
+  const all = S.filter(x => x === v).length;
+  if (!F.length) return `<b>Po ${cyLab(v)}</b>: w historii to był ostatni cykl — nie ma jeszcze, co było po nim.`;
+  const C = {}; F.forEach(x => { C[x] = (C[x] || 0) + 1; });
+  const D = Object.keys(C).map(Number).sort((a, b) => C[b] - C[a] || a - b), pc = x => Math.round(100 * C[x] / F.length);
+  return `<b>Po ${cyLab(v)}</b> (${all}× w całej historii${all > F.length ? ', ostatni jeszcze bez następnego' : ''}) następny cykl:` +
+    `<div class="cyd">${D.map(x => `<span class="${x === 9 ? 'x' : ''}"><b>${cyLab(x)}</b> × ${C[x]} <small>(${pc(x)}%)</small></span>`).join('')}</div>` +
+    `<div class="mu" style="font-size:11px;margin-top:4px">po kolei (najstarszy z lewej):</div><div class="cyc">${F.map(x => x === 9 ? '<b class="x">LOST</b>' : `<b>W${x}</b>`).join('')}</div>`;
+}
+function cyApply() {   // po odświeżeniu ekranu: przywróć powiększony kafelek i otwarty pasek
+  if (!cyS) return; const c = document.querySelector(`.cyx[data-cx="${CSS.escape(cyS.u)}"]`); if (!c) return;
+  const b = c.querySelector(`b[data-ci="${cyS.i}"]`); if (!b) return; b.classList.add('big');
+  const p = c.nextElementSibling; if (cyS.open && p) { p.innerHTML = cyPanel(cyS.u, cyS.i); p.hidden = false; }
+}
 function cycLine(it) {
   const c = cycOf(it); if (!c || !(c.nw + c.nl)) return '';
   return `<div class="l3">WIN <b class="pos">${c.nw}</b> · LOST <b class="neg">${c.nl}</b>${c.l3.length ? ` · ostatnie: ${c.l3.map(v => v >= 0 ? `<i>W${v || ''}</i>` : '<i class="x">L</i>').join('')}` : ''}</div>`;
@@ -1034,7 +1059,7 @@ function model() {
     <div class="bars" style="margin-top:18px">${dist.map(v => `<div style="height:${100 * v / mx}%"><span>${v}</span></div>`).join('')}<div style="height:${100 * r.nbu / mx}%;background:#b3261e"><span>${r.nbu}</span></div></div>
     <div class="bl">${dist.map((_, i) => `<span>k${i + 1}</span>`).join('')}<span>BUST</span></div>
     <div class="hint" style="margin-top:8px">Ostatnie ${last.length} cykli (W = WIN na kroku, B = BUST), najnowszy z prawej:</div>
-    <div class="cyc">${last.map(e => e[1] === 1 ? `<b>W${e[2]}</b>` : '<b class="x">B</b>').join('')}</div>
+    ${cycHtml(it, 24, 'B')}
     ${r.bl.length ? `<div class="hint" style="margin-top:8px">BUST-y w wierszach: ${r.bl.slice(-6).map(b => 'Nr ' + fmtN(b[0] + 1)).join(' · ')}${gaps.length ? `<br>odstępy między nimi w cyklach: ${gaps.join(' · ')}` : ''}</div>` : ''}</div>`;
   if (back !== 'bank') h += bankBox(it);
   h += rows20(it);
@@ -1264,7 +1289,7 @@ function bqDet(it) {
   return `<div class="box${r.sinceB === 0 ? ' abust' : ''}" style="border-color:var(--or);margin-top:6px"><div style="display:flex;justify-content:space-between;gap:6px"><b style="font-size:16px">${srcBdg(it)}${esc(it.g.id)}<span class="tgt">${it.tg}</span></b><span class="mu">${esc(it.s.name)} ${TABS[it.t].name}</span></div>
     <div class="rule mu" style="font-size:12px;margin:3px 0 6px">${esc(ruleTxt(it.m))}</div><div style="font-size:14px">Teraz: ${phaseTxt(it)}</div>${r.sinceB === 0 ? `<div class="neg" style="margin-top:4px">LOST w Nr ${fmtN(r.lbr + 1)} — od niego jeszcze bez WIN</div>` : ''}
     <div class="kv" style="margin-top:6px"><div><b>${r.nw + r.nbu}</b>cykli</div><div><b class="pos">${r.nw}</b>WIN</div><div><b class="neg">${r.nbu}</b>LOST</div><div><b>${zl(r.pnl)}</b>bilans</div></div>
-    <div class="hint" style="margin-top:6px">Ostatnie cykle modelu (najnowszy z prawej):</div><div class="cyc">${r.ev.slice(-16).map(e => e[1] === 1 ? `<b>W${e[2]}</b>` : '<b class="x">LOST</b>').join('')}</div><div style="margin-top:8px">${moveBtn(it)}</div></div>` + bankBox(it);
+    <div class="hint" style="margin-top:6px">Ostatnie cykle modelu (najnowszy z prawej):</div>${cycHtml(it, 16, 'LOST')}<div style="margin-top:8px">${moveBtn(it)}</div></div>` + bankBox(it);
 }
 function bqRes() {
   const t = only, st = s => (PL[t + '|' + s.a] || {}).st, ld = SRC.some(s => st(s) === 'ładuję'), er = SRC.filter(s => st(s) === 'błąd').map(s => s.name);
@@ -1430,6 +1455,7 @@ function render() {
   $('navK').innerHTML = `BANK${bankBadges35(bitems.filter(it => it.t === only))}`;
   const ae = document.activeElement, keep = ae && ae.id && /^(in|pa|bq)_/.test(ae.id) ? [ae.id, ae.value] : null;
   $('main').innerHTML = view === 'teraz' ? teraz() : view === 'zak' ? zaklady() : view === 'bust' ? busty() : view === 'bank' ? bankView() : view === 'bankm' ? bankModel() : view === 'model' ? model() : view === 'dane' ? dane() : pomoc();
+  try { cyApply(); } catch (e) {}
   if (keep && $(keep[0])) { $(keep[0]).value = keep[1]; $(keep[0]).focus(); }
 }
 let back = 'teraz';
@@ -1465,6 +1491,9 @@ document.addEventListener('click', e => {
   if ((b = q('[data-u2]'))) return go('model', b.dataset.u2);
   if ((b = q('[data-move]'))) return moveTo(b.dataset.mu, b.dataset.move);
   if ((b = q('[data-bkdel]'))) return bankDel(b.dataset.bkdel);
+  if ((b = q('.cyx b[data-ci]'))) { const c = b.closest('.cyx'), u = c.dataset.cx, i = +b.dataset.ci, p = c.nextElementSibling;
+    if (!b.classList.contains('big')) { c.querySelectorAll('b.big').forEach(x => x.classList.remove('big')); b.classList.add('big'); cyS = { u, i, open: false }; if (p) p.hidden = true; return; }
+    cyS = { u, i, open: !(cyS && cyS.open && cyS.i === i) }; if (p) { p.innerHTML = cyS.open ? cyPanel(u, i) : ''; p.hidden = !cyS.open; } return; }
   if ((b = q('[data-bkagain]'))) { e.stopPropagation(); const a = jget('moje_v1_bkdone'); a.push(b.dataset.bkagain); lsSet('moje_v1_bkdone', JSON.stringify(a.slice(-300))); toast('Bank gra od nowa od k1 — w CZEKAJĄ'); return render(); }   // bank po WIN i tak gra od k1: tylko zdejmij z ZAKOŃCZONE
   if ((b = q('[data-bkm]'))) return go('bankm', b.dataset.bkm);
   if ((b = q('[data-go]'))) return go(b.dataset.go);
