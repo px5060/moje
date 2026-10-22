@@ -185,7 +185,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.28.3';
+const APP_VER = '1.28.4';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1183,7 +1183,7 @@ const bankHas = uid => bankList().some(x => bkUid(x) === uid);
 function bankItems() {
   return bankList().map(x => {
     const it = mkItem(x.t, SRC.find(s => s.a === x.a), x.tg, { m: x.m, id: x.id, start: D[x.t].n, s0: 1 });
-    classify(it); it.bk = {}; BKW.forEach(w => { it.bk[w] = bankOf(it, w); }); return it;
+    classify(it); it.bat = x.at; it.bk = {}; BKW.forEach(w => { it.bk[w] = bankOf(it, w); }); return it;
   });
 }
 // ===== TERAZ ⇄ BANK: model jest albo na TERAZ (prosta progresja k1–k8), albo w BANK (+3 / +5) — nigdy w obu =====
@@ -1196,7 +1196,7 @@ function addMoje(it) {   // → MOJE GRY aplikacji źródłowej (ten sam zapis c
 function moveTo(uid, where) {   // 'B' = przenieś do BANK · 'T' = przenieś do TERAZ
   const it = BKI[uid]; if (!it) return;
   const L = jget(BKK), i = L.findIndex(x => x && Array.isArray(x.m) && bkUid(x) === uid);
-  if (where === 'B') { if (i < 0) L.push({ t: it.t, a: it.s.a, tg: it.tg, m: it.m, id: it.g.id, t0: Date.now() }); }
+  if (where === 'B') { if (i < 0) L.push({ t: it.t, a: it.s.a, tg: it.tg, m: it.m, id: it.g.id, t0: Date.now(), at: D[it.t].n }); }   // at = Nr wiersza dodania (ZAKOŃCZONE: WIN-y banku od dodania)
   else { if (i >= 0) L.splice(i, 1); if (!myIn(uid) && !addMoje(it)) { alert('BŁĄD zapisu pamięci telefonu!'); return; } }
   if (!lsSet(BKK, JSON.stringify(L))) { alert('BŁĄD zapisu pamięci telefonu!'); return; }
   toast(`${esc(it.s.a)} ${esc(it.g.id)} → ${where === 'B' ? '🏦 BANK' : '🟧 TERAZ'}`);
@@ -1285,6 +1285,9 @@ function bankView() {
   if (G.soon.length) h += sec('K-soon', '🟨 ZA CHWILĘ', 'TRIGGER już był', G.soon.sort((a, b) => a.d - b.d), 'ssoon');
   if (G.wait.length) h += sec('K-wait', '🟦 CZEKAJĄ', 'bank w oknie · czeka na STEP / TRIGGER', G.wait, 'swait', '', byK(G.wait));
   if (G.held.length) h += sec('K-held', '⏸ CZEKAJĄ NA BANK', 'okno przegrane · czeka na WIN modelu', G.held, 'sheld', '', byK(G.held));
+  // ✅ ZAKOŃCZONE: ostatni WIN banku modelu (seria banku zamknięta) od dodania do BANK — bank gra dalej od k1, więc model jest też w CZEKAJĄ
+  { const D0 = L.map(it => { const R = it.bk[bkw].res, x = R[R.length - 1], from = it.bat != null ? it.bat : n - 100; return x && x.row >= from ? { it, x } : null; }).filter(Boolean).sort((a, b) => b.x.row - a.x.row);
+    h += `<details class="sec sdone" ${foldAt('K-done', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${D0.length}</span><span class="m">WIN banku +${bkw}</span></summary>${D0.length ? D0.map(({ it, x }) => `<div class="rw ${it.s.cls}" data-bkm="${esc(it.uid)}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b><span class="tgt">${it.tg}</span><span class="sp"></span><span class="pos">✔ WIN k${x.k}</span></div><div class="l2">bank +${bkw} zamknięty w Nr ${fmtN(x.row + 1)} · seria ${zl(bSer(x.k))} · teraz znowu od k1</div></div>`).join('') : `<div class="none">Od dodania do BANK żaden bank +${bkw} nie zamknął się WIN.</div>`}</details>`; }
   return h + `<div class="hint" style="margin-bottom:8px">Droga modelu w banku +${bkw}: 🟦 CZEKAJĄ → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ. WIN → bank od k1 (znowu CZEKAJĄ). Przegrane ${bkw} kroki okna → ⏸ CZEKAJĄ NA BANK, aż model skończy cykl (WIN albo LOST); potem znowu CZEKAJĄ na kolejnym oknie. Dotknij modelu → szanse, stawki i usunięcie z listy.</div>` + bankRules();
 }
 function bankModel() {   // model z listy BANK
