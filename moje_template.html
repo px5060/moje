@@ -185,7 +185,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.28.2';
+const APP_VER = '1.28.3';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -750,6 +750,11 @@ function busty() {
       for (let k = 8; k >= 1; k--) { const G = wait.filter(it => it.r.bs + 1 === k).sort(byApp); if (G.length) w += `<div class="kh">k${k} · ${ST[k - 1]} zł · ${G.length}</div>` + G.map(it => row(it, ex(it))).join(''); }
       h += `<details class="sec swait" ${foldAt('L-wait', 1)}><summary class="sh"><span>🟦 CZEKAJĄ · ${wait.length}</span><span class="m">na STEP / TRIGGER</span></summary>${w}</details>`; }
   }
+  // ✅ ZAKOŃCZONE (jak na TERAZ): modele, które po BUST-cie (od dodania) trafiły WIN — cykl po BUST-cie zamknięty
+  { const D0 = []; vitems.forEach(it => { if (it.t !== only || (bsrc === 'B') !== isB(it) || it.inBust || it.rz) return; const st = it.gone ? it.brow : it.g.start || 0, bl = it.r.bl || [], lb = bl.length ? bl[bl.length - 1][0] : -1; if (lb < st) return;
+      const w = (it.r.ev || []).find(e => e[0] > lb && e[1] === 1); if (w) D0.push({ it, lb, w }); });
+    D0.sort((a, b) => b.w[0] - a.w[0]);
+    h += `<details class="sec sdone" ${foldAt('L-done', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${D0.length}</span><span class="m">WIN po BUST-cie</span></summary>${D0.length ? D0.map(x => row(x.it, `<span class="neg">BUST Nr ${fmtN(x.lb + 1)}</span> → <span class="pos">✔ WIN k${x.w[2]}</span> w Nr ${fmtN(x.w[0] + 1)}`)).join('') : '<div class="none">Żaden model po BUST-cie jeszcze nie trafił WIN.</div>'}</details>`; }
   // historia: wszystkie BUST-y moich modeli od dodania i co było po nich
   const H = [];
   vitems.forEach(it => { if (it.t !== only || (bsrc === 'B') !== isB(it)) return; const st = it.gone ? it.brow : it.g.start || 0;
@@ -901,8 +906,8 @@ function zaklady() {
     if (wait.length || bWait.length) h += sec('🟦 CZEKAJĄ', 'na STEP / TRIGGER', wait, Object.assign({ cls: 'swait', extra: exW, key: 'zakwait', open: 1, lost: lostF }, bTW(bWait)));
   }
   if (!L.length) return h + '<div class="empty">Brak zapisanych zakładów w tej grupie. Na karcie „GRAJ TERAZ” dotknij <b>💰 Zapisz zakład</b>.</div>';
-  if (ZK.length || ZKB.length) h += `<details class="sec sdone" ${foldAt('zakdone', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${ZK.length + ZKB.length}</span><span class="m">WIN po zakładzie</span></summary>${ZK.map(x => row(x.it,
-    (x.res === 'win' ? `<span class="pos">✔ WIN na zakładzie</span> Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł · ${zl(betVal(x))}` : (w => `ostatni zakład Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł · potem <span class="pos">WIN modelu k${w[2]}</span> w Nr ${fmtN(w[0] + 1)} (bez zakładu)`)(wonAfter(x))) + serTxt(x))).join('')}${ZKB.map(e => zakBankRow(e, e.x.res === 'win' ? `<span class="pos">✔ WIN na zakładzie banku</span> Nr ${fmtN(e.x.b.row + 1)} · k${e.x.b.step} · ${e.x.b.stake} zł · ${zl(betVal(e.x))}` : `ostatni zakład banku Nr ${fmtN(e.x.b.row + 1)} · potem <span class="pos">WIN modelu</span>`)).join('')}</details>`;
+  h += `<details class="sec sdone" ${foldAt('zakdone', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${ZK.length + ZKB.length}</span><span class="m">WIN po zakładzie</span></summary>${ZK.map(x => row(x.it,
+    (x.res === 'win' ? `<span class="pos">✔ WIN na zakładzie</span> Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł · ${zl(betVal(x))}` : (w => `ostatni zakład Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł · potem <span class="pos">WIN modelu k${w[2]}</span> w Nr ${fmtN(w[0] + 1)} (bez zakładu)`)(wonAfter(x))) + serTxt(x))).join('')}${ZKB.map(e => zakBankRow(e, e.x.res === 'win' ? `<span class="pos">✔ WIN na zakładzie banku</span> Nr ${fmtN(e.x.b.row + 1)} · k${e.x.b.step} · ${e.x.b.stake} zł · ${zl(betVal(e.x))}` : `ostatni zakład banku Nr ${fmtN(e.x.b.row + 1)} · potem <span class="pos">WIN modelu</span>`)).join('')}${ZK.length + ZKB.length ? '' : '<div class="none">Jeszcze żaden model nie skończył serii zakładów WIN.</div>'}</details>`;
   const all = L.map((x, i) => `<div class="bt ${x.res}${x.it && x.it.inBust ? ' lsrc' : ''}" data-bi="${bets.indexOf(x)}"><span class="bdg ${x.s.cls}">${x.s.a}${x.t.slice(1)}</span><div>${esc(x.b.id)}${x.tg ? `<span class="tgt">${x.tg}</span>` : ""}${x.b.bank ? ` · <b style="color:var(--bl)">🏦 +${x.b.bank}</b>` : ''} · Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł<div class="mu" style="font-size:11px">zapisany ${ago(x.b.t)} (${when(x.b.t)})</div></div>
     <div class="r">${x.res === 'pend' ? '<span style="color:var(--or2)">czeka</span>' : x.res === 'win' ? zl(betVal(x)) : x.res === 'lost' ? zl(betVal(x)) : '<span class="mu">model nie grał</span>'}<br><button class="ub" data-delbet="${bets.indexOf(x)}">↶ cofnij</button></div></div>`).join('');
   h += `<details class="sec" ${foldAt('zakall', 0)}><summary class="sh"><span>📋 WSZYSTKIE ZAKŁADY · ${L.length}</span><span class="m">najnowszy na górze</span></summary>${all}</details>`;
