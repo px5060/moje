@@ -189,7 +189,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.29.3';
+const APP_VER = '1.29.4';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -790,10 +790,10 @@ function busty() {
       h += `<details class="sec swait" ${foldAt('L-wait', 1)}><summary class="sh"><span>🟦 CZEKAJĄ · ${wait.length}</span><span class="m">na STEP / TRIGGER</span></summary>${w}</details>`; }
   }
   // ✅ ZAKOŃCZONE (jak na TERAZ): modele, które po BUST-cie (od dodania) trafiły WIN — cykl po BUST-cie zamknięty
-  { const D0 = []; vitems.forEach(it => { if (it.t !== only || (bsrc === 'B') !== isB(it) || it.inBust || it.rz) return; const st = it.gone ? it.brow : it.g.start || 0, bl = it.r.bl || [], lb = bl.length ? bl[bl.length - 1][0] : -1; if (lb < st) return;
-      const w = (it.r.ev || []).find(e => e[0] > lb && e[1] === 1); if (w) D0.push({ it, lb, w }); });
+  { const D0 = []; vitems.forEach(it => { if (it.t !== only || (bsrc === 'B') !== isB(it) || it.inBust || it.rz) return; const st = it.gone ? it.brow : it.g.start || 0, bl = it.r.bl || [], lb = bl.length ? bl[bl.length - 1][0] : -1; if (lb < 0) return;
+      const w = (it.r.ev || []).find(e => e[0] > lb && e[1] === 1); if (w && w[0] >= st) D0.push({ it, lb, w }); });   // WIN po LOST-cie od dodania (LOST mógł być przed dodaniem — model był w zakładce LOST)
     D0.sort((a, b) => b.w[0] - a.w[0]);
-    h += `<details class="sec sdone" ${foldAt('L-done', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${D0.length}</span><span class="m">WIN po BUST-cie</span></summary>${D0.length ? D0.map(x => row(x.it, `<span class="neg">BUST Nr ${fmtN(x.lb + 1)}</span> → <span class="pos">✔ WIN k${x.w[2]}</span> w Nr ${fmtN(x.w[0] + 1)}`)).join('') : '<div class="none">Żaden model po BUST-cie jeszcze nie trafił WIN.</div>'}</details>`; }
+    h += `<details class="sec sdone" ${foldAt('L-done', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${D0.length}</span><span class="m">WIN po BUST-cie</span></summary>${D0.length ? D0.map(x => row(x.it, `<span class="neg">BUST Nr ${fmtN(x.lb + 1)}</span> → <span class="pos">✔ WIN k${x.w[2]}</span> w Nr ${fmtN(x.w[0] + 1)}` + (x.it.gone ? '' : `<br><button class="btn sm ok" data-restart="${esc(x.it.uid)}" style="margin-top:5px">▶ graj od nowa (k${x.it.r.bs + 1})</button>`))).join('') : '<div class="none">Żaden model po BUST-cie jeszcze nie trafił WIN.</div>'}</details>`; }
   // historia: wszystkie BUST-y moich modeli od dodania i co było po nich
   const H = [];
   vitems.forEach(it => { if (it.t !== only || (bsrc === 'B') !== isB(it)) return; const st = it.gone ? it.brow : it.g.start || 0;
