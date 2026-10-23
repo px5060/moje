@@ -189,7 +189,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.29.4';
+const APP_VER = '1.29.5';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -760,7 +760,7 @@ function teraz() {
   const ZS = zakState(bets.filter(x => x.t === t)), zc = ZS.CH, zNear = near(zc);
   if (zc.length) h += `<details class="sec szak" ${foldAt('T-zak', 1)}><summary class="sh" data-lp="zak"><span>💰 ZAKŁADY · ${zc.length}${bustBadges(zc)}</span><span class="m">przytrzymaj → ZAKŁADY</span></summary>
     ${zNear.length ? zNear.map(it => ddTag(row(it, zakLb(ZS.M.get(it.uid)), 0, 1), it.d)).join('') : none('żaden model po zakładzie')}</details>`;
-  const Z = L.filter(it => it.grp === 'done');
+  const Z = L.filter(it => it.grp === 'done' && !it.inBust);   // po LOST-cie → zakładka LOST (tam gra od k1 jako pierwszy cykl po LOST-cie)
   if (Z.length) h += sec('✅ ZAKOŃCZONE', 'WIN albo BUST (krok 8)', Z, { key: 'T-done', cls: 'sdone', after: rsBtn, extra: it => (it.rz ? `${it.res.win ? '✔ WIN' : '<span class="neg">✖ BUST / LOSS</span>'} · Nr ${fmtN(it.res.i + 1)}` : `${it.res.win ? `✔ WIN k${it.res.k}` : '<span class="neg">✖ BUST k8</span>'} · Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}`) + (it.res.win ? '' : it.inBust ? ' · <b>w zakładce BUST</b>' : ' · potem WIN') + (it.rz ? '' : `<br><span class="sertx">▶ start: Nr ${fmtN((it.g.start || 0) + 1)}${it.g.t ? ' · ' + ago(it.g.t) + ' (' + when(it.g.t) + ')' : ''} · <b>k${it.g.s0 || 1} → k${it.res.win ? it.res.k : 8}</b></span>`) });
   return h;
 }
@@ -776,6 +776,7 @@ function busty() {
   const isB = it => it.s.a === 'L', all = vitems.filter(it => it.inBust && it.t === only), A = all.filter(it => bsrc === 'B' ? isB(it) : !isB(it));
   const L = A.slice().sort((a, b) => (a.d || 99) - (b.d || 99) || b.r.lbr - a.r.lbr);
   const nB = all.filter(isB), nM = all.filter(it => !isB(it));
+  if (!A.length && (bsrc === 'B' ? nM : nB).length) { bsrc = bsrc === 'B' ? 'M' : 'B'; return busty(); }   // pusta podzakładka → ta, w której są LOST-y
   let h = tabSwitch(it => it.inBust) + `<div class="tsw sub src"><button class="${bsrc !== 'B' ? 'on' : ''}" data-bsrc="M">💥 MOJE MODELE <small>· ${nM.length}</small>${bustBadges(nM)}</button><button class="${bsrc === 'B' ? 'on' : ''}" data-bsrc="B">🔻 SZUKAJ LOST <small>· ${nB.length}</small>${bustBadges(nB)}</button></div>
     <div class="hint" style="margin:-4px 0 10px">${bsrc === 'B' ? 'BUST-y modeli z aplikacji SZUKAJ BUST' : 'BUST-y moich modeli z SZUKAJ, SZUKAJ+ i RAZEM'} (krok 8, 512 zł bez trafienia) — aż do pierwszego WIN. W ZAKOŃCZONE są też.</div>`;
   if (!A.length) h += '<div class="empty">Brak BUST-ów w moich modelach — żaden nie przegrał kroku 8 bez późniejszego WIN.</div>';
@@ -793,7 +794,7 @@ function busty() {
   { const D0 = []; vitems.forEach(it => { if (it.t !== only || (bsrc === 'B') !== isB(it) || it.inBust || it.rz) return; const st = it.gone ? it.brow : it.g.start || 0, bl = it.r.bl || [], lb = bl.length ? bl[bl.length - 1][0] : -1; if (lb < 0) return;
       const w = (it.r.ev || []).find(e => e[0] > lb && e[1] === 1); if (w && w[0] >= st) D0.push({ it, lb, w }); });   // WIN po LOST-cie od dodania (LOST mógł być przed dodaniem — model był w zakładce LOST)
     D0.sort((a, b) => b.w[0] - a.w[0]);
-    h += `<details class="sec sdone" ${foldAt('L-done', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${D0.length}</span><span class="m">WIN po BUST-cie</span></summary>${D0.length ? D0.map(x => row(x.it, `<span class="neg">BUST Nr ${fmtN(x.lb + 1)}</span> → <span class="pos">✔ WIN k${x.w[2]}</span> w Nr ${fmtN(x.w[0] + 1)}` + (x.it.gone ? '' : `<br><button class="btn sm ok" data-restart="${esc(x.it.uid)}" style="margin-top:5px">▶ graj od nowa (k${x.it.r.bs + 1})</button>`))).join('') : '<div class="none">Żaden model po BUST-cie jeszcze nie trafił WIN.</div>'}</details>`; }
+    h += `<details class="sec sdone" ${foldAt('L-done', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${D0.length}</span><span class="m">WIN po BUST-cie</span></summary>${D0.length ? D0.map(x => row(x.it, `<span class="neg">BUST Nr ${fmtN(x.lb + 1)}</span> → <span class="pos">✔ WIN k${x.w[2]}</span> w Nr ${fmtN(x.w[0] + 1)}` + (x.it.gone ? '' : `<br><button class="btn sm ok" data-restart="${esc(x.it.uid)}" style="margin-top:5px">▶ graj od nowa → ${rsTo(x.it)}</button>`))).join('') : '<div class="none">Żaden model po BUST-cie jeszcze nie trafił WIN.</div>'}</details>`; }
   // historia: wszystkie BUST-y moich modeli od dodania i co było po nich
   const H = [];
   vitems.forEach(it => { if (it.t !== only || (bsrc === 'B') !== isB(it)) return; const st = it.gone ? it.brow : it.g.start || 0;
@@ -808,7 +809,8 @@ const ZG = x => x.s.a === 'R' ? 'R' : x.s.a === 'L' ? 'L' : 'S';   // grupa zak�
 let zsrc = (v => ['R', 'S', 'L', 'F'].includes(v) ? v : 'R')(lsGet('moje_v1_zsrc', 'R'));
 // modele po zakładzie: ostatni zakład przegrany / czeka / model nie grał — dopóki po nim nie wejdzie WIN (wtedy ZAKOŃCZONE)
 // ▶ graj od nowa: model z ZAKOŃCZONE (po WIN) wraca do gry od teraz — w MOJE GRY aplikacji źródłowej start = teraz, wejście od bieżącego kroku (po WIN = k1)
-const rsBtn = it => it && !it.rz && it.res && it.res.win ? `<br><button class="btn sm ok" data-restart="${esc(it.uid)}" style="margin-top:5px">▶ graj od nowa (k${it.r.bs + 1})</button>` : '';
+const rsTo = it => { const r = it.r, d = r.ph === 2 ? r.wz + 1 - D[it.t].n : 0; return d === 1 ? `🟧 GRAJ TERAZ (k${r.bs + 1} · ${fmtN(ST[r.bs])} zł)` : d >= 2 ? `🟨 ZA CHWILĘ (za ${d} w. · k${r.bs + 1})` : `🟦 CZEKAJĄ (k${r.bs + 1})`; };   // dokąd trafi model po „graj od nowa”
+const rsBtn = it => it && !it.rz && !it.gone && it.res && !it.inBust ? `<br><button class="btn sm ok" data-restart="${esc(it.uid)}" style="margin-top:5px">▶ graj od nowa → ${rsTo(it)}</button>` : '';
 function toCzekaj(x) {   // WSZYSTKIE ZAKŁADY: model usunięty z MOJE / zakończony → z powrotem w grze od teraz (CZEKAJĄ / ZA CHWILĘ / GRAJ TERAZ wg stanu), bez nowego zakładu
   if (!x || x.rz || x.b.bank) return; if (x.it) return restartMy(x.it.uid);
   const it = mkItem(x.t, x.s, x.tg, { m: x.b.m, id: x.b.id, start: D[x.t].n, s0: 1 }), key = MYK(x.t, x.s, x.tg);
