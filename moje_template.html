@@ -144,6 +144,7 @@ nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-r
 .bst{display:flex;gap:6px;align-items:center;margin-top:6px}.bst input{flex:1;min-width:0;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:7px 9px;font-size:15px}
 .cyx b{cursor:pointer;transition:transform .15s}.cyx b.big{transform:scale(1.35);position:relative;z-index:2;box-shadow:0 0 0 2px #fff}.cyp{margin-top:8px;padding:7px 9px;border:1px solid var(--bd);border-radius:8px;background:var(--card);font-size:13px}.cyd{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}.cyd span{background:#2b4a37;border-radius:6px;padding:2px 7px}.cyd span.x{background:#8a1f1f}.cyd small{opacity:.8}
 .zwh{font-size:11.5px;font-weight:700;color:var(--or2);margin-top:2px}
+.srcb{display:inline-block;font-size:11px;font-weight:800;line-height:1.3;border:1.5px solid;border-radius:5px;padding:0 4px;vertical-align:middle}
 .cyc b.hi{background:#7a5a1a}.cyc b.hh{background:#a0521a}
 table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:11px;border-top:0}
 .respop .h{font-size:20px;font-weight:900}.respop .i{padding:3px 0;border-top:1px solid #ffffff33;font-size:13px}.respop .x{font-size:11px;opacity:.75;margin-top:5px;text-align:right}
@@ -188,7 +189,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.29.2';
+const APP_VER = '1.29.4';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -238,11 +239,21 @@ function syncLog(t) {
   lsSet(LOGK(t), JSON.stringify(L.slice(-300)));
   return L;
 }
+// skąd kod: wspólny dziennik „codesrc_v1_t50 / _t60” (wszystkie aplikacje na px5060.github.io) — {i: numer w dopisanych kodach, c: kod, a: aplikacja, t: czas}; MOJE pokazuje znaczek aplikacji przy ostatnim kodzie
+function codeSrcLog(t, oldS, newS, a) {
+  if (!newS || newS.length <= oldS.length || newS.indexOf(oldS) !== 0) return;
+  const k = 'codesrc_v1_' + t; let L; try { L = JSON.parse(localStorage.getItem(k) || '[]'); } catch (e) { L = []; } if (!Array.isArray(L)) L = [];
+  const now = Date.now(); for (let j = oldS.length; j + 3 <= newS.length; j += 3) L.push({ i: j / 3, c: newS.substr(j, 3), a, t: now });
+  try { localStorage.setItem(k, JSON.stringify(L.slice(-300))); } catch (e) {}
+}
+const SRCC = { MOJE: '#c97a45', R50: '#2e7d4f', R60: '#2e7d4f', S50: '#2e75b6', S60: '#2e75b6', 'S+50': '#7a3fb0', 'S+60': '#7a3fb0', L50: '#8e2a2a', L60: '#8e2a2a', Z: '#b8902e' };
+const srcBadge = a => `<span class="srcb" style="border-color:${SRCC[a] || '#888'};color:${SRCC[a] || 'var(--tx)'}">${esc(a)}</span>`;
+function codeSrcOf(t, i, c) { const L = jget('codesrc_v1_' + t); for (let j = L.length - 1; j >= 0; j--) { const e = L[j]; if (e && e.i === i && e.c === c) return e; } return null; }
 function validCode(t, c) { return t === 't50' ? /^[01]{3}$/.test(c) : /^[0-3][01]{2}$/.test(c); }
 function addCode(t, c) {
   if (!validCode(t, c)) { toast(t === 't50' ? 'Kod T50: trzy cyfry 0/1, np. 010' : 'Kod T60: pierwsza cyfra 0–3, potem dwie 0/1, np. 210'); return; }
   const row = D[t].n, before = vitems.filter(it => !it.rz && it.t === t && it.grp !== 'done' && it.r.ph === 2 && it.r.wz === row);
-  if (!lsSet(TABS[t].key, readAdded(t) + c)) { alert('BŁĄD zapisu pamięci telefonu!'); return; }
+  const old0 = readAdded(t); if (!lsSet(TABS[t].key, old0 + c)) { alert('BŁĄD zapisu pamięci telefonu!'); return; } codeSrcLog(t, old0, old0 + c, 'MOJE');
   const inp = $('in_' + t); if (inp) inp.value = '';   // pole od razu puste na następny kod   // czytaj-zmień-zapisz: nie gubi kodów z innych aplikacji
   const L = jget(LOGK(t)); L.push({ n: row + 1, c, t: Date.now(), here: 1 }); lsSet(LOGK(t), JSON.stringify(L.slice(-300)));
   reload();
@@ -255,7 +266,7 @@ const IMPK = t => 'moje_v1_lastimp_' + t, EXPK = t => 'moje_v1_lastexp_' + t;
 function jobj(k) { try { const v = JSON.parse(lsGet(k, 'null')); return v && typeof v === 'object' ? v : null; } catch (e) { return null; } }
 function appendBatch(t, arr, how, f) {   // dopisz kody na koniec (czytaj-zmień-zapisz), zapisz w dzienniku i jako ostatni import (do cofnięcia)
   const from = D[t].n;
-  if (!lsSet(TABS[t].key, readAdded(t) + arr.join(''))) { alert('BŁĄD zapisu pamięci telefonu!'); return false; }
+  const old0 = readAdded(t); if (!lsSet(TABS[t].key, old0 + arr.join(''))) { alert('BŁĄD zapisu pamięci telefonu!'); return false; } codeSrcLog(t, old0, old0 + arr.join(''), 'MOJE');
   const now = Date.now(), L = jget(LOGK(t));
   arr.forEach((c, i) => L.push({ n: from + i + 1, c, t: now, here: how, f }));
   lsSet(LOGK(t), JSON.stringify(L.slice(-300)));
@@ -599,11 +610,12 @@ function lostBox(t) {
   return '';
 }
 function kodBox(t) {
-  const T = TABS[t], L = syncLog(t), last = L[L.length - 1], n = D[t].n, age = last ? Date.now() - last.t : 0;
+  const T = TABS[t], L = syncLog(t), n = D[t].n, addN = readAdded(t).length / 3, cs = addN ? codeSrcOf(t, addN - 1, code(t, n - 1)) : null;
+  const last = cs ? { t: cs.t, a: cs.a } : L[L.length - 1], age = last ? Date.now() - last.t : 0;   // znana aplikacja, w której wpisano kod → jej czas i znaczek
   const prev = []; for (let i = Math.max(0, n - 10); i < n; i++) prev.push(`<b>${code(t, i)}</b>`);
   return lostBox(t) + `<div class="kod"><div class="kh"><b>${T.name}</b><span class="src">${fmtN(n)} kodów</span></div>
     <div class="last">Ostatni kod: <b>Nr ${fmtN(n)}</b> = <span class="c">${code(t, n - 1)}</span> ·
-    ${last ? `<span class="when ${age > 864e5 ? 'vold' : age > 3 * 36e5 ? 'old' : ''}">${ago(last.t)}</span> <span class="src">(${when(last.t)}${srcTxt(last)})</span>`
+    ${last ? `<span class="when ${age > 864e5 ? 'vold' : age > 3 * 36e5 ? 'old' : ''}">${ago(last.t)}</span> <span class="src">(${when(last.t)}${last.a ? ', wpisany w ' + srcBadge(last.a) : srcTxt(last)})</span>`
       : '<span class="src">kod z bazy (bez dopisanych kodów)</span>'}</div>
     <div class="erow"><input id="in_${t}" inputmode="numeric" maxlength="3" placeholder="wpisz następny kod · Nr ${fmtN(n + 1)}" autocomplete="off"><button class="btn" data-undo="${t}" title="cofnij ostatni">↶</button></div>
     <div class="prev">ostatnie: ${prev.join('')}</div></div>`;
@@ -714,7 +726,7 @@ function teraz() {
   if (rzSt[t] === 'wczytuję') h += `<div class="hint" style="margin:-2px 0 8px">⏳ Wczytuję modele z RAZEM ${TABS[t].name}…</div>`;
   if (rzSt[t] === 'błąd') h += `<div class="hint neg" style="margin:-2px 0 8px">Nie udało się wczytać RAZEM ${TABS[t].name} — otwórz MOJE ponownie.</div>`;
   const L = vitems.filter(it => it.t === t);
-  if (!vitems.length && !bitems.length && rzSt[t] !== 'wczytuję') return h + `<div class="empty">Brak modeli w MOJE.<br><br>W SZUKAJ, SZUKAJ+ albo SZUKAJ BUST dotknij kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. W RAZEM: przytrzymaj kartę → <b>▶ Gram — dodaj do aplikacji MOJE</b>.</div>`;
+  if (!vitems.length && !bitems.length && rzSt[t] !== 'wczytuję') return h + `<div class="empty">Brak modeli w MOJE.<br><br>W SZUKAJ, SZUKAJ+ albo SZUKAJ BUST dotknij kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. W RAZEM: dotknij kartę → <b>▶ Gram — dodaj do aplikacji MOJE</b>.</div>`;
   const act = L.filter(it => it.grp !== 'done'), play = act.filter(it => it.grp !== 'bust'), now = play.filter(it => it.d === 1).sort(byApp);
   const sum = now.reduce((a, it) => a + ST[it.r.bs], 0);
   // 1. CO GRAM NA NASTĘPNYM WIERSZU — tylko moje modele (LOST, BANK i ZAKŁADY mają swoje zakładki; na TERAZ tylko paski z tym, co gra)
@@ -778,10 +790,10 @@ function busty() {
       h += `<details class="sec swait" ${foldAt('L-wait', 1)}><summary class="sh"><span>🟦 CZEKAJĄ · ${wait.length}</span><span class="m">na STEP / TRIGGER</span></summary>${w}</details>`; }
   }
   // ✅ ZAKOŃCZONE (jak na TERAZ): modele, które po BUST-cie (od dodania) trafiły WIN — cykl po BUST-cie zamknięty
-  { const D0 = []; vitems.forEach(it => { if (it.t !== only || (bsrc === 'B') !== isB(it) || it.inBust || it.rz) return; const st = it.gone ? it.brow : it.g.start || 0, bl = it.r.bl || [], lb = bl.length ? bl[bl.length - 1][0] : -1; if (lb < st) return;
-      const w = (it.r.ev || []).find(e => e[0] > lb && e[1] === 1); if (w) D0.push({ it, lb, w }); });
+  { const D0 = []; vitems.forEach(it => { if (it.t !== only || (bsrc === 'B') !== isB(it) || it.inBust || it.rz) return; const st = it.gone ? it.brow : it.g.start || 0, bl = it.r.bl || [], lb = bl.length ? bl[bl.length - 1][0] : -1; if (lb < 0) return;
+      const w = (it.r.ev || []).find(e => e[0] > lb && e[1] === 1); if (w && w[0] >= st) D0.push({ it, lb, w }); });   // WIN po LOST-cie od dodania (LOST mógł być przed dodaniem — model był w zakładce LOST)
     D0.sort((a, b) => b.w[0] - a.w[0]);
-    h += `<details class="sec sdone" ${foldAt('L-done', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${D0.length}</span><span class="m">WIN po BUST-cie</span></summary>${D0.length ? D0.map(x => row(x.it, `<span class="neg">BUST Nr ${fmtN(x.lb + 1)}</span> → <span class="pos">✔ WIN k${x.w[2]}</span> w Nr ${fmtN(x.w[0] + 1)}`)).join('') : '<div class="none">Żaden model po BUST-cie jeszcze nie trafił WIN.</div>'}</details>`; }
+    h += `<details class="sec sdone" ${foldAt('L-done', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${D0.length}</span><span class="m">WIN po BUST-cie</span></summary>${D0.length ? D0.map(x => row(x.it, `<span class="neg">BUST Nr ${fmtN(x.lb + 1)}</span> → <span class="pos">✔ WIN k${x.w[2]}</span> w Nr ${fmtN(x.w[0] + 1)}` + (x.it.gone ? '' : `<br><button class="btn sm ok" data-restart="${esc(x.it.uid)}" style="margin-top:5px">▶ graj od nowa (k${x.it.r.bs + 1})</button>`))).join('') : '<div class="none">Żaden model po BUST-cie jeszcze nie trafił WIN.</div>'}</details>`; }
   // historia: wszystkie BUST-y moich modeli od dodania i co było po nich
   const H = [];
   vitems.forEach(it => { if (it.t !== only || (bsrc === 'B') !== isB(it)) return; const st = it.gone ? it.brow : it.g.start || 0;
