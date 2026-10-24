@@ -52,7 +52,7 @@ details.sec>summary{list-style:none}[data-lp]{-webkit-user-select:none;user-sele
 .rw.abust .graj{background:#8e2a2a}
 .rw.Sp{border-left-color:#7030a0}.rw.R{border-left-color:#1f8a4c}.rw.B{border-left-color:#b3261e}.rw.now{background:#3a2a1c}
 .zbt{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:5px}.zbt .zdel{padding:3px 10px;font-size:15px;margin-left:auto}
-.rw .l2 .sbt{float:right;margin:2px 0 2px 8px}.rw .l2 .sbt .btn{padding:3px 12px}.rw .l2 .sbt .ok{font-weight:800;padding:0 6px}
+.rw .l2 .sbt{float:right;margin:2px 0 2px 8px;display:flex;gap:6px;align-items:center}.rw .l2 .sbt .zdel{padding:3px 9px;font-size:14px}.rw .l2 .sbt .btn{padding:3px 12px}.rw .l2 .sbt .ok{font-weight:800;padding:0 6px}
 .rw .l1{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px}.rw .l1 .sp{flex:1}.rw .l1 .zl{min-width:52px;text-align:right}.rw .l1 .btn{padding:3px 9px}.rw .l1 .ok{font-weight:800;padding:0 6px}
 .rw .l2{color:var(--mu);font-size:12px;margin-top:2px}
 .rw .l3{color:var(--mu);font-size:11.5px;margin-top:3px;display:flex;align-items:center;gap:3px;flex-wrap:wrap}.rw .l3 b{margin:0 2px}.rw .l3 i{font-style:normal;font-weight:700;font-size:11px;color:#fff;border-radius:4px;padding:1px 5px;background:#2b7a4b}.rw .l3 i.x{background:#8e2a2a}.rw.now .l2{color:#ffd0a8}.rw .bdg{margin-right:0}
@@ -191,7 +191,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.29.9';
+const APP_VER = '1.30.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -708,7 +708,8 @@ function row0(it, extra, asLost, zk) {
     ${bnow ? `<div class="graj">GRAJ Nr ${fmtN(r.wz + 1)} · k${r.bs + 1} · ${stk} zł${it.rz ? '' : ' na ' + it.tg}</div>` : ''}
     <div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b><span class="tgt">${it.tg}</span>${ocTag(it)}${famTag(it)}<span class="sp"></span>${it.grp === 'done' && !(it.inBust && view === 'bust') && view !== 'zak' && !zk ? '' : `<span class="kk">k${r.bs + 1}</span><b class="zl">${stk} zł</b>`}
 </div>
-    <div class="l2">${canBet ? `<span class="sbt">${saved ? '<span class="pos ok">✓</span>' : `<button class="btn sm ${it.d === 1 ? 'pri' : ''}" data-fo="${esc(it.uid)}">💰</button>`}</span>` : ''}${extra != null ? extra : shortPh(it)}${pend.length ? ` · <span style="color:var(--bl)">● postawiony k${pend[pend.length - 1].b.step} ${pend[pend.length - 1].b.stake} zł</span>` : ''}</div>${cycLine(it)}
+    <div class="l2">${(() => { const tr = !String(extra || '').includes('data-untr');   // 🗑 usuń z MOJE (GRAJ TERAZ, ZA CHWILĘ, CZEKAJĄ, PO LOST…) — w ZAKOŃCZONE kosz jest już przy „▶ do gry”
+      return canBet || tr ? `<span class="sbt">${canBet ? (saved ? '<span class="pos ok">✓</span>' : `<button class="btn sm ${it.d === 1 ? 'pri' : ''}" data-fo="${esc(it.uid)}">💰</button>`) : ''}${tr ? `<button class="btn sm zdel" data-untr="${esc(it.uid)}" title="usuń z MOJE">🗑</button>` : ''}</span>` : ''; })()}${extra != null ? extra : shortPh(it)}${pend.length ? ` · <span style="color:var(--bl)">● postawiony k${pend[pend.length - 1].b.step} ${pend[pend.length - 1].b.stake} zł</span>` : ''}</div>${cycLine(it)}
     ${formU === it.uid && canBet ? betForm(it) : ''}</div>`;
 }
 // grupy zwijane / rozwijane (GRAJ TERAZ, ZA CHWILĘ, CZEKAJĄ …): stan każdej grupy zapamiętany (klucz data-fold), zostaje po odświeżeniu ekranu
