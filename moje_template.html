@@ -582,9 +582,12 @@ function restBet() {
 function untrack(it, stay) {   // stay = zostań na tym ekranie (🗑 w ZAKOŃCZONE)
   if (it.rz) { if (!confirm(`Usunąć ${it.label} z MOJE?`)) return; const w = rzWin(it.t); if (w) try { w.__MOJE.del(it.k, it.g.rid); } catch (e) {} }
   else if (it.gone) { if (!confirm(`Ukryć BUST ${it.label}?`)) return; const k = MBK(it.t, it.tg), a = jget(k), z = a.find(x => x.key === it.gone); if (z) z.hide = 1; lsSet(k, JSON.stringify(a)); }
-  else { if (!confirm(`Usunąć ${it.label} z MOJE?`)) return; const k = MYK(it.t, it.s, it.tg); lsSet(k, JSON.stringify(jget(k).filter(g => !(g && Array.isArray(g.m) && spec(g.m) === spec(it.m))))); }
+  else { if (!confirm(`Usunąć ${it.label} z MOJE?`)) return; const k = MYK(it.t, it.s, it.tg), a = jget(k), g = a.find(g => g && Array.isArray(g.m) && spec(g.m) === spec(it.m));
+    lsSet(k, JSON.stringify(a.filter(x => x !== g))); if (g) { lastUn = { k, g }; if (stay) setTimeout(() => toast(`Usunięto ${esc(it.label)} z MOJE <button class="ub" data-restun="1">↶ Przywróć</button>`, 7000), 0); } }
   if (!stay) { view = 'teraz'; sel = null; } reload();
 }
+let lastUn = null;   // ostatni model usunięty 🗑 — do przywrócenia z komunikatu
+function restUn() { const x = lastUn; lastUn = null; if (!x) return; const a = jget(x.k); if (!a.some(g => g && Array.isArray(g.m) && spec(g.m) === spec(x.g.m))) { a.push(x.g); lsSet(x.k, JSON.stringify(a)); } reload(); toast('Przywrócono model do MOJE'); }
 
 // ===== OPIS MODELU SŁOWAMI =====
 const TN = m => m[5] || 1;
@@ -1518,6 +1521,7 @@ document.addEventListener('click', e => {
   if ((b = q('[data-bsave]'))) { const it = items.find(x => x.uid === b.dataset.bsave), f = b.closest('.btf'); if (it) saveBet(it, +f.querySelector('.fNr').value - 1, +f.querySelector('.fK').value, +f.querySelector('.fZl').value); return; }
   if ((b = q('[data-fo]'))) { formU = formU === b.dataset.fo ? null : b.dataset.fo; return render(); }
   if (q('.btf')) return;   // pola formularza zakładu — nie otwieraj modelu
+  if ((b = q('[data-restun]'))) { e.stopPropagation(); document.querySelectorAll('.toast').forEach(t => t.remove()); return restUn(); }
   if ((b = q('[data-restbet]'))) { e.stopPropagation(); document.querySelectorAll('.toast').forEach(t => t.remove()); return restBet(); }
   if ((b = q('[data-tocz]'))) { e.stopPropagation(); return toCzekaj(bets[+b.dataset.tocz]); }
   if ((b = q('[data-delbet]'))) { e.stopPropagation(); return delBet(bets[+b.dataset.delbet]); }
