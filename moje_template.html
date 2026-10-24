@@ -189,7 +189,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.29.5';
+const APP_VER = '1.29.6';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -960,7 +960,7 @@ function zaklady() {
     const bT = A => ({ tail: A.map(e => zakBankRow(e, zakLb(e.x))).join(''), tailN: A.length }), bNow = bG('now'), bSoon = bG('soon'), bWait = bG('wait');
     h += `<div class="hint" style="margin:0 0 6px">Modele po zakładzie — gram dalej kolejny krok, aż wejdzie WIN:</div>`;
     h += sec(`🟧 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, now.length ? `razem ${fmtN(now.reduce((a, it) => a + (it.rz ? it.r.stake : ST[it.r.bs]), 0))} zł` : '', now, Object.assign({ cls: 'snow', key: 'Z-now', open: 1, empty: `Na Nr ${fmtN(n + 1)} żaden z tych modeli nie gra.`, extra: ex, lost: lostF }, bT(bNow)));
-    if (soon.length || bSoon.length) h += sec('🟨 ZA CHWILĘ', 'TRIGGER już był', soon, Object.assign({ cls: 'ssoon', extra: ex, lost: lostF }, bT(bSoon)));
+    if (soon.length || bSoon.length) h += sec('🟨 ZA CHWILĘ', 'TRIGGER już był', soon, Object.assign({ cls: 'ssoon', key: 'Z-soon', open: 1, extra: ex, lost: lostF }, bT(bSoon)));
     const bTW = A => ({ tail: A.map(e => { const B = e.b.bk[e.w]; return zakBankRow(e, zakLb(e.x) + nxt(B.next, bStake(B.next))); }).join(''), tailN: A.length });
     if (wait.length || bWait.length) h += sec('🟦 CZEKAJĄ', 'na STEP / TRIGGER', wait, Object.assign({ cls: 'swait', extra: exW, key: 'zakwait', open: 1, lost: lostF }, bTW(bWait)));
   }
