@@ -51,6 +51,7 @@ details.sec>summary{list-style:none}[data-lp]{-webkit-user-select:none;user-sele
 .rw .graj{background:#c97a45;color:#fff;font-weight:800;font-size:14px;border-radius:6px;padding:5px 8px;margin-bottom:5px}
 .rw.abust .graj{background:#8e2a2a}
 .rw.Sp{border-left-color:#7030a0}.rw.R{border-left-color:#1f8a4c}.rw.B{border-left-color:#b3261e}.rw.now{background:#3a2a1c}
+.zbt{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:5px}.zbt .zdel{padding:3px 10px;font-size:15px}
 .rw .l2 .sbt{float:right;margin:2px 0 2px 8px}.rw .l2 .sbt .btn{padding:3px 12px}.rw .l2 .sbt .ok{font-weight:800;padding:0 6px}
 .rw .l1{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:14px}.rw .l1 .sp{flex:1}.rw .l1 .zl{min-width:52px;text-align:right}.rw .l1 .btn{padding:3px 9px}.rw .l1 .ok{font-weight:800;padding:0 6px}
 .rw .l2{color:var(--mu);font-size:12px;margin-top:2px}
@@ -190,7 +191,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.29.7';
+const APP_VER = '1.29.8';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -578,11 +579,11 @@ function restBet() {
   else { const key = BTK(x.t, x.s, x.tg), a = jget(key); if (!a.some(b => b.t === x.b.t)) { a.push(x.b); lsSet(key, JSON.stringify(a)); } }
   reload(); toast(`Przywrócono zakład ${esc(x.b.id)}`);
 }
-function untrack(it) {
+function untrack(it, stay) {   // stay = zostań na tym ekranie (🗑 w ZAKOŃCZONE)
   if (it.rz) { if (!confirm(`Usunąć ${it.label} z MOJE?`)) return; const w = rzWin(it.t); if (w) try { w.__MOJE.del(it.k, it.g.rid); } catch (e) {} }
   else if (it.gone) { if (!confirm(`Ukryć BUST ${it.label}?`)) return; const k = MBK(it.t, it.tg), a = jget(k), z = a.find(x => x.key === it.gone); if (z) z.hide = 1; lsSet(k, JSON.stringify(a)); }
   else { if (!confirm(`Usunąć ${it.label} z MOJE?`)) return; const k = MYK(it.t, it.s, it.tg); lsSet(k, JSON.stringify(jget(k).filter(g => !(g && Array.isArray(g.m) && spec(g.m) === spec(it.m))))); }
-  view = 'teraz'; sel = null; reload();
+  if (!stay) { view = 'teraz'; sel = null; } reload();
 }
 
 // ===== OPIS MODELU SŁOWAMI =====
@@ -795,7 +796,7 @@ function busty() {
   { const D0 = []; vitems.forEach(it => { if (it.t !== only || (bsrc === 'B') !== isB(it) || it.inBust || it.rz) return; const st = it.gone ? it.brow : it.g.start || 0, bl = it.r.bl || [], lb = bl.length ? bl[bl.length - 1][0] : -1; if (lb < 0) return;
       const w = (it.r.ev || []).find(e => e[0] > lb && e[1] === 1); if (w && w[0] >= st) D0.push({ it, lb, w }); });   // WIN po LOST-cie od dodania (LOST mógł być przed dodaniem — model był w zakładce LOST)
     D0.sort((a, b) => b.w[0] - a.w[0]);
-    h += `<details class="sec sdone" ${foldAt('L-done', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${D0.length}</span><span class="m">WIN po BUST-cie</span></summary>${D0.length ? D0.map(x => row(x.it, `<span class="neg">BUST Nr ${fmtN(x.lb + 1)}</span> → <span class="pos">✔ WIN k${x.w[2]}</span> w Nr ${fmtN(x.w[0] + 1)}` + (x.it.gone ? '' : `<br><button class="btn sm ok" data-restart="${esc(x.it.uid)}" style="margin-top:5px">▶ graj od nowa → ${rsTo(x.it)}</button>`))).join('') : '<div class="none">Żaden model po BUST-cie jeszcze nie trafił WIN.</div>'}</details>`; }
+    h += `<details class="sec sdone" ${foldAt('L-done', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${D0.length}</span><span class="m">WIN po BUST-cie</span></summary>${D0.length ? D0.map(x => row(x.it, `<span class="neg">BUST Nr ${fmtN(x.lb + 1)}</span> → <span class="pos">✔ WIN k${x.w[2]}</span> w Nr ${fmtN(x.w[0] + 1)}` + zkBtns(x.it, !x.it.gone && !x.it.rz))).join('') : '<div class="none">Żaden model po BUST-cie jeszcze nie trafił WIN.</div>'}</details>`; }
   // historia: wszystkie BUST-y moich modeli od dodania i co było po nich
   const H = [];
   vitems.forEach(it => { if (it.t !== only || (bsrc === 'B') !== isB(it)) return; const st = it.gone ? it.brow : it.g.start || 0;
@@ -811,7 +812,9 @@ let zsrc = (v => ['R', 'S', 'L', 'F'].includes(v) ? v : 'R')(lsGet('moje_v1_zsrc
 // modele po zakładzie: ostatni zakład przegrany / czeka / model nie grał — dopóki po nim nie wejdzie WIN (wtedy ZAKOŃCZONE)
 // ▶ graj od nowa: model z ZAKOŃCZONE (po WIN) wraca do gry od teraz — w MOJE GRY aplikacji źródłowej start = teraz, wejście od bieżącego kroku (po WIN = k1)
 const rsTo = it => { const r = it.r, d = r.ph === 2 ? r.wz + 1 - D[it.t].n : 0; return d === 1 ? `🟧 GRAJ TERAZ (k${r.bs + 1} · ${fmtN(ST[r.bs])} zł)` : d >= 2 ? `🟨 ZA CHWILĘ (za ${d} w. · k${r.bs + 1})` : `🟦 CZEKAJĄ (k${r.bs + 1})`; };   // dokąd trafi model po „graj od nowa”
-const rsBtn = it => it && !it.rz && !it.gone && it.res && !it.inBust ? `<br><button class="btn sm ok" data-restart="${esc(it.uid)}" style="margin-top:5px">▶ graj od nowa → ${rsTo(it)}</button>` : '';
+// ZAKOŃCZONE: ▶ do gry (CZEKAJĄ / ZA CHWILĘ / GRAJ TERAZ wg stanu modelu) · 🗑 usuń z MOJE
+const zkBtns = (it, play) => `<div class="zbt">${play ? `<button class="btn sm ok" data-restart="${esc(it.uid)}">▶ do gry → ${rsTo(it)}</button>` : ''}<button class="btn sm zdel" data-untr="${esc(it.uid)}" title="usuń z MOJE">🗑</button></div>`;
+const rsBtn = it => it && !it.inBust && (it.rz || it.gone || it.res) ? zkBtns(it, !it.rz && !it.gone && it.res) : '';
 function toCzekaj(x) {   // WSZYSTKIE ZAKŁADY: model usunięty z MOJE / zakończony → z powrotem w grze od teraz (CZEKAJĄ / ZA CHWILĘ / GRAJ TERAZ wg stanu), bez nowego zakładu
   if (!x || x.rz || x.b.bank) return; if (x.it) return restartMy(x.it.uid);
   const it = mkItem(x.t, x.s, x.tg, { m: x.b.m, id: x.b.id, start: D[x.t].n, s0: 1 }), key = MYK(x.t, x.s, x.tg);
@@ -1537,6 +1540,7 @@ document.addEventListener('click', e => {
   if ((b = q('[data-bkm]'))) return go('bankm', b.dataset.bkm);
   if ((b = q('[data-go]'))) return go(b.dataset.go);
   if ((b = q('[data-bq]'))) { bqSel = b.dataset.bq; return bqUpd(); }
+  if ((b = q('[data-untr]'))) { e.stopPropagation(); const it = items.find(x => x.uid === b.dataset.untr) || vitems.find(x => x.uid === b.dataset.untr); if (it) untrack(it, 1); return; }
   if ((b = q('[data-restart]'))) { e.stopPropagation(); return restartMy(b.dataset.restart); }
   if ((b = q('.mc[data-u],.rw[data-u]'))) return go('model', b.dataset.u);
   if ((b = q('.bt[data-bi]'))) { const x = bets[+b.dataset.bi]; if (x && x.it) go('model', x.it.uid); else toast('Tego modelu nie ma już w MOJE'); }
