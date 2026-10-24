@@ -191,7 +191,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.30.0';
+const APP_VER = '1.30.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1253,7 +1253,7 @@ function bankRow0(it) {   // jeden model listy BANK = zwarty wiersz jak na TERAZ
   const pl = r.sinceB === 0;   // model po LOST-cie (od LOST-u bez WIN) — biało-czerwona ramka jak na LOST
   const fk = `B|${it.uid}|${w}`, canB = (st === 'now' || st === 'soon') && it.d <= 3, savedB = canB && betsOf(it).some(x => x.b.bank === w && x.b.row === r.wz);
   return `<div class="rw ${it.s.cls}${st === 'now' ? ' now' : ''}${pl ? ' abust' : ''}" data-bkm="${esc(it.uid)}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b><span class="tgt">${it.tg}</span>${ocTag(it)}<span class="sp"></span><span class="kk">k${B.next}</span><b class="zl">${fmtN(bStake(B.next))} zł</b></div>
-    <div class="l2">${canB ? `<span class="sbt">${savedB ? '<span class="pos ok">✓</span>' : `<button class="btn sm ${st === 'now' ? 'pri' : ''}" data-fo="${esc(fk)}">💰</button>`}</span>` : ''}${pl ? `<span class="neg">po LOST (Nr ${fmtN(r.lbr + 1)})</span> · ` : ''}${l2}</div>${cycLine(it)}${formU === fk && canB ? bankBetForm(it, w) : ''}</div>`;
+    <div class="l2">${(BKI[it.uid] = it, '')}<span class="sbt">${canB ? (savedB ? '<span class="pos ok">✓</span>' : `<button class="btn sm ${st === 'now' ? 'pri' : ''}" data-fo="${esc(fk)}">💰</button>`) : ''}<button class="btn sm zdel" data-bkdel="${esc(it.uid)}" title="usuń z BANK">🗑</button></span>${pl ? `<span class="neg">po LOST (Nr ${fmtN(r.lbr + 1)})</span> · ` : ''}${l2}</div>${cycLine(it)}${formU === fk && canB ? bankBetForm(it, w) : ''}</div>`;
 }
 // ===== lista BANK: modele dodane przyciskiem „➕ Dodaj do BANK” (z wyszukiwarki albo z ekranu modelu) — niezależnie od MOJE =====
 const BKK = 'moje_v1_bank', BKI = {};   // BKI: uid → model pokazany na ekranie (dla przycisku dodaj / usuń)
@@ -1368,7 +1368,7 @@ function bankView() {
   // ✅ ZAKOŃCZONE: ostatni WIN banku modelu (seria banku zamknięta) od dodania do BANK — bank gra dalej od k1, więc model jest też w CZEKAJĄ
   { const D0 = L.map(it => { const R = it.bk[bkw].res, x = R[R.length - 1], from = it.bat != null ? it.bat : n - 100; return x && x.row >= from ? { it, x } : null; }).filter(Boolean).sort((a, b) => b.x.row - a.x.row);
     const hid = jget('moje_v1_bkdone'); for (let i = D0.length - 1; i >= 0; i--) if (hid.includes(`${D0[i].it.uid}#${bkw}#${D0[i].x.row}`)) D0.splice(i, 1);   // ▶ graj od nowa = schowany z ZAKOŃCZONE
-    h += `<details class="sec sdone" ${foldAt('K-done', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${D0.length}</span><span class="m">WIN banku +${bkw}</span></summary>${D0.length ? D0.map(({ it, x }) => `<div class="rw ${it.s.cls}" data-bkm="${esc(it.uid)}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b><span class="tgt">${it.tg}</span><span class="sp"></span><span class="pos">✔ WIN k${x.k}</span></div><div class="l2">bank +${bkw} zamknięty w Nr ${fmtN(x.row + 1)} · seria ${zl(bSer(x.k))}<br><button class="btn sm ok" data-bkagain="${esc(it.uid)}#${bkw}#${x.row}" style="margin-top:5px">▶ graj od nowa (k1)</button></div></div>`).join('') : `<div class="none">Od dodania do BANK żaden bank +${bkw} nie zamknął się WIN.</div>`}</details>`; }
+    h += `<details class="sec sdone" ${foldAt('K-done', 0)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${D0.length}</span><span class="m">WIN banku +${bkw}</span></summary>${D0.length ? D0.map(({ it, x }) => `<div class="rw ${it.s.cls}" data-bkm="${esc(it.uid)}"><div class="l1"><span class="bdg ${it.s.cls}">${it.s.a}</span><b>${esc(it.g.id)}</b><span class="tgt">${it.tg}</span><span class="sp"></span><span class="pos">✔ WIN k${x.k}</span></div><div class="l2">bank +${bkw} zamknięty w Nr ${fmtN(x.row + 1)} · seria ${zl(bSer(x.k))}${(BKI[it.uid] = it, '')}<div class="zbt"><button class="btn sm ok" data-bkagain="${esc(it.uid)}#${bkw}#${x.row}">▶ graj od nowa (k1)</button><button class="btn sm zdel" data-bkdel="${esc(it.uid)}" title="usuń z BANK">🗑</button></div></div></div>`).join('') : `<div class="none">Od dodania do BANK żaden bank +${bkw} nie zamknął się WIN.</div>`}</details>`; }
   return h + `<div class="hint" style="margin-bottom:8px">Droga modelu w banku +${bkw}: 🟦 CZEKAJĄ → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ. WIN → bank od k1 (znowu CZEKAJĄ). Przegrane ${bkw} kroki okna → ⏸ CZEKAJĄ NA BANK, aż model skończy cykl (WIN albo LOST); potem znowu CZEKAJĄ na kolejnym oknie. Dotknij modelu → szanse, stawki i usunięcie z listy.</div>` + bankRules();
 }
 function bankModel() {   // model z listy BANK
@@ -1537,7 +1537,7 @@ document.addEventListener('click', e => {
   if ((b = q('[data-bsub]'))) { bsub = b.dataset.bsub; lsSet('moje_v1_bsub', bsub); return render(); }
   if ((b = q('[data-u2]'))) return go('model', b.dataset.u2);
   if ((b = q('[data-move]'))) return moveTo(b.dataset.mu, b.dataset.move);
-  if ((b = q('[data-bkdel]'))) return bankDel(b.dataset.bkdel);
+  if ((b = q('[data-bkdel]'))) { e.stopPropagation(); return bankDel(b.dataset.bkdel); }
   if ((b = q('.cyx b[data-ci]'))) { const c = b.closest('.cyx'), u = c.dataset.cx, i = +b.dataset.ci, p = c.nextElementSibling;
     if (!b.classList.contains('big')) { c.querySelectorAll('b.big').forEach(x => x.classList.remove('big')); b.classList.add('big'); cyS = { u, i, open: false }; if (p) p.hidden = true; return; }
     cyS = { u, i, open: !(cyS && cyS.open && cyS.i === i) }; if (p) { p.innerHTML = cyS.open ? cyPanel(u, i) : ''; p.hidden = !cyS.open; } return; }
