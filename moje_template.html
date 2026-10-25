@@ -191,7 +191,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.30.1';
+const APP_VER = '1.30.2';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1586,7 +1586,7 @@ reload();
 (() => { const u = new URLSearchParams(location.search).get('open'); if (!u) return;
   history.replaceState(null, '', location.pathname);
   if (items.some(x => x.uid === u)) go('model', u); else toast('Model jeszcze nie jest w MOJE'); })();
-if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('moje-sw.js').catch(() => {});
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('moje-sw.js').catch(() => {});
 </script>
 <script>
 "use strict";
