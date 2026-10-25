@@ -96,3 +96,8 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - **🔎 Wyszukiwarka** (na górze BANK): nazwa modelu z SZUKAJ / SZUKAJ+ / SZUKAJ LOST (np. P1037; „S+…”, „L…”, „S…” zawęża aplikację) → statystyki modelu, ostatnie cykle i bank +3 / +5. Pule wczytywane na żądanie z aplikacji (ten sam adres, `const POOLS`), więc nazwy zgadzają się z bieżącą wersją SZUKAJ.
 - Lista jak na TERAZ (zwarte wiersze: model, krok i stawka banku), osobno dla **BANK +3 / BANK +5** (przełącznik, `moje_v1_bkw`). Stany wybranego banku: 🟦 **CZEKAJĄ** (okno trwa, model czeka na STEP / TRIGGER; podgrupy wg kroku banku) → 🟨 **ZA CHWILĘ** (zakład banku za 2+ wiersze) → 🟧 **GRAJ TERAZ** (zakład banku na następnym wierszu, „razem … zł”). WIN → bank od k1 → CZEKAJĄ. Okno przegrane w tym cyklu → **⏸ CZEKAJĄ NA BANK** (model gra dalej bez banku), aż model skończy cykl (WIN albo LOST) → znowu CZEKAJĄ na kolejnym oknie. Znaczki jak na TERAZ (żółty = za ile wierszy, pomarańczowy = ile na następnym) przy BANK, T50 / T60 i +3 / +5. Dotknięcie wiersza → ekran banku modelu.
 - Model po LOST-cie (ostatni zakończony cykl to LOST, od niego bez WIN — `sinceB === 0`) ma w BANK **biało-czerwoną ramkę** jak na LOST (wiersz listy i ekran banku modelu) oraz dopisek „po LOST (Nr …)”.
+
+## Praca bez internetu (od 1.30.2)
+- Prośba użytkownika: MOJE działa offline. `moje-sw.js` (generowany przez build.py): każde pobranie z tego samego adresu — strona MOJE
+  i pule modeli z SZUKAJ / SZUKAJ+ / SZUKAJ LOST — najpierw z sieci (zawsze najnowsza wersja), kopia w pamięci `moje-offline-v1`;
+  bez sieci — kopia. Wystarczy raz otworzyć MOJE z internetem. Kody i tak są w pamięci telefonu, więc wpisywanie offline działa.

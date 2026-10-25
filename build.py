@@ -18,12 +18,32 @@ man = {'id': 'moje-v1', 'name': 'MOJE — wszystkie moje gry (SZUKAJ, SZUKAJ+, B
        'display': 'standalone', 'orientation': 'portrait', 'background_color': '#12151c', 'theme_color': '#1b1f2a',
        'icons': [{'src': f'moje-{n}.png', 'sizes': f'{n}x{n}', 'type': 'image/png', 'purpose': 'any'} for n in (192, 512)]}
 (HERE / 'moje.webmanifest').write_text(json.dumps(man, ensure_ascii=False, indent=1))
-(HERE / 'moje-sw.js').write_text(
-    "// MOJE: nawigacje zawsze z sieci (bez starej wersji z pamięci)\n"
-    "self.addEventListener('install', () => self.skipWaiting());\n"
-    "self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));\n"
-    "self.addEventListener('fetch', e => {\n"
-    "  if (e.request.mode !== 'navigate') return;\n"
-    "  e.respondWith(fetch(e.request.url, { cache: 'no-store' }).catch(() => fetch(e.request)));\n"
-    "});\n")
+(HERE / 'moje-sw.js').write_text(r"""// MOJE — praca bez internetu. Strona i pliki zawsze najpierw z sieci (nowa wersja od razu), kopia zapisana w telefonie;
+// bez internetu — kopia. Bierzemy wszystko z tego samego adresu: MOJE i pule modeli z SZUKAJ / SZUKAJ+ / SZUKAJ LOST
+// (wyszukiwarka modeli w MOJE działa offline na pulach z ostatniego otwarcia). Wystarczy raz otworzyć MOJE z internetem.
+const C = 'moje-offline-v1';
+const NA_START = ['./', './moje.webmanifest', './moje-192.png'];
+self.addEventListener('install', e => {
+  self.skipWaiting();
+  e.waitUntil(caches.open(C).then(c => Promise.all(NA_START.map(u => c.add(new Request(u, { cache: 'no-store' })).catch(() => {})))));
+});
+self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+self.addEventListener('fetch', e => {
+  const r = e.request; if (r.method !== 'GET') return;
+  const u = new URL(r.url); if (u.origin !== location.origin) return;
+  const nav = r.mode === 'navigate', klucz = nav ? u.origin + u.pathname : r;
+  e.respondWith((async () => {
+    const c = await caches.open(C);
+    try {
+      const res = nav ? await fetch(r.url, { cache: 'no-store' }) : await fetch(r, { cache: 'no-store' });
+      if (res.ok) c.put(klucz, res.clone()).catch(() => {});
+      return res;
+    } catch (err) {
+      const m = await c.match(klucz, { ignoreSearch: true });
+      if (m) return m;
+      throw err;
+    }
+  })());
+});
+""")
 print('zapisano index.html', len(html) // 1024, 'KB')
