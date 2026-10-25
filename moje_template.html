@@ -115,6 +115,8 @@ details{margin-top:10px}summary{cursor:pointer;font-weight:700;color:var(--mu);p
 .bt.win{border-left:4px solid var(--gr)}.bt.lost{border-left:4px solid #ff4444}.bt.pend{border-left:4px solid var(--or)}.bt.none{border-left:4px solid var(--mu)}
 /* model */
 .box{background:var(--pan);border:1px solid var(--bd);border-radius:10px;padding:9px 11px;margin-bottom:9px}
+.spw{display:flex;gap:6px;margin:0 0 9px}.spw button{flex:1;padding:10px 6px;border-radius:9px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-weight:700;font-size:14px}.spw button.on{background:#b8902e;border-color:#b8902e;color:#fff}
+.pgz{display:block;width:100%;height:640px;border:0;border-radius:10px;margin:6px 0;background:var(--bg)}
 .box h4{margin:0 0 6px;font-size:13.5px}
 .box ol{margin:0;padding-left:20px}.box li{margin:3px 0}
 .kv{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
@@ -191,7 +193,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.30.3';
+const APP_VER = '1.31.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1095,6 +1097,12 @@ function model() {
     <li><b>TRIGGER</b>: potem czekam na ${esc(m[3])}${TN(m) > 1 ? ` — ${TN(m)} razy` : ''}.</li>
     <li><b>Zakład</b>: ${m[4] === 1 ? 'w następnym wierszu po TRIGGERZE' : `w ${m[4]}. wierszu po TRIGGERZE`} gram na <b>${it.tg}</b> (kurs 3,0).</li>
     <li>Przegrana → następny krok: 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512 zł. WIN → od nowa k1. Przegrany krok 8 = <b>BUST</b>.</li></ol></div>`;
+  h += `<div class="spw"><button data-mwid="s" class="${mWid === 's' ? 'on' : ''}">📊 Statystyki</button><button data-mwid="z" class="${mWid === 'z' ? 'on' : ''}">📓 Zeszyt — bieżąca gra</button></div>`;
+  if (mWid === 'z') {   // bieżąca gra na kartach ZESZYTU (z nazwami meczów) zamiast statystyk i tabeli 20 wierszy
+    h += `<div class="box"><h4>📓 Zeszyt — bieżąca gra</h4><div class="hint">STEP, TRIGGER, przegrane kroki i zakład do gry na kartach ZESZYTU, z nazwami meczów. ◀ ▶ — inne karty.</div>
+      <iframe class="pgz" src="/zeszyt/${it.t === 't60' ? 't60.html' : ''}?znacz=${znaczZeszyt(lab, n)}" title="bieżąca gra na zeszycie"></iframe></div>`;
+    if (back !== 'bank') h += bankBox(it);
+  } else {
   const dist = r.wk, mx = Math.max(1, ...dist, r.nbu), last = r.ev.slice(-24);
   const gaps = r.bl.slice(-6).map((b, i, a) => i ? b[1] - a[i - 1][1] : null).slice(1);
   h += `<div class="box"><h4>Statystyki na całej tabeli (${fmtN(n)} wierszy)</h4>
@@ -1108,6 +1116,7 @@ function model() {
     ${r.bl.length ? `<div class="hint" style="margin-top:8px">BUST-y w wierszach: ${r.bl.slice(-6).map(b => 'Nr ' + fmtN(b[0] + 1)).join(' · ')}${gaps.length ? `<br>odstępy między nimi w cyklach: ${gaps.join(' · ')}` : ''}</div>` : ''}</div>`;
   if (back !== 'bank') h += bankBox(it);
   h += rows20(it);
+  }
   const dl = v => `${it.s.url[it.t]}?model=${encodeURIComponent(it.g.m.join('|'))}&tgt=${it.tg}&v=${v}`;   // SZUKAJ otwiera od razu ten model
   h += `<a class="btn wide pri" href="${dl('stat')}">📊 Otwórz ten model w ${esc(it.s.name)} ${TABS[it.t].name} (statystyki)</a>
     <a class="btn wide" href="${dl('tab')}">📋 Otwórz tabelę tego modelu w ${esc(it.s.name)} ${TABS[it.t].name}</a>
@@ -1503,7 +1512,25 @@ function render() {
   try { cyApply(); } catch (e) {}
   if (keep && $(keep[0])) { $(keep[0]).value = keep[1]; $(keep[0]).focus(); }
 }
-let back = 'teraz';
+let back = 'teraz', mWid = 's';   // ekran modelu: 's' statystyki, 'z' zeszyt (bieżąca gra)
+function znaczZeszyt(lab, n) {   // bieżąca gra modelu → ?znacz= dla ZESZYTU (Nr = indeks + 1): STEP s, TRIGGER t, krok bez trafienia k, WIN w, BUST b, zakład do gry n — jak w S+
+  const K = lab.K, A = lab.A, B = lab.B, kon = i => K[i] === 6 || K[i] === 8, czy = i => K[i] && K[i] !== 9;
+  let e = n - 1; while (e >= 0 && !kon(e)) e--;
+  let od = e + 1, ko = n - 1;
+  if (!Array.from({ length: n - od }, (_, j) => od + j).some(czy) && e >= 0) { ko = e; od = e - 1; while (od >= 0 && !kon(od)) od--; od++; }   // po WIN / BUST jeszcze nic — ostatnia gra
+  const z = [];
+  for (let i = od; i <= ko; i++) {
+    const k = K[i];
+    if (k === 3 || k === 10) z.push(`${i + 1}:s`);
+    else if (k === 4 || k === 12) z.push(`${i + 1}:t`);
+    else if (k === 7) z.push(`${i + 1}:k:${A[i]}`);
+    else if (k === 6) z.push(`${i + 1}:w:${A[i]}`);
+    else if (k === 8) z.push(`${i + 1}:b:8`);
+  }
+  if (ko === n - 1 && n && (K[n - 1] === 4 || K[n - 1] === 5)) z.push(`${B[n - 1] + 1}:n:${A[n - 1]}`);
+  return z.slice(-80).join(',');
+}
+window.addEventListener('message', e => { const h = e.data && e.data.zeszytH; if (h) document.querySelectorAll('iframe.pgz').forEach(f => { if (f.contentWindow === e.source) f.style.height = Math.max(200, h) + 'px'; }); });
 function go(v, u) { if (v === 'model' && view !== 'model') back = view; view = v; sel = u || null; render(); window.scrollTo(0, 0); }
 document.addEventListener('click', e => {
   const q = s => e.target.closest(s);
@@ -1526,6 +1553,7 @@ document.addEventListener('click', e => {
   if ((b = q('[data-restbet]'))) { e.stopPropagation(); document.querySelectorAll('.toast').forEach(t => t.remove()); return restBet(); }
   if ((b = q('[data-tocz]'))) { e.stopPropagation(); return toCzekaj(bets[+b.dataset.tocz]); }
   if ((b = q('[data-delbet]'))) { e.stopPropagation(); return delBet(bets[+b.dataset.delbet]); }
+  if ((b = q('[data-mwid]'))) { mWid = b.dataset.mwid; return render(); }
   if ((b = q('[data-untrack]'))) { const it = items.find(x => x.uid === sel); if (it) untrack(it); return; }
   if ((b = q('[data-ffold]'))) { const k = b.dataset.ffold, a = famShut(); lsSet('moje_v1_famshut', JSON.stringify(a.includes(k) ? a.filter(x => x !== k) : [...a, k])); return render(); }
   if ((b = q('[data-fmoje]'))) { e.stopPropagation(); const v = b.dataset.fmoje, F = famGet()[+v.slice(0, v.indexOf('#'))]; if (F) famAddMoje(F, v.slice(v.indexOf('#') + 1)); return; }
@@ -1580,7 +1608,7 @@ document.addEventListener('click', e => { if (lpOn || Date.now() - lpUp < 350) {
 document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('[data-lp],.mc[data-u],.rw[data-u]')) e.preventDefault(); });
 window.addEventListener('storage', () => reload());
 document.addEventListener('visibilitychange', () => { if (!document.hidden) reload(); });
-setInterval(() => { if (!document.hidden && !(document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName))) render(); }, 30000);
+setInterval(() => { if (!document.hidden && !(view === 'model' && mWid === 'z') && !(document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName))) render(); }, 30000);
 reload();
 // ?open=<t>~<app>~<cel>~<model> — z aplikacji SZUKAJ („⇢ Gram — dodaj do MOJE”): od razu ekran modelu
 (() => { const u = new URLSearchParams(location.search).get('open'); if (!u) return;

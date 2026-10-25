@@ -102,3 +102,7 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
   i pule modeli z SZUKAJ / SZUKAJ+ / SZUKAJ LOST — najpierw z sieci (zawsze najnowsza wersja), kopia w pamięci `moje-offline-v1`;
   bez sieci — kopia. Wystarczy raz otworzyć MOJE z internetem. Kody i tak są w pamięci telefonu, więc wpisywanie offline działa.
 - Po starcie zielony komunikat na 3,5 s: „✓ Pobrane — działa też bez internetu”, a bez sieci „📴 Bez internetu — działa z pamięci telefonu”.
+
+## Ekran modelu: 📊 Statystyki ⇄ 📓 Zeszyt (1.31.0)
+- Pod „Jak gra ten model” dwa przyciski: Statystyki (statystyki + ostatnie 20 wierszy) albo Zeszyt — bieżąca gra na kartach ZESZYTU (ramka `/zeszyt/…?znacz=`), z nazwami meczów. Jak w S+50 / S+60.
+- Tylko modele z SZUKAJ / SZUKAJ+ / LOST (nie karty RAZEM). W trybie zeszytu bez odświeżania co 30 s (ramka by się przeładowywała).
