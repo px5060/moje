@@ -101,3 +101,4 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Prośba użytkownika: MOJE działa offline. `moje-sw.js` (generowany przez build.py): każde pobranie z tego samego adresu — strona MOJE
   i pule modeli z SZUKAJ / SZUKAJ+ / SZUKAJ LOST — najpierw z sieci (zawsze najnowsza wersja), kopia w pamięci `moje-offline-v1`;
   bez sieci — kopia. Wystarczy raz otworzyć MOJE z internetem. Kody i tak są w pamięci telefonu, więc wpisywanie offline działa.
+- Po starcie zielony komunikat na 3,5 s: „✓ Pobrane — działa też bez internetu”, a bez sieci „📴 Bez internetu — działa z pamięci telefonu”.
