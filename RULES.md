@@ -106,3 +106,4 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 ## Ekran modelu: 📊 Statystyki ⇄ 📓 Zeszyt (1.31.0)
 - Pod „Jak gra ten model” dwa przyciski: Statystyki (statystyki + ostatnie 20 wierszy) albo Zeszyt — bieżąca gra na kartach ZESZYTU (ramka `/zeszyt/…?znacz=`), z nazwami meczów. Jak w S+50 / S+60.
 - Tylko modele z SZUKAJ / SZUKAJ+ / LOST (nie karty RAZEM). W trybie zeszytu bez odświeżania co 30 s (ramka by się przeładowywała).
+- Modele RAZEM (R50 / R60) też mają przełącznik (1.32.0): łańcuch zakładu z RAZEM (`UT.znacz(mi)` w ramce tabeli) → ZESZYT `?znacz=`.
