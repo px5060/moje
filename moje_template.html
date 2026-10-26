@@ -193,7 +193,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.31.0';
+const APP_VER = '1.32.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1015,7 +1015,7 @@ const LT = (it, K, A, B, i) => {
   return '';
 };
 // adapter tabeli RAZEM (UT.A w ramce): etykiety wierszy modelu i opis — do ekranu modelu jak w SZUKAJ
-function rzA(it) { try { const w = rzWin(it.t), f = w && w.document.getElementById('fr_' + it.k), A = f && f.contentWindow.UT && f.contentWindow.UT.A; if (!A) return null; const mi = A.models().findIndex(m => m.id === it.g.rid); return mi < 0 ? null : { A, mi }; } catch (e) { return null; } }
+function rzA(it) { try { const w = rzWin(it.t), f = w && w.document.getElementById('fr_' + it.k), A = f && f.contentWindow.UT && f.contentWindow.UT.A; if (!A) return null; const mi = A.models().findIndex(m => m.id === it.g.rid); return mi < 0 ? null : { A, mi, U: f.contentWindow.UT }; } catch (e) { return null; } }
 const rzCls = t => /^\s*(STEP|TRIGGER)[^W]*✓/.test(t) ? 'k3' : /LOST|BUST/.test(t) && !/GRA|gra za|czeka/.test(t) ? 'k8' : /WIN|✓|✔/.test(t) ? 'k6' : /LOSS|✗|pudło|przegr/.test(t) ? 'k7' : /▶|GRA|gra za|START|zakład/.test(t) ? 'k4' : /STEP|TRIGGER|trig/.test(t) ? 'k3' : '';
 function rzRows(it) {
   const X = rzA(it); if (!X) return '';
@@ -1040,6 +1040,12 @@ function betHist(it) {
     <table class="rows hist" style="margin-top:8px"><tr class="mu"><td>Nr</td><td>krok</td><td style="text-align:right">kwota</td><td>wynik</td><td></td></tr>
     ${B.map(x => `<tr><td class="nr">${fmtN(x.b.row + 1)}</td><td>${x.b.bank ? `<span class="bw w${x.b.bank}">🏦 +${x.b.bank}</span> ` : ''}k${x.b.step}</td><td style="text-align:right"><b>${fmtN(x.b.stake)} zł</b></td><td>${rs(x)}<div class="mu" style="font-size:11px">${ago(x.b.t)}</div></td><td><button class="btn sm" data-delbet="${bets.indexOf(x)}">✕</button></td></tr>`).join('')}</table></div>`;
 }
+function rzZeszyt(it) {   // bieżąca gra modelu RAZEM na kartach ZESZYTU (łańcuch zakładu z RAZEM: STEP, TRIGGER, gra, zakład)
+  const X = rzA(it); let zn = ''; try { zn = X && X.U && X.U.znacz ? X.U.znacz(X.mi) : ''; } catch (e) {}
+  if (!zn) return '<div class="box"><div class="hint">Nie ma jeszcze bieżącej gry tego modelu do pokazania na zeszycie (albo RAZEM jeszcze się wczytuje).</div></div>';
+  return `<div class="box"><h4>📓 Zeszyt — bieżąca gra</h4><div class="hint">STEP, TRIGGER, gra i zakład na kartach ZESZYTU, z nazwami meczów. ◀ ▶ — inne karty.</div>
+    <iframe class="pgz" src="/zeszyt/${it.t === 't60' ? 't60.html' : ''}?znacz=${zn}" title="bieżąca gra na zeszycie"></iframe></div>`;
+}
 function rzModel(it) {
   let rows = []; try { rows = it.c && it.c.stats ? it.c.stats() || [] : []; } catch (e) {}   // statystyki modelu z RAZEM (te same co po przytrzymaniu karty w RAZEM)
   const c = it.c, r = it.r;
@@ -1052,8 +1058,8 @@ function rzModel(it) {
     <div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (wynik zobaczysz w ZAKŁADY):</div>${betForm(it, 1)}</div>
     ${betHist(it)}
     ${rzHow(it)}
-    ${rows.length ? `<div class="box"><h4>Statystyki modelu (RAZEM ${TABS[it.t].name})</h4><table class="rows st">${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td style="text-align:right;font-weight:700">${esc(v)}</td></tr>`).join('')}</table></div>` : ''}
-    ${rzRows(it)}
+    <div class="spw"><button data-mwid="s" class="${mWid === 's' ? 'on' : ''}">📊 Statystyki</button><button data-mwid="z" class="${mWid === 'z' ? 'on' : ''}">📓 Zeszyt — bieżąca gra</button></div>
+    ${mWid === 'z' ? rzZeszyt(it) : (rows.length ? `<div class="box"><h4>Statystyki modelu (RAZEM ${TABS[it.t].name})</h4><table class="rows st">${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td style="text-align:right;font-weight:700">${esc(v)}</td></tr>`).join('')}</table></div>` : '') + rzRows(it)}
     ${c ? `<div class="box"><h4>Co pokazuje RAZEM</h4>${(c.meta || []).map(m => `<div class="mu" style="font-size:12px">${esc(m)}</div>`).join('')}
       ${c.lines.map(l => `<div class="bt ${l.p === 1 ? 'pend' : l.p === 4 ? 'pend' : 'none'}" style="cursor:default"><div>${esc(l.txt || '')}<div class="mu" style="font-size:11px">${esc(l.sub || '')}</div></div></div>`).join('')}</div>` : ''}
     <a class="btn wide" href="${RZ[it.t].url}">Otwórz RAZEM ${TABS[it.t].name}</a>
