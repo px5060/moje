@@ -114,7 +114,8 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
   (`moje_v1_gh`), nigdy nie jest wysyłany.
 - Plik `stan.json`: `t50` / `t60` = `{n, kody}` (pełny ciąg od Nr 1, 3 cyfry na kod), `modele` (lista MOJE: tabela, app, cel, nazwa, id, model `m`,
   krok, faza, Nr zakładu, bank, lost), `storage` = kopia pamięci px5060.github.io (MOJE GRY, BANK, ZAKŁADY, RAZEM, ZESZYT…) bez klucza GitHub
-  i bez ustawień ekranu. Wysyłka sama: po zmianach (15 s po ostatniej, przy każdym `reload`) i przy otwarciu, tylko gdy stan się zmienił (skrót).
+  i bez ustawień ekranu; od 1.33.1 też bez `oc_v1/…` (zapamiętane oceny GRAĆ / OBSERWUJ w SZUKAJ — appka je przelicza; ok. 1/4
+  pliku mniej danych przy każdej wysyłce). Wysyłka sama: po zmianach (15 s po ostatniej, przy każdym `reload`) i przy otwarciu, tylko gdy stan się zmienił (skrót).
   Przy wyjściu z MOJE (`visibilitychange` → ukryta, `pagehide`) czekająca wysyłka idzie od razu.
 - **Poprawki kodów** (prośba użytkownika: poprawiony kod ma trafić do repo): cofnięty i wpisany na nowo kod (MOJE ↶, RAZEM ⟲), zmiana kodu
   w ZESZYCIE (dopisany kod — wspólna lista; kod z bazy — `zeszyt_v1_poprawki_<t>`) zmieniają stan → wysyłka jak wyżej. Każde urządzenie pamięta
