@@ -193,7 +193,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.33.1';
+const APP_VER = '1.34.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -404,8 +404,8 @@ function ghKonflikt(b, x, d, dev) {   // '' = wolno nadpisać plik w GitHub; ina
   const R = ghRoznice(d, x); return [...R.dif, ...R.tam, ...R.zesz].join('\n');
 }
 const ghH = c => ({ Authorization: 'Bearer ' + c.tok, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' });
-async function ghGet(c) {   // plik stanu z GitHub → {d, sha, st}; d = null, gdy go nie ma albo jest nieczytelny
-  const url = `https://api.github.com/repos/${c.repo}/contents/${GH_FILE}`, r = await fetch(url, { headers: ghH(c), cache: 'no-store' });
+async function ghGet(c, f) {   // plik z GitHub (domyślnie stan.json) → {d, sha, st}; d = null, gdy go nie ma albo jest nieczytelny
+  const url = `https://api.github.com/repos/${c.repo}/contents/${f || GH_FILE}`, r = await fetch(url, { headers: ghH(c), cache: 'no-store' });
   if (r.status === 404) return { d: null, st: 404 };
   if (!r.ok) throw new Error(`${r.status}`);
   const j = await r.json(); let d = null;
@@ -460,6 +460,74 @@ async function ghRestore() {
     reload(); toast(`☁ Przywrócono z GitHub: T50 Nr ${fmtN(D.t50.n)} · T60 Nr ${fmtN(D.t60.n)}`, 5000);
   } catch (e) { toast(`☁ Nie przywrócono: ${esc(String(e.message || e))}`, 6000); }
 }
+// ===== 📥 OD CLAUDE (1.34.0): propozycje modeli z pliku od_claude.json w tym samym repo — do MOJE, BANK albo ZESZYTU dopiero po „Dodaj” =====
+// Plik pisze Claude: {propozycje: [{id, gdzie: 'MOJE' | 'BANK' | 'ZESZYT', tabela: 't50' | 't60', …, uwaga}]}. MOJE / BANK: app (S, S+, L), cel, model (P…),
+// m (model z puli, pola jak w SZUKAJ); ZESZYT T50: w (3 wiersze 1–28), poz, czekaj, war ('' / 'boki'), limit; T60: w (wiersze 1–30), cel, cz, limit.
+// Zapis jak „Gram — dodaj do MOJE” / „→ BANK” / „Przenieś do zeszytu”. Decyzje (dodane / jest / odrzucone) w moje_v1_odclaude — jadą w stan.json.
+const GH_IN = 'od_claude.json', INK = 'moje_v1_ghin', ODK = 'moje_v1_odclaude', IN_MAX = 20;   // INK: ostatnio pobrany plik (nie jedzie w stan.json)
+const Z60C = ['2,3', '1', '1,2,3', 'x1x', 'xx1'];   // cele ZESZYTU T60 (jak w kodzie modelu)
+let inBusy = false;
+async function inFetch(force) {   // co najmniej 2 min między sprawdzeniami (przy reload / otwarciu), „📥 Sprawdź” — od razu
+  const c = ghCfg(), x = jobj(INK) || {}; if (!c.repo || !c.tok || inBusy || (!force && x.t && Date.now() - x.t < 120000)) return;
+  inBusy = true;
+  try {
+    const g = await ghGet(c, GH_IN), P = g.d && Array.isArray(g.d.propozycje) ? g.d.propozycje.filter(p => p && typeof p.id === 'string' && p.id.length <= 60).slice(0, 100) : [];
+    const zm = JSON.stringify(P) !== JSON.stringify(x.P || []); lsSet(INK, JSON.stringify({ t: Date.now(), P, err: '' }));
+    if (zm || force) render();
+    if (force) toast(inPending().length ? `📥 Od Claude: ${inPending().length} do dodania (TERAZ)` : '📥 Od Claude: nic nowego');
+  } catch (e) { lsSet(INK, JSON.stringify({ ...x, t: Date.now(), err: String(e.message || e).slice(0, 120) })); if (force) toast('📥 Nie sprawdzono: ' + esc(String(e.message || e))); }
+  finally { inBusy = false; }
+}
+const inDec = () => jobj(ODK) || {};
+const inPending = () => { const x = jobj(INK), d = inDec(); return x && Array.isArray(x.P) ? x.P.filter(p => !d[p.id]).slice(0, IN_MAX) : []; };
+function inSet(id, wyn) { const d = inDec(); d[id] = { d: wyn, t: Date.now() }; const k = Object.keys(d); k.slice(0, Math.max(0, k.length - 300)).forEach(x => delete d[x]); lsSet(ODK, JSON.stringify(d)); }
+const inInt = (v, d, a, b) => { const x = v == null ? d : Number(v); return Number.isInteger(x) && x >= a && x <= b ? x : null; };
+function inOpis(p) {   // propozycja → {txt, z (zapis ZESZYTU) | it (model MOJE / BANK)} albo {err}
+  try {
+    const t = p.tabela; if (!TABS[t]) return { err: 'zła tabela' };
+    if (p.gdzie === 'ZESZYT') {
+      const w = Array.isArray(p.w) ? p.w.map(Number).sort((a, b) => a - b) : [], lim = inInt(p.limit, 9, 1, 20);
+      if (t === 't50') {
+        const poz = inInt(p.poz, 1, 0, 2), cz = inInt(p.czekaj, 1, 0, 9), war = p.war === 'boki' ? 'boki' : '';
+        if (w.length !== 3 || new Set(w).size !== 3 || w.some(r => !(Number.isInteger(r) && r >= 1 && r <= 28)) || poz == null || cz == null || lim == null || (p.war && p.war !== 'boki')) return { err: 'zły model ZESZYTU T50' };
+        return { z: { w, poz, czekaj: cz, war, limit: lim }, txt: `ZESZYT T50 · ${['+XX ', '', 'XX+ '][poz]}${w.join('·')}${war ? ' +bok' : ''}${cz === 1 ? '' : cz ? ' ×' + cz : ' od razu'} · do k${lim}` };
+      }
+      const cel = Array.isArray(p.cel) ? p.cel.map(String) : [], cz = inInt(p.cz, 1, 0, 9);
+      if (!w.length || w.length > 3 || new Set(w).size !== w.length || w.some(r => !(Number.isInteger(r) && r >= 1 && r <= 30)) || !Z60C.includes(cel.join(',')) || cz == null || lim == null) return { err: 'zły model ZESZYTU T60' };
+      const cn = { '2,3': '2/3xx', 1: '1xx', '1,2,3': '1–3xx' }[cel.join(',')] || cel[0];
+      return { z: { w, cel, jedn: 's', cz, war: '', limit: lim, ...(p.lista === 'lost' ? { lista: 'lost' } : {}) }, txt: `ZESZYT T60 · ${cn} ${w.join('·')}${cz === 1 ? '' : cz ? ' ×' + cz : ' od razu'} · do k${lim}` };
+    }
+    if (p.gdzie !== 'MOJE' && p.gdzie !== 'BANK') return { err: 'nie wiem, gdzie dodać' };
+    const s = SRC.find(s => s.a === p.app), tg = p.cel;
+    if (!s || !TABS[t].targets.includes(tg) || !Array.isArray(p.m) || p.m.length < s.nf || !/^[PN]\d{1,6}$/.test(String(p.model))) return { err: 'zły opis modelu' };
+    const it = mkItem(t, s, tg, { m: p.m.slice(0, s.nf), id: String(p.model), start: D[t].n, s0: 1 }); if (!it.r || !(it.r.bs >= 0)) return { err: 'nie da się policzyć modelu' };
+    return { it, txt: `${it.label} → ${p.gdzie === 'BANK' ? 'BANK' : 'MOJE (TERAZ)'} · teraz k${it.r.bs + 1} ${ST[it.r.bs]} zł` };
+  } catch (e) { return { err: 'nie da się policzyć: ' + String(e.message || e).slice(0, 60) }; }
+}
+function inDodaj(id) {
+  const p = inPending().find(x => x.id === id); if (!p) return;
+  const o = inOpis(p); if (o.err) { toast('Nie dodano: ' + esc(o.err)); return; }
+  let wyn = 'dodane';
+  if (o.z) {
+    const K = p.tabela === 't50' ? 'zeszyt_v1_modele' : 'zeszyt_v1_modele60', L = jget(K), z = o.z;
+    const same = m => m && Array.isArray(m.w) && m.w.join() === z.w.join() && m.limit === z.limit && (p.tabela === 't50' ? m.poz === z.poz && m.czekaj === z.czekaj && (m.war || '') === z.war : Array.isArray(m.cel) && m.cel.join() === z.cel.join() && m.cz === z.cz);
+    if (L.some(same)) wyn = 'jest';
+    else { L.push({ id: (p.tabela === 't50' ? 'u' : 'v') + Date.now().toString(36), ...z }); if (!lsSet(K, JSON.stringify(L))) { alert('BŁĄD zapisu pamięci telefonu!'); return; } }
+  } else if (p.gdzie === 'BANK') {
+    if (bankHas(o.it.uid)) wyn = 'jest';
+    else { const L = jget(BKK); L.push({ t: o.it.t, a: o.it.s.a, tg: o.it.tg, m: o.it.m, id: o.it.g.id, t0: Date.now(), at: D[o.it.t].n }); if (!lsSet(BKK, JSON.stringify(L))) { alert('BŁĄD zapisu pamięci telefonu!'); return; } }
+  } else if (myIn(o.it.uid) || bankHas(o.it.uid)) wyn = 'jest';
+  else if (!addMoje(o.it)) { alert('BŁĄD zapisu pamięci telefonu!'); return; }
+  inSet(id, wyn); toast(wyn === 'jest' ? `To już masz: ${esc(o.txt.split(' · ')[0])}` : `📥 Dodano: ${esc(o.txt)}`, 4000); reload();
+}
+function inBox() {
+  const P = inPending(); if (!P.length) return '';
+  return `<div class="box" id="inbox" style="border-color:var(--ye)"><h4>📥 Od Claude: ${P.length} ${pl(P.length, ['model', 'modele', 'modeli'])} do dodania</h4>
+    ${P.map(p => { const o = inOpis(p), id = esc(p.id); return `<div style="padding:7px 0 4px;border-top:1px solid var(--bd)"><b>${esc(o.txt || String(p.gdzie || '?'))}</b>${o.err ? ` <span class="neg">— ${esc(o.err)}</span>` : ''}
+      ${p.uwaga ? `<div class="hint" style="margin:2px 0">${esc(String(p.uwaga).slice(0, 300))}</div>` : ''}
+      <div style="display:flex;gap:6px;margin-top:4px">${o.err ? '' : `<button class="btn pri" data-indod="${id}">＋ Dodaj</button>`}<button class="btn" data-inodr="${id}">Odrzuć</button></div></div>`; }).join('')}
+    <div class="hint" style="margin-top:4px">Nic nie dodaje się samo — tylko po „Dodaj”. Claude nie ustawia zakładów.</div></div>`;
+}
 function ghBox() {
   const c = ghCfg(), on = !!(c.repo && c.tok);
   return `<div class="box" id="ghbox">
@@ -468,7 +536,9 @@ function ghBox() {
     ${on ? `<div class="hint">Repo <b>${esc(c.repo)}</b> · ${c.last && c.last.t ? `wysłano ${ago(c.last.t)} (${when(c.last.t)}) · T50 Nr ${fmtN(c.last.n50)} · T60 Nr ${fmtN(c.last.n60)}` : 'jeszcze nie wysłano'}${c.err ? ` · <b style="color:var(--rd)">błąd: ${esc(c.err)}</b>` : ''}</div>
       ${(() => { const L = jget(GHZK).slice(-3).reverse(); return L.length ? `<div class="hint">Poprawki kodów wysłane do GitHub: ${L.map(z => `${esc(ghZTxt(z))} · ${ago(z.czas)}`).join('<br>')}</div>` : ''; })()}
       <label class="hint" style="display:flex;gap:8px;align-items:center;margin:6px 0 8px;font-size:13px;color:var(--tx)"><input type="checkbox" data-ghauto ${c.auto !== false ? 'checked' : ''} style="width:20px;height:20px">Wysyłaj samo po zmianach</label>
+      ${(() => { const x = jobj(INK) || {}, n = inPending().length; return `<div class="hint">📥 Od Claude (${GH_IN}): ${x.t ? `sprawdzono ${ago(x.t)}` : 'jeszcze nie sprawdzono'}${n ? ` · <b style="color:var(--ye)">${n} do dodania — na TERAZ</b>` : ''}${x.err && !/^404/.test(x.err) ? ` · <b style="color:var(--rd)">błąd: ${esc(x.err)}</b>` : ''}</div>`; })()}
       <button class="btn pri wide" data-ghsend="1">☁ Wyślij teraz</button>
+      <button class="btn wide" data-inchk="1">📥 Sprawdź propozycje od Claude</button>
       <button class="btn wide" data-ghrest="1">⬇ Przywróć z GitHub na tym urządzeniu</button>
       <button class="btn wide" data-ghoff="1" style="color:var(--rd)">✕ Usuń klucz z tego urządzenia</button>`
     : `<input id="gh_repo" placeholder="repo, np. px5060/kody" value="${esc(c.repo || 'px5060/kody')}" style="width:100%;margin:4px 0;padding:10px;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:8px">
@@ -749,7 +819,7 @@ function phaseTxt(it) {
 
 // ===== EKRANY =====
 let view = 'teraz', sel = null, only = lsGet('moje_v1_only', 't50'); if (!TABS[only]) only = 't50';   // wybrana tabela (T50 / T60) — każda ma swój ekran
-function reload() { Object.keys(TABS).forEach(loadCodes); _lab.clear(); gather(); render(); rzLoad(); ghSchedule(); }
+function reload() { Object.keys(TABS).forEach(loadCodes); _lab.clear(); gather(); render(); rzLoad(); ghSchedule(); inFetch(); }
 // zgubione kody: tylko baza (brak dopisanych) albo mniej kodów niż ostatnio widziane → podpowiedź „wczytaj kopię”
 const MAXK = t => 'moje_v1_maxn_' + t;
 function lostBox(t) {
@@ -874,7 +944,7 @@ const byApp = (a, b) => SRC.indexOf(a.s) - SRC.indexOf(b.s) || b.r.bs - a.r.bs |
 const ddTag = (html, d) => !(d >= 1) || html.includes('class="dd') ? html : html.replace('<span class="sp"></span>', `<span class="sp"></span><span class="dd${d === 1 ? ' n' : ''}">${d === 1 ? 'TERAZ' : 'za ' + d}</span>`);
 function teraz() {
   const t = only, n = D[t].n;
-  let h = tabSwitch(null, 1) + kodBox(t);
+  let h = tabSwitch(null, 1) + inBox() + kodBox(t);
   if (rzSt[t] === 'wczytuję') h += `<div class="hint" style="margin:-2px 0 8px">⏳ Wczytuję modele z RAZEM ${TABS[t].name}…</div>`;
   if (rzSt[t] === 'błąd') h += `<div class="hint neg" style="margin:-2px 0 8px">Nie udało się wczytać RAZEM ${TABS[t].name} — otwórz MOJE ponownie.</div>`;
   const L = vitems.filter(it => it.t === t);
@@ -1473,8 +1543,8 @@ function plLoad(t) {
     const k = t + '|' + s.a; if (PL[k] && PL[k].st !== 'błąd') return; PL[k] = { st: 'ładuję' };
     fetch(s.url[t], { cache: 'no-cache' }).then(r => r.ok ? r.text() : Promise.reject(r.status)).then(h => {
       const m = /const POOLS = (\{.*?\});\s/.exec(h); if (!m) throw new Error('brak puli');
-      const P = JSON.parse(m[1]), o = {}; for (const g in P) o[g] = P[g].pool || [];
-      PL[k] = { st: 'ok', P: o };
+      const P = JSON.parse(m[1]), o = {}, N = {}; for (const g in P) { o[g] = P[g].pool || []; N[g] = Array.isArray(P[g].nr) ? P[g].nr : null; }   // nr: numery P po przycięciu puli
+      PL[k] = { st: 'ok', P: o, N };
     }).catch(() => { PL[k] = { st: 'błąd' }; }).then(bqUpd);
   });
 }
@@ -1483,7 +1553,7 @@ function bqFind(t, q) {   // „P1037”, „1037”, „S+1037” (tylko SZUKAJ
   const one = /^S\s*\+/.test(Q) ? 'S+' : /^L/.test(Q) ? 'L' : /^S/.test(Q) ? 'S' : null, out = [];
   SRC.forEach(s => {
     const L = PL[t + '|' + s.a]; if ((one && s.a !== one) || !L || L.st !== 'ok') return;
-    TABS[t].targets.forEach(tg => { const m = (L.P[tg] || [])[n - 1]; if (Array.isArray(m)) out.push(mkItem(t, s, tg, { m, id: 'P' + n, start: D[t].n, s0: 1 })); });
+    TABS[t].targets.forEach(tg => { const N = L.N && L.N[tg], m = (L.P[tg] || [])[N ? N.indexOf(n) : n - 1]; if (Array.isArray(m)) out.push(mkItem(t, s, tg, { m, id: 'P' + n, start: D[t].n, s0: 1 })); });
   });
   out.forEach(classify);
   return out;
@@ -1569,6 +1639,7 @@ function pomoc() {
     <div class="box"><h4>Kody</h4>Kody są wspólne z RAZEM i SZUKAJ — wpisany tu kod jest od razu we wszystkich aplikacjach (i odwrotnie). Przy każdej tabeli widać ostatni kod i <b>kiedy</b> go wpisano. Gdy kod wpisano w innej aplikacji, MOJE pokazuje, kiedy go tu zauważyło (przy otwarciu).<br>Zakładka <b>KODY</b>: kilka kodów naraz, import pliku (z cofnięciem całego importu) i eksport z nazwami jak w RAZEM — T50: TRÓJKA <b>v13_…kod.json</b>, T60: <b>xx1_pikoff_…json</b> i <b>trojka_xx1_v13_…kod.json</b>, żeby appki na PC je wychwyciły.</div>
     <div class="box"><h4>Kopia kodów</h4>Co 10 nowych kodów (licząc od ostatniego eksportu) MOJE samo zapisuje plik kopii (T50 TRÓJKA, T60 PIKOFF) do Pobranych — przy wpisaniu kodu tutaj. Gdy telefon wyczyści pamięć, wczytaj go w KODY → Import pliku. Wyłączysz to w KODY.</div>
     <div class="box"><h4>☁ Kopia w GitHub</h4>W KODY możesz podać swoje <b>prywatne</b> repo GitHub i klucz do niego. Wtedy MOJE samo wysyła kody T50 / T60 i listy (MOJE, BANK, ZAKŁADY, RAZEM, ZESZYT) do pliku <b>stan.json</b> — Claude czyta go w nowej rozmowie bez eksportów, a „Przywróć z GitHub” wczytuje ten sam stan na komputerze. Poprawiony kod (cofnięty i wpisany na nowo albo zmieniony w ZESZYCIE) też idzie sam — dymek „☁ Poprawka kodu wysłana”, a urządzenie ze starszymi kodami nie nadpisze jej bez pytania. Klucz zostaje tylko na tym urządzeniu.</div>
+    <div class="box"><h4>📥 Od Claude</h4>Claude może zaproponować modele do dodania — zapisuje je w pliku <b>od_claude.json</b> w tym samym repo. MOJE sprawdza go przy otwarciu (i przyciskiem „📥 Sprawdź” w KODY) i pokazuje na górze TERAZ: <b>＋ Dodaj</b> wpisuje model do MOJE (TERAZ), BANK albo ZESZYTU tak samo jak przycisk w appce, <b>Odrzuć</b> chowa propozycję. Nic nie dodaje się samo, a zakładów Claude nie ustawia. Twoje decyzje Claude widzi w stan.json.</div>
     <div class="box"><h4>Zakładka BANK</h4>Bank +3 / +5 (bez limitu) dla modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST. Bank gra w każdym cyklu modelu tylko pierwsze 3 (5) zakłady; model trafi → WIN banku (przeniesione kroki + krok modelu) i bank od k1; nie trafi → bank przegrywa 3 (5) kroki, czeka i w następnym cyklu gra dalej. Stawki 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512, dalej ×2.<br>Model jest <b>albo na TERAZ</b> (prosta progresja k1–k8), <b>albo w BANK</b> (+3 / +5) — nigdy w obu. Przełącznik przy modelu (ekran modelu i <b>🔎 wyszukiwarka</b>): <b>🏦 Przenieś do BANK</b> / <b>🟧 Przenieś do TERAZ</b>. „✕ usuń z BANK” usuwa model całkiem (też z MOJE). Na TERAZ grupy <b>🟥 PO BUST</b> i <b>🏦 BANK</b> (zwijane jak pozostałe) pokazują to, co gra na następnym wierszu; <b>przytrzymanie</b> nagłówka przenosi do zakładki LOST / BANK. Przełącznik <b>BANK +3 / BANK +5</b> wybiera, który bank prowadzi listę. Droga modelu jak na TERAZ: 🟦 CZEKAJĄ (okno banku trwa, czeka na STEP / TRIGGER) → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ. WIN → bank od k1 i znowu CZEKAJĄ. Bank przegrał swoje 3 (5) kroki → <b>⏸ CZEKAJĄ NA BANK</b>, aż model skończy cykl (WIN albo LOST) — potem znowu CZEKAJĄ, już na kolejnym oknie (np. k4–k6). Znaczki przy BANK, T50 / T60 i +3 / +5: żółty = za ile wierszy zakład banku, pomarańczowy = ile gra na następnym. Dotknięcie modelu → szanse zamknięcia banku na kolejnych krokach, stawki, gdzie bank się zamykał (% dla okien) i usunięcie z listy.</div>
     <div class="box"><h4>Zakłady</h4>„💰 Zapisz zakład” zapisuje zakład w MOJE ZAKŁADY aplikacji, z której jest model — widać go tu i tam. Wynik liczy się sam po wpisaniu kodu.</div>
     <div class="box"><h4>Dodawanie modeli</h4>W aplikacji SZUKAJ dotknij kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. Tutaj: dotknięcie kafelka → statystyki modelu, przytrzymanie → tabela wierszy. Aplikacja doda model i otworzy go tutaj.</div>
@@ -1699,6 +1770,9 @@ document.addEventListener('click', e => {
     if (!/^[\w.-]+\/[\w.-]+$/.test(repo) || tok.length < 20) { toast('Podaj repo (właściciel/nazwa) i klucz GitHub'); return; }
     ghPut({ repo, tok, auto: true }); render(); return ghSend(true); }
   if ((b = q('[data-ghsend]'))) return ghSend(true);
+  if ((b = q('[data-inchk]'))) return inFetch(true);
+  if ((b = q('[data-indod]'))) return inDodaj(b.dataset.indod);
+  if ((b = q('[data-inodr]'))) { inSet(b.dataset.inodr, 'odrzucone'); toast('Odrzucone'); reload(); return; }
   if ((b = q('[data-ghrest]'))) return ghRestore();
   if ((b = q('[data-ghoff]'))) { if (!confirm('Usunąć klucz GitHub z tego urządzenia? Kopia przestanie się wysyłać (plik w repo zostaje).')) return; lsSet(GHK, JSON.stringify({ repo: ghCfg().repo })); return render(); }
   if ((b = q('[data-bkw]'))) { bkw = +b.dataset.bkw === 5 ? 5 : 3; lsSet('moje_v1_bkw', String(bkw)); return render(); }

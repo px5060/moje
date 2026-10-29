@@ -128,3 +128,16 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
   Urządzenie ze starszymi kodami nie skasuje więc poprawki z telefonu. „⬇ Przywróć z GitHub” wczytuje stan na tym urządzeniu (np. komputer),
   ustawia bazę i sha, a przed podmianą pokazuje, co zniknie (więcej kodów albo inne kody tutaj). „✕ Usuń klucz” zatrzymuje wysyłkę.
 - Claude czyta `stan.json` w projekcie `all50/analiza` (narzędzia przyjmują `--stan`).
+
+## 📥 Od Claude — propozycje modeli z repo (1.34.0)
+- Prośba użytkownika: Claude ma móc sam dodawać modele do MOJE i ZESZYTU. Claude zapisuje propozycje w `od_claude.json` w tym samym prywatnym
+  repo (narzędzie `all50/analiza/narzedzia/od_claude.py`); MOJE pobiera plik tym samym kluczem (przy `reload` / otwarciu, co najmniej 2 min
+  przerwy; „📥 Sprawdź propozycje od Claude” w KODY — od razu) i pokazuje na górze TERAZ okienko **„📥 Od Claude”**. **Nic nie dodaje się samo**:
+  „＋ Dodaj” zapisuje model tak samo jak appka, „Odrzuć” chowa propozycję. Claude nie ustawia zakładów.
+- Propozycja: `{id, gdzie, tabela, …, uwaga}`. `gdzie: 'MOJE'` → `{t}{pfx}moje_{cel}` jak `addMoje` (start = Nr teraz, s0 = krok teraz);
+  `'BANK'` → `moje_v1_bank` jak „→ BANK”; oba z `app` (S / S+ / L), `cel`, `model` (P…) i `m` (pola modelu z puli, S/L 5, S+ 7) — MOJE liczy krok
+  własnym silnikiem i pokazuje go przy propozycji. `'ZESZYT'` T50 → `zeszyt_v1_modele` `{id: 'u…', w (3 wiersze 1–28), poz, czekaj, war ('' / 'boki'),
+  limit}`, T60 → `zeszyt_v1_modele60` `{id: 'v…', w (1–3 wiersze 1–30), cel (2/3xx, 1xx, 1–3xx, x1x, xx1), jedn: 's', cz, war: '', limit, lista?}` —
+  jak „Przenieś do zeszytu”. Zły opis → okienko pokazuje błąd i tylko „Odrzuć”. Ten sam model drugi raz → „już jest”, bez duplikatu.
+- Decyzje `moje_v1_odclaude` `{id: {d: 'dodane' | 'jest' | 'odrzucone', t}}` jadą w `stan.json` (Claude widzi, co dodano); pobrany plik
+  (`moje_v1_ghin`) nie jedzie. Najwyżej 20 propozycji naraz na ekranie, `uwaga` do 300 znaków, wszystko z pliku escapowane.

@@ -11,6 +11,7 @@ ze wszystkich aplikacji SZUKAJ, SZUKAJ+ i SZUKAJ BUST (T50 i T60). Czyta wspóln
   🔎 wyszukiwarka dowolnego modelu z SZUKAJ / SZUKAJ+ / SZUKAJ LOST (pule czytane z tych aplikacji). Zasady: `RULES.md`.
 
 - **☁ Kopia w GitHub** (KODY, 1.33.0) — kody i listy z telefonu do pliku `stan.json` w prywatnym repo (np. `px5060/kody`), sama po zmianach (także po poprawce kodu — urządzenie ze starszymi kodami jej nie nadpisze); Claude czyta go w nowej rozmowie, „Przywróć” wczytuje ten stan na innym urządzeniu. Zasady: `RULES.md`.
+- **📥 Od Claude** (TERAZ, 1.34.0) — propozycje modeli od Claude z pliku `od_claude.json` w tym samym repo: „＋ Dodaj” wpisuje model do MOJE, BANK albo ZESZYTU, „Odrzuć” chowa; nic nie dodaje się samo. Zasady: `RULES.md`.
 
 Budowa: `python3 build.py` (z `moje_template.html` + `seed_t50.txt` / `seed_t60.txt`) → `index.html`. Ikony: `python3 make_icons.py`.
 Silnik = ten sam co w SZUKAJ+ (SZUKAJ i BUST to SZUKAJ+ z 1 TRIGGEREM i bez STEP2).
