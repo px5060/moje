@@ -1543,8 +1543,8 @@ function plLoad(t) {
     const k = t + '|' + s.a; if (PL[k] && PL[k].st !== 'błąd') return; PL[k] = { st: 'ładuję' };
     fetch(s.url[t], { cache: 'no-cache' }).then(r => r.ok ? r.text() : Promise.reject(r.status)).then(h => {
       const m = /const POOLS = (\{.*?\});\s/.exec(h); if (!m) throw new Error('brak puli');
-      const P = JSON.parse(m[1]), o = {}; for (const g in P) o[g] = P[g].pool || [];
-      PL[k] = { st: 'ok', P: o };
+      const P = JSON.parse(m[1]), o = {}, N = {}; for (const g in P) { o[g] = P[g].pool || []; N[g] = Array.isArray(P[g].nr) ? P[g].nr : null; }   // nr: numery P po przycięciu puli
+      PL[k] = { st: 'ok', P: o, N };
     }).catch(() => { PL[k] = { st: 'błąd' }; }).then(bqUpd);
   });
 }
@@ -1553,7 +1553,7 @@ function bqFind(t, q) {   // „P1037”, „1037”, „S+1037” (tylko SZUKAJ
   const one = /^S\s*\+/.test(Q) ? 'S+' : /^L/.test(Q) ? 'L' : /^S/.test(Q) ? 'S' : null, out = [];
   SRC.forEach(s => {
     const L = PL[t + '|' + s.a]; if ((one && s.a !== one) || !L || L.st !== 'ok') return;
-    TABS[t].targets.forEach(tg => { const m = (L.P[tg] || [])[n - 1]; if (Array.isArray(m)) out.push(mkItem(t, s, tg, { m, id: 'P' + n, start: D[t].n, s0: 1 })); });
+    TABS[t].targets.forEach(tg => { const N = L.N && L.N[tg], m = (L.P[tg] || [])[N ? N.indexOf(n) : n - 1]; if (Array.isArray(m)) out.push(mkItem(t, s, tg, { m, id: 'P' + n, start: D[t].n, s0: 1 })); });
   });
   out.forEach(classify);
   return out;
