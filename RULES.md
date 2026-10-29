@@ -107,3 +107,14 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Pod „Jak gra ten model” dwa przyciski: Statystyki (statystyki + ostatnie 20 wierszy) albo Zeszyt — bieżąca gra na kartach ZESZYTU (ramka `/zeszyt/…?znacz=`), z nazwami meczów. Jak w S+50 / S+60.
 - Tylko modele z SZUKAJ / SZUKAJ+ / LOST (nie karty RAZEM). W trybie zeszytu bez odświeżania co 30 s (ramka by się przeładowywała).
 - Modele RAZEM (R50 / R60) też mają przełącznik (1.32.0): łańcuch zakładu z RAZEM (`UT.znacz(mi)` w ramce tabeli) → ZESZYT `?znacz=`.
+
+## ☁ Kopia w GitHub — dla Claude i drugiego urządzenia (1.33.0)
+- Prośba użytkownika: Claude ma widzieć dopisywane kody i modele z telefonu bez ręcznych eksportów. KODY → „☁ Kopia w GitHub”:
+  repo (domyślnie `px5060/kody`, **prywatne**) + klucz *fine-grained* tylko do tego repo (Contents: Read and write). Klucz tylko w telefonie
+  (`moje_v1_gh`), nigdy nie jest wysyłany.
+- Plik `stan.json`: `t50` / `t60` = `{n, kody}` (pełny ciąg od Nr 1, 3 cyfry na kod), `modele` (lista MOJE: tabela, app, cel, nazwa, id, model `m`,
+  krok, faza, Nr zakładu, bank, lost), `storage` = kopia pamięci px5060.github.io (MOJE GRY, BANK, ZAKŁADY, RAZEM, ZESZYT…) bez klucza GitHub
+  i bez ustawień ekranu. Wysyłka sama: po zmianach (15 s po ostatniej, przy każdym `reload`) i przy otwarciu, tylko gdy stan się zmienił (skrót).
+- Gdy w GitHub jest nowszy stan (więcej kodów — inne urządzenie), MOJE go nie nadpisuje (ręcznie — tylko po potwierdzeniu); „⬇ Przywróć z GitHub”
+  wczytuje stan na tym urządzeniu (np. komputer) i zastępuje kody i listy. „✕ Usuń klucz” zatrzymuje wysyłkę.
+- Claude czyta `stan.json` w projekcie `all50/analiza` (narzędzia przyjmują `--stan`).

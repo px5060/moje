@@ -10,5 +10,7 @@ ze wszystkich aplikacji SZUKAJ, SZUKAJ+ i SZUKAJ BUST (T50 i T60). Czyta wspóln
   🎯 bank +3 na k4–k6, stawki 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512 (dalej ×2), szanse na kolejnych krokach z historii modelu,
   🔎 wyszukiwarka dowolnego modelu z SZUKAJ / SZUKAJ+ / SZUKAJ LOST (pule czytane z tych aplikacji). Zasady: `RULES.md`.
 
+- **☁ Kopia w GitHub** (KODY, 1.33.0) — kody i listy z telefonu do pliku `stan.json` w prywatnym repo (np. `px5060/kody`), sama po zmianach; Claude czyta go w nowej rozmowie, „Przywróć” wczytuje ten stan na innym urządzeniu. Zasady: `RULES.md`.
+
 Budowa: `python3 build.py` (z `moje_template.html` + `seed_t50.txt` / `seed_t60.txt`) → `index.html`. Ikony: `python3 make_icons.py`.
 Silnik = ten sam co w SZUKAJ+ (SZUKAJ i BUST to SZUKAJ+ z 1 TRIGGEREM i bez STEP2).

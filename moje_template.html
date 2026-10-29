@@ -193,7 +193,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.32.0';
+const APP_VER = '1.33.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -333,6 +333,82 @@ function autoBackup(t) {
   if (!abOn() || D[t].n - lastExpN(t) < AB_N) return;
   try { const nm = exportFile(t, 0, 1); setTimeout(() => toast(`💾 Automatyczna kopia ${TABS[t].name}: ${esc(nm)} (w Pobranych)`), 1600); } catch (e) {}
 }
+// ===== ☁ KOPIA W GITHUB (dla Claude i drugiego urządzenia) — 1.33.0 =====
+// Stan telefonu → plik stan.json w prywatnym repo użytkownika (GitHub API, klucz „fine-grained” tylko do tego repo, Contents: Read and write):
+// kody T50 / T60 (pełne, od Nr 1), lista modeli MOJE (z krokiem) i kopia pamięci aplikacji z px5060.github.io (MOJE GRY, BANK, ZAKŁADY, RAZEM,
+// ZESZYT…) — bez klucza GitHub i bez ustawień ekranu. Wysyła sama po zmianach (co najmniej 15 s po ostatniej) i przy otwarciu, tylko gdy coś
+// się zmieniło. „Przywróć” wczytuje ten stan na innym urządzeniu (np. komputer) — te same kody i listy.
+const GHK = 'moje_v1_gh', GH_FILE = 'stan.json';
+const GH_SKIP = k => k === GHK || /token|haslo|password/i.test(k) || /^moje_v1_(octag|fold|only|bkw|bsrc|bsub|zsrc|famshut|autobk)$/.test(k) || k === 'px_theme';
+const ghCfg = () => jobj(GHK) || {}, ghPut = c => lsSet(GHK, JSON.stringify(c));
+const ghOn = () => { const c = ghCfg(); return !!(c.repo && c.tok && c.auto !== false); };
+function ghHash(s) { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(16); }
+function ghB64(s) { const u = new TextEncoder().encode(s); let x = ''; for (let i = 0; i < u.length; i += 0x8000) x += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(x); }
+function ghSnap() {
+  const storage = {};
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (!k || GH_SKIP(k)) continue; const v = localStorage.getItem(k); if (v != null && v.length < 250000) storage[k] = v; }
+  const kody = t => ({ n: (TABS[t].seed.length + readAdded(t).length) / 3, kody: TABS[t].seed + readAdded(t) });   // ciąg od Nr 1, 3 cyfry na kod
+  const modele = items.map(it => ({ tabela: it.t, app: it.rz ? 'R' : it.s && it.s.a, cel: it.tg, nazwa: it.label, id: it.g && it.g.id, m: Array.isArray(it.m) ? it.m : undefined,
+    krok: it.r && it.r.bs != null ? it.r.bs + 1 : undefined, faza: it.r && it.r.ph, zaklad_nr: it.r && it.r.ph === 2 ? it.r.wz + 1 : undefined, bank: !!it.hid, lost: !!it.inBust, grupa: it.grp }));
+  return { app: 'MOJE', wersja: APP_VER, t50: kody('t50'), t60: kody('t60'), modele, storage };
+}
+let ghT = 0, ghBusy = false;
+function ghSchedule(ms) { if (!ghOn()) return; clearTimeout(ghT); ghT = setTimeout(() => ghSend(false), ms == null ? 15000 : ms); }
+async function ghSend(manual) {
+  const c = ghCfg(); if (!c.repo || !c.tok) { if (manual) toast('Wpisz repo i klucz GitHub'); return; }
+  if (ghBusy) { ghSchedule(5000); return; } ghBusy = true;
+  try {
+    const snap = ghSnap(), h = ghHash(JSON.stringify(snap));
+    if (!manual && c.last && c.last.h === h) return;
+    snap.zapisano = new Date().toISOString();
+    const url = `https://api.github.com/repos/${c.repo}/contents/${GH_FILE}`, H = { Authorization: 'Bearer ' + c.tok, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+    const body = sha => JSON.stringify({ message: `MOJE ${APP_VER}: T50 Nr ${snap.t50.n} · T60 Nr ${snap.t60.n}`, content: ghB64(JSON.stringify(snap, null, 1)), ...(sha ? { sha } : {}) });
+    let r = await fetch(url, { method: 'PUT', headers: H, body: body(c.sha) });
+    if (r.status === 409 || r.status === 422) {   // plik zmieniony gdzie indziej (inne urządzenie) / brak sha → sprawdź, czy tam nie ma nowszego stanu
+      const g = await fetch(url, { headers: H, cache: 'no-store' }), gj = g.ok ? await g.json() : {};
+      let d = null; try { if (gj.content) d = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(gj.content.replace(/\s/g, '')), ch => ch.charCodeAt(0)))); } catch (e) {}
+      if (d && d.t50 && d.t60 && (d.t50.n > snap.t50.n || d.t60.n > snap.t60.n)
+          && (!manual || !confirm(`W GitHub jest nowszy stan (T50 Nr ${fmtN(d.t50.n)}, T60 Nr ${fmtN(d.t60.n)}) niż tutaj (T50 Nr ${fmtN(snap.t50.n)}, T60 Nr ${fmtN(snap.t60.n)}).\nNadpisać go stanem z tego urządzenia?`)))
+        throw new Error('w GitHub jest nowszy stan (więcej kodów) — na tym urządzeniu użyj „Przywróć”');
+      r = await fetch(url, { method: 'PUT', headers: H, body: body(gj.sha) });
+    }
+    if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 140)}`);
+    const j = await r.json(), c2 = ghCfg(); c2.sha = j.content && j.content.sha; c2.last = { t: Date.now(), h, n50: snap.t50.n, n60: snap.t60.n }; c2.err = ''; ghPut(c2);
+    if (manual) toast(`☁ Wysłano do ${esc(c.repo)}: T50 Nr ${fmtN(snap.t50.n)} · T60 Nr ${fmtN(snap.t60.n)}`);
+  } catch (e) {
+    const c2 = ghCfg(); c2.err = String(e.message || e).slice(0, 160); c2.errT = Date.now(); ghPut(c2);
+    if (manual) toast(`☁ Nie wysłano: ${esc(c2.err)}`, 6000);
+  } finally { ghBusy = false; if (view === 'dane') render(); }
+}
+async function ghRestore() {
+  const c = ghCfg(); if (!c.repo || !c.tok) { toast('Wpisz repo i klucz GitHub'); return; }
+  try {
+    const r = await fetch(`https://api.github.com/repos/${c.repo}/contents/${GH_FILE}`, { headers: { Authorization: 'Bearer ' + c.tok, Accept: 'application/vnd.github.raw+json' }, cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status === 404 ? 'w repo nie ma jeszcze stan.json' : `${r.status}`);
+    const d = await r.json(); if (!d || !d.storage || !d.t50 || !d.t60) throw new Error('to nie jest plik stanu MOJE');
+    const tu = t => D[t].n;
+    if (!confirm(`Przywrócić na tym urządzeniu stan z GitHub (zapisany ${d.zapisano ? when(Date.parse(d.zapisano)) : '?'})?\n\nT50: tu Nr ${fmtN(tu('t50'))}, w GitHub Nr ${fmtN(d.t50.n)}\nT60: tu Nr ${fmtN(tu('t60'))}, w GitHub Nr ${fmtN(d.t60.n)}\n\nKody i listy (MOJE, BANK, ZAKŁADY, RAZEM, ZESZYT) z GitHub zastąpią te na tym urządzeniu.${tu('t50') > d.t50.n || tu('t60') > d.t60.n ? '\n\nUWAGA: tu jest więcej kodów niż w GitHub — te dodatkowe znikną.' : ''}`)) return;
+    Object.entries(d.storage).forEach(([k, v]) => { if (!GH_SKIP(k) && typeof v === 'string') lsSet(k, v); });
+    const c2 = ghCfg(); c2.last = null; ghPut(c2);   // następna zmiana tu wyśle pełny stan
+    reload(); toast(`☁ Przywrócono z GitHub: T50 Nr ${fmtN(D.t50.n)} · T60 Nr ${fmtN(D.t60.n)}`, 5000);
+  } catch (e) { toast(`☁ Nie przywrócono: ${esc(String(e.message || e))}`, 6000); }
+}
+function ghBox() {
+  const c = ghCfg(), on = !!(c.repo && c.tok);
+  return `<div class="box" id="ghbox">
+    <h4>☁ Kopia w GitHub — dla Claude i drugiego urządzenia</h4>
+    <div class="hint" style="margin:0 0 8px">Kody T50 / T60, modele w MOJE, BANK, ZAKŁADY, RAZEM i ZESZYT trafiają do pliku <b>${GH_FILE}</b> w Twoim <b>prywatnym</b> repo — sama, po każdej zmianie. Claude czyta go w nowej rozmowie (bez eksportów), a „Przywróć” wczyta ten sam stan na komputerze. Klucz zostaje tylko w tym telefonie i nie jest wysyłany.</div>
+    ${on ? `<div class="hint">Repo <b>${esc(c.repo)}</b> · ${c.last && c.last.t ? `wysłano ${ago(c.last.t)} (${when(c.last.t)}) · T50 Nr ${fmtN(c.last.n50)} · T60 Nr ${fmtN(c.last.n60)}` : 'jeszcze nie wysłano'}${c.err ? ` · <b style="color:var(--rd)">błąd: ${esc(c.err)}</b>` : ''}</div>
+      <label class="hint" style="display:flex;gap:8px;align-items:center;margin:6px 0 8px;font-size:13px;color:var(--tx)"><input type="checkbox" data-ghauto ${c.auto !== false ? 'checked' : ''} style="width:20px;height:20px">Wysyłaj samo po zmianach</label>
+      <button class="btn pri wide" data-ghsend="1">☁ Wyślij teraz</button>
+      <button class="btn wide" data-ghrest="1">⬇ Przywróć z GitHub na tym urządzeniu</button>
+      <button class="btn wide" data-ghoff="1" style="color:var(--rd)">✕ Usuń klucz z tego urządzenia</button>`
+    : `<input id="gh_repo" placeholder="repo, np. px5060/kody" value="${esc(c.repo || 'px5060/kody')}" style="width:100%;margin:4px 0;padding:10px;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:8px">
+      <input id="gh_tok" type="password" autocomplete="off" placeholder="klucz GitHub (github_pat_…)" style="width:100%;margin:4px 0;padding:10px;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:8px">
+      <button class="btn pri wide" data-ghset="1">Zapisz i wyślij</button>
+      <details style="margin-top:6px"><summary class="hint">Jak zrobić klucz (raz)</summary><div class="hint">1. github.com → Settings → Developer settings → Personal access tokens → <b>Fine-grained tokens</b> → Generate new token.<br>2. Repository access: <b>Only select repositories</b> → wybierz swoje prywatne repo (np. kody).<br>3. Permissions → Repository → <b>Contents: Read and write</b>. Expiration: np. 1 rok.<br>4. Skopiuj klucz (github_pat_…) i wklej tutaj.</div></details>`}
+  </div>`;
+}
 function daneBox(t) {
   const T = TABS[t], b = lastBatch(t), ex = jobj(EXPK(t)) || {}, imp = jobj(IMPK(t));
   return kodBox(t) + `<div class="box" style="margin-top:-4px">
@@ -350,7 +426,7 @@ function daneBox(t) {
       <div class="hint">${x ? `ostatni: ${ago(x.t)} (${when(x.t)}) · ${fmtN(x.n)} kodów${D[t].n > x.n ? ` · <b style="color:var(--ye)">od tego czasu +${D[t].n - x.n} kodów</b>` : ' · aktualny'}` : 'jeszcze nie eksportowano z MOJE'}</div>`; }).join('')}
   </div>`;
 }
-function dane() { return daneBox('t50') + daneBox('t60') + '<div class="hint">Kody są wspólne z RAZEM i SZUKAJ: to, co tu dopiszesz, zaimportujesz albo cofniesz, od razu widać we wszystkich aplikacjach.</div>'; }
+function dane() { return ghBox() + daneBox('t50') + daneBox('t60') + '<div class="hint">Kody są wspólne z RAZEM i SZUKAJ: to, co tu dopiszesz, zaimportujesz albo cofniesz, od razu widać we wszystkich aplikacjach.</div>'; }
 function undoCode(t) {
   const a = readAdded(t); if (!a.length) { toast('Brak dopisanych kodów do cofnięcia'); return; }
   if (!confirm(`Cofnąć ostatni kod ${a.slice(-3)} (Nr ${fmtN(D[t].n)}) w ${TABS[t].name}?\nZniknie we wszystkich aplikacjach (RAZEM, SZUKAJ…).`)) return;
@@ -605,7 +681,7 @@ function phaseTxt(it) {
 
 // ===== EKRANY =====
 let view = 'teraz', sel = null, only = lsGet('moje_v1_only', 't50'); if (!TABS[only]) only = 't50';   // wybrana tabela (T50 / T60) — każda ma swój ekran
-function reload() { Object.keys(TABS).forEach(loadCodes); _lab.clear(); gather(); render(); rzLoad(); }
+function reload() { Object.keys(TABS).forEach(loadCodes); _lab.clear(); gather(); render(); rzLoad(); ghSchedule(); }
 // zgubione kody: tylko baza (brak dopisanych) albo mniej kodów niż ostatnio widziane → podpowiedź „wczytaj kopię”
 const MAXK = t => 'moje_v1_maxn_' + t;
 function lostBox(t) {
@@ -1424,6 +1500,7 @@ function pomoc() {
     <div class="box"><h4>Znaczki na TERAZ</h4><b style="background:#c97a45;color:#fff;border-radius:8px;padding:0 5px">2</b> pomarańczowy = ile modeli gra na następnym wierszu.<br><b style="background:#FFD700;color:#000;border-radius:8px;padding:0 5px">2,3</b> żółty = za ile wierszy grają kolejne.</div>
     <div class="box"><h4>Kody</h4>Kody są wspólne z RAZEM i SZUKAJ — wpisany tu kod jest od razu we wszystkich aplikacjach (i odwrotnie). Przy każdej tabeli widać ostatni kod i <b>kiedy</b> go wpisano. Gdy kod wpisano w innej aplikacji, MOJE pokazuje, kiedy go tu zauważyło (przy otwarciu).<br>Zakładka <b>KODY</b>: kilka kodów naraz, import pliku (z cofnięciem całego importu) i eksport z nazwami jak w RAZEM — T50: TRÓJKA <b>v13_…kod.json</b>, T60: <b>xx1_pikoff_…json</b> i <b>trojka_xx1_v13_…kod.json</b>, żeby appki na PC je wychwyciły.</div>
     <div class="box"><h4>Kopia kodów</h4>Co 10 nowych kodów (licząc od ostatniego eksportu) MOJE samo zapisuje plik kopii (T50 TRÓJKA, T60 PIKOFF) do Pobranych — przy wpisaniu kodu tutaj. Gdy telefon wyczyści pamięć, wczytaj go w KODY → Import pliku. Wyłączysz to w KODY.</div>
+    <div class="box"><h4>☁ Kopia w GitHub</h4>W KODY możesz podać swoje <b>prywatne</b> repo GitHub i klucz do niego. Wtedy MOJE samo wysyła kody T50 / T60 i listy (MOJE, BANK, ZAKŁADY, RAZEM, ZESZYT) do pliku <b>stan.json</b> — Claude czyta go w nowej rozmowie bez eksportów, a „Przywróć z GitHub” wczytuje ten sam stan na komputerze. Klucz zostaje tylko na tym urządzeniu.</div>
     <div class="box"><h4>Zakładka BANK</h4>Bank +3 / +5 (bez limitu) dla modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST. Bank gra w każdym cyklu modelu tylko pierwsze 3 (5) zakłady; model trafi → WIN banku (przeniesione kroki + krok modelu) i bank od k1; nie trafi → bank przegrywa 3 (5) kroki, czeka i w następnym cyklu gra dalej. Stawki 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512, dalej ×2.<br>Model jest <b>albo na TERAZ</b> (prosta progresja k1–k8), <b>albo w BANK</b> (+3 / +5) — nigdy w obu. Przełącznik przy modelu (ekran modelu i <b>🔎 wyszukiwarka</b>): <b>🏦 Przenieś do BANK</b> / <b>🟧 Przenieś do TERAZ</b>. „✕ usuń z BANK” usuwa model całkiem (też z MOJE). Na TERAZ grupy <b>🟥 PO BUST</b> i <b>🏦 BANK</b> (zwijane jak pozostałe) pokazują to, co gra na następnym wierszu; <b>przytrzymanie</b> nagłówka przenosi do zakładki LOST / BANK. Przełącznik <b>BANK +3 / BANK +5</b> wybiera, który bank prowadzi listę. Droga modelu jak na TERAZ: 🟦 CZEKAJĄ (okno banku trwa, czeka na STEP / TRIGGER) → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ. WIN → bank od k1 i znowu CZEKAJĄ. Bank przegrał swoje 3 (5) kroki → <b>⏸ CZEKAJĄ NA BANK</b>, aż model skończy cykl (WIN albo LOST) — potem znowu CZEKAJĄ, już na kolejnym oknie (np. k4–k6). Znaczki przy BANK, T50 / T60 i +3 / +5: żółty = za ile wierszy zakład banku, pomarańczowy = ile gra na następnym. Dotknięcie modelu → szanse zamknięcia banku na kolejnych krokach, stawki, gdzie bank się zamykał (% dla okien) i usunięcie z listy.</div>
     <div class="box"><h4>Zakłady</h4>„💰 Zapisz zakład” zapisuje zakład w MOJE ZAKŁADY aplikacji, z której jest model — widać go tu i tam. Wynik liczy się sam po wpisaniu kodu.</div>
     <div class="box"><h4>Dodawanie modeli</h4>W aplikacji SZUKAJ dotknij kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. Tutaj: dotknięcie kafelka → statystyki modelu, przytrzymanie → tabela wierszy. Aplikacja doda model i otworzy go tutaj.</div>
@@ -1548,7 +1625,14 @@ document.addEventListener('click', e => {
   if ((b = q('[data-paste]'))) return pasteCodes(b.dataset.paste);
   if ((b = q('[data-undob]'))) return undoBatch(b.dataset.undob);
   if ((b = q('[data-autobk]'))) { lsSet(ABK, b.checked ? '1' : '0'); return render(); }
+  if ((b = q('[data-ghauto]'))) { const c = ghCfg(); c.auto = b.checked; ghPut(c); if (b.checked) ghSchedule(1000); return render(); }
   if ((b = q('[data-exp]'))) { const [t, i] = b.dataset.exp.split(':'); return exportFile(t, +i); }
+  if ((b = q('[data-ghset]'))) { const repo = ($('gh_repo').value || '').trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$|\/$/g, ''), tok = ($('gh_tok').value || '').trim();
+    if (!/^[\w.-]+\/[\w.-]+$/.test(repo) || tok.length < 20) { toast('Podaj repo (właściciel/nazwa) i klucz GitHub'); return; }
+    ghPut({ repo, tok, auto: true }); render(); return ghSend(true); }
+  if ((b = q('[data-ghsend]'))) return ghSend(true);
+  if ((b = q('[data-ghrest]'))) return ghRestore();
+  if ((b = q('[data-ghoff]'))) { if (!confirm('Usunąć klucz GitHub z tego urządzenia? Kopia przestanie się wysyłać (plik w repo zostaje).')) return; lsSet(GHK, JSON.stringify({ repo: ghCfg().repo })); return render(); }
   if ((b = q('[data-bkw]'))) { bkw = +b.dataset.bkw === 5 ? 5 : 3; lsSet('moje_v1_bkw', String(bkw)); return render(); }
   if ((b = q('[data-only]'))) { only = b.dataset.only; lsSet('moje_v1_only', only); return render(); }
   if ((b = q('[data-bksave]'))) { const v = b.dataset.bksave, w = +v.slice(0, v.indexOf('#')), it = BKMAP.get(v.slice(v.indexOf('#') + 1)), f = b.closest('.btf'); if (it) saveBet(it, +f.querySelector('.fNr').value - 1, +f.querySelector('.fK').value, +f.querySelector('.fZl').value, w); return; }
