@@ -193,7 +193,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.33.0';
+const APP_VER = '1.33.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -336,12 +336,13 @@ function autoBackup(t) {
 // ===== ☁ KOPIA W GITHUB (dla Claude i drugiego urządzenia) — 1.33.0 =====
 // Stan telefonu → plik stan.json w prywatnym repo użytkownika (GitHub API, klucz „fine-grained” tylko do tego repo, Contents: Read and write):
 // kody T50 / T60 (pełne, od Nr 1), lista modeli MOJE (z krokiem) i kopia pamięci aplikacji z px5060.github.io (MOJE GRY, BANK, ZAKŁADY, RAZEM,
-// ZESZYT…) — bez klucza GitHub i bez ustawień ekranu. Wysyła sama po zmianach (co najmniej 15 s po ostatniej) i przy otwarciu, tylko gdy coś
+// ZESZYT…) — bez klucza GitHub, ustawień ekranu i zapamiętanych ocen SZUKAJ (oc_v1/…, 1.33.1). Wysyła sama po zmianach (co najmniej 15 s po ostatniej) i przy otwarciu, tylko gdy coś
 // się zmieniło; przy wyjściu z MOJE od razu. „Przywróć” wczytuje ten stan na innym urządzeniu (np. komputer) — te same kody i listy.
 // Poprawki kodów (cofnięty i wpisany na nowo kod, zmiana kodu w ZESZYCIE — też kodu z bazy) wychodzą tak samo: opis w stan.json → zmiany,
 // dziennik moje_v1_kodzm i opis zapisu w GitHub. Urządzenie ze starszymi kodami nie nadpisze samo poprawki z innego urządzenia.
 const GHK = 'moje_v1_gh', GH_FILE = 'stan.json', GHZK = 'moje_v1_kodzm', GH_TAIL = 600;   // GHZK: dziennik poprawek kodów (jedzie w stan.json)
-const GH_SKIP = k => /^moje_v1_gh/.test(k) || /token|haslo|password/i.test(k) || /^moje_v1_(octag|fold|only|bkw|bsrc|bsub|zsrc|famshut|autobk)$/.test(k) || k === 'px_theme';
+const GH_SKIP = k => /^moje_v1_gh/.test(k) || /^oc_v1\//.test(k) ||   // oc_v1/…: zapamiętane oceny SZUKAJ (appka sama je przelicza) — ok. 1/4 pliku
+   /token|haslo|password/i.test(k) || /^moje_v1_(octag|fold|only|bkw|bsrc|bsub|zsrc|famshut|autobk)$/.test(k) || k === 'px_theme';
 const GH_ZP = t => 'zeszyt_v1_poprawki_' + t;   // poprawki kodów z bazy zrobione w ZESZYCIE (MOJE i RAZEM liczą starym kodem)
 const ghCfg = () => jobj(GHK) || {}, ghPut = c => lsSet(GHK, JSON.stringify(c));
 const ghOn = () => { const c = ghCfg(); return !!(c.repo && c.tok && c.auto !== false); };
