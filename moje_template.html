@@ -193,7 +193,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.34.0';
+const APP_VER = '1.35.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -367,7 +367,6 @@ function ghBase(x) {
     b[t] = { n: x[t].n, h: ghHash(k), h0: ghHash(k.slice(0, od * 3)), tail: k.slice(od * 3), zp: (x.storage || {})[GH_ZP(t)] || '' }; }
   return b;
 }
-const ghSame = (b, x, t) => b[t].n === x[t].n && b[t].h === ghHash(x[t].kody) && b[t].zp === ((x.storage || {})[GH_ZP(t)] || '');
 const ghJ = s => { try { const v = JSON.parse(s || '{}'); return v && typeof v === 'object' ? v : {}; } catch (e) { return {}; } };
 function ghZmiany(b, x) {   // poprawione / cofnięte kody od bazy (ostatniej wysyłki) do teraz — do dziennika, opisu zapisu i dymka
   const Z = []; if (!b) return Z;
@@ -397,12 +396,6 @@ function ghRoznice(d, x) {   // stan w GitHub (d) a tutaj (x): inne kody w tych 
   }
   return R;
 }
-function ghKonflikt(b, x, d, dev) {   // '' = wolno nadpisać plik w GitHub; inaczej: co jest tam, a czego tu nie ma (nie gubię cudzych poprawek)
-  if (!d || !d.t50 || !d.t60) return '';
-  if (d.urzadzenie && d.urzadzenie.id === dev.id) return '';             // ostatnio zapisało to urządzenie
-  if (b && ['t50', 't60'].every(t => ghSame(b, d, t))) return '';        // kody w GitHub = baza → zmiany są tylko tutaj (np. poprawka kodu)
-  const R = ghRoznice(d, x); return [...R.dif, ...R.tam, ...R.zesz].join('\n');
-}
 const ghH = c => ({ Authorization: 'Bearer ' + c.tok, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' });
 async function ghGet(c, f) {   // plik z GitHub (domyślnie stan.json) → {d, sha, st}; d = null, gdy go nie ma albo jest nieczytelny
   const url = `https://api.github.com/repos/${c.repo}/contents/${f || GH_FILE}`, r = await fetch(url, { headers: ghH(c), cache: 'no-store' });
@@ -416,47 +409,110 @@ async function ghGet(c, f) {   // plik z GitHub (domyślnie stan.json) → {d, s
 let ghT = 0, ghBusy = false;
 function ghSchedule(ms) { if (!ghOn()) return; clearTimeout(ghT); ghT = setTimeout(() => { ghT = 0; ghSend(false); }, ms == null ? 15000 : ms); }
 function ghFlush() { if (ghT) { clearTimeout(ghT); ghT = 0; ghSend(false); } }   // wychodzę z MOJE → wyślij od razu (telefon może uśpić stronę)
-async function ghSend(manual) {
+// ===== łączenie zmian z kilku urządzeń (1.35.0): telefon, tablet, komputer — każde z tym samym kluczem — mają te same kody i modele =====
+// Każde urządzenie pamięta bazę (GHB: storage po ostatniej synchronizacji). Gdy w GitHub zapisało inne urządzenie, MOJE łączy trzy stany:
+// baza / tutaj / GitHub. Listy (MOJE GRY, BANK, ZAKŁADY, ZESZYT, rodziny…) — element po elemencie: dodane tu i tam zostają, usunięte tu
+// albo tam znikają. Obiekty (decyzje 📥, poprawki ZESZYTU) — klucz po kluczu. Kody: dłuższy ciąg wygrywa, gdy drugi jest jego początkiem
+// (dopisane kody, poprawka po jednej stronie); różne kody po obu stronach = konflikt (nie nadpisuje, jak dotąd). Inne wartości: zmiana
+// z jednej strony wygrywa, z obu — zostaje tutaj.
+const GHB = 'moje_v1_ghbase';   // baza łączenia (nie jedzie w stan.json, nie wraca przy „Przywróć”)
+const ghJp = s => { try { return JSON.parse(s); } catch (e) { return undefined; } };
+const ghCodeK = k => Object.values(TABS).some(T => T.key === k);
+function ghMerge(base, loc, rem) {   // → { out: storage po połączeniu, konf: klucze kodów w konflikcie }
+  const out = {}, konf = [], id = x => JSON.stringify(x), isObj = x => x && typeof x === 'object' && !Array.isArray(x);
+  for (const k of new Set([...Object.keys(loc), ...Object.keys(rem)])) {
+    const b = base[k], l = loc[k], r = rem[k];
+    if (r === undefined || r === l || r === b) { if (l !== undefined) out[k] = l; continue; }   // tam bez zmian (albo brak) → zostaje tutaj
+    if (l === undefined || l === b) { out[k] = r; continue; }                                  // tu bez zmian → z GitHub
+    if (ghCodeK(k)) { if (r.startsWith(l)) out[k] = r; else if (l.startsWith(r)) out[k] = l; else { out[k] = l; konf.push(k); } continue; }
+    const B = ghJp(b), L = ghJp(l), R = ghJp(r);
+    if (Array.isArray(L) && Array.isArray(R) && L.concat(R).every(isObj)) {   // lista: element po elemencie
+      const bs = new Set((Array.isArray(B) ? B : []).map(id)), ls = new Set(L.map(id)), rs = new Set(R.map(id));
+      out[k] = JSON.stringify([...L.filter(x => rs.has(id(x)) || !bs.has(id(x))), ...R.filter(x => !ls.has(id(x)) && !bs.has(id(x)))]); continue;
+    }
+    if (isObj(L) && isObj(R)) {   // obiekt: klucz po kluczu
+      const Bo = isObj(B) ? B : {}, o = { ...L };
+      for (const q in R) if (id(L[q]) === id(Bo[q]) && id(R[q]) !== id(Bo[q])) o[q] = R[q];
+      for (const q in Bo) if (!(q in R) && id(L[q]) === id(Bo[q])) delete o[q];
+      out[k] = JSON.stringify(o); continue;
+    }
+    out[k] = l;
+  }
+  return { out, konf };
+}
+const ghB64d = s => JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g, '')), ch => ch.charCodeAt(0))));
+async function ghSend(manual, raz) {   // synchronizacja: sprawdź GitHub (mały commit), w razie zmian pobierz i połącz, potem wyślij połączony stan
   const c = ghCfg(); if (!c.repo || !c.tok) { if (manual) toast('Wpisz repo i klucz GitHub'); return; }
   if (ghBusy) { ghSchedule(5000); return; } ghBusy = true;
+  let again = false;
   try {
-    const snap = ghSnap(), Z = ghZmiany(c.base, snap);
+    const url = `https://api.github.com/repos/${c.repo}/contents/${GH_FILE}`, H = ghH(c);
+    // 1. czy ktoś zapisał od ostatniej synchronizacji? (ostatni commit pliku — kilka KB zamiast całego stanu)
+    const cm = await fetch(`https://api.github.com/repos/${c.repo}/commits?path=${GH_FILE}&per_page=1`, { headers: H, cache: 'no-store' });
+    if (!cm.ok && cm.status !== 404 && cm.status !== 409) throw new Error(`${cm.status}`);
+    const cj = cm.ok ? await cm.json() : [], top = Array.isArray(cj) && cj[0] ? cj[0].sha : null;
+    let rsha = top ? c.sha : undefined, d = null, konf = [], zt = [];
+    if (top && top !== c.commit) {   // zmienione gdzie indziej (albo pierwsza synchronizacja tutaj) → pobierz i połącz
+      const g = await fetch(url, { headers: H, cache: 'no-store' });
+      if (!g.ok) throw new Error(`${g.status}`);
+      const j = await g.json(); rsha = j.sha;
+      d = j.content ? ghB64d(j.content) : await (await fetch(url, { headers: { ...H, Accept: 'application/vnd.github.raw+json' }, cache: 'no-store' })).json();
+      if (d && d.storage && j.sha !== c.sha) {
+        const loc = ghSnap().storage, n0 = { t50: D.t50.n, t60: D.t60.n }, M = ghMerge((jobj(GHB) || {}).storage || {}, loc, d.storage);
+        let ile = 0; for (const [k, v] of Object.entries(M.out)) if (!GH_SKIP(k) && loc[k] !== v) { lsSet(k, v); ile++; }
+        konf = M.konf;
+        if (ile) {
+          Object.keys(TABS).forEach(loadCodes);
+          for (const t of ['t50', 't60']) if (D[t].n !== n0[t]) zt.push(`${TABS[t].name} ${D[t].n > n0[t] ? '+' + (D[t].n - n0[t]) + ' kodów' : 'kody poprawione'} (Nr ${fmtN(D[t].n)})`);
+          zt.push(`${ile} ${pl(ile, ['lista', 'listy', 'list'])} / ustawień`); reload();
+        }
+      }
+    }
+    if (konf.length) {   // różne kody tu i tam — nie nadpisuj sam (jak dotąd)
+      const R = ghRoznice(d, ghSnap()), why = [...R.dif, ...R.tam, ...R.zesz].join('\n') || 'inne kody';
+      if (!manual || !confirm(`W GitHub są inne kody z innego urządzenia${d.urzadzenie ? ' (' + d.urzadzenie.nazwa + ')' : ''}:\n${why}\n\nListy modeli są już połączone. Nadpisać kody w GitHub kodami z tego urządzenia? (Anuluj = zostaw; tu możesz użyć „Przywróć”.)`))
+        throw new Error(`w GitHub są inne kody z innego urządzenia (${why.split('\n')[0]}) — użyj „Przywróć” albo „Wyślij teraz”`);
+    }
+    // 2. wyślij połączony stan, jeśli różni się od tego w GitHub
+    const snap = ghSnap(), Z = ghZmiany(d && d.t50 ? ghBase(d) : c.base, snap);
     if (Z.length) { const L = jget(GHZK), now = Date.now(); Z.forEach(z => L.push({ ...z, czas: now }));   // do pamięci dopiero po wysłaniu
       snap.storage = Object.fromEntries(Object.entries({ ...snap.storage, [GHZK]: JSON.stringify(L.slice(-100)) }).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)); }   // kolejność jak w ghSnap
-    const h = ghHash(JSON.stringify(snap));
-    if (!manual && c.last && c.last.h === h) return;
-    const dev = ghDev(); snap.urzadzenie = dev; if (Z.length) snap.zmiany = Z; snap.zapisano = new Date().toISOString();
-    const url = `https://api.github.com/repos/${c.repo}/contents/${GH_FILE}`, H = ghH(c);
-    const zt = Z.length ? ' · poprawka ' + Z.slice(0, 3).map(ghZTxt).join(', ') + (Z.length > 3 ? ` (+${Z.length - 3})` : '') : '';
-    const body = sha => JSON.stringify({ message: `MOJE ${APP_VER}: T50 Nr ${snap.t50.n} · T60 Nr ${snap.t60.n}${zt}`, content: ghB64(JSON.stringify(snap, null, 1)), ...(sha ? { sha } : {}) });
-    let r = await fetch(url, { method: 'PUT', headers: H, body: body(c.sha) });
-    if (r.status === 409 || r.status === 422) {   // plik zmieniony gdzie indziej (inne urządzenie) / brak sha → nie nadpisuj cudzych kodów ani poprawek
-      const g = await ghGet(c), why = ghKonflikt(c.base, snap, g.d, dev);
-      if (why && (!manual || !confirm(`W GitHub jest stan z innego urządzenia${g.d.urzadzenie ? ' (' + g.d.urzadzenie.nazwa + ')' : ''} z kodami, których tu nie ma:\n${why}\n\nNadpisać go stanem z tego urządzenia? (Anuluj = zostaw; na tym urządzeniu możesz użyć „Przywróć”.)`)))
-        throw new Error(`w GitHub są inne kody z innego urządzenia (${why.split('\n')[0]}) — użyj „Przywróć” albo „Wyślij teraz”`);
-      r = await fetch(url, { method: 'PUT', headers: H, body: body(g.sha) });
+    const h = ghHash(JSON.stringify(snap)), same = d && d.storage && JSON.stringify(d.storage) === JSON.stringify(snap.storage) && d.t50.kody === snap.t50.kody && d.t60.kody === snap.t60.kody;
+    const c2 = ghCfg(); if (top) c2.commit = top;
+    if (same || (!manual && c.last && c.last.h === h && top === c.commit)) {   // GitHub = tutaj
+      if (d && d.storage) { c2.sha = rsha; c2.base = ghBase(d); c2.last = { t: Date.now(), h, n50: snap.t50.n, n60: snap.t60.n }; lsSet(GHB, JSON.stringify({ storage: d.storage })); }
+      c2.err = ''; ghPut(c2);
+      if (zt.length) toast(`☁ Z ${esc((d.urzadzenie && d.urzadzenie.nazwa) || 'innego urządzenia')}: ${zt.join(' · ')}`, 6000); else if (manual) toast('☁ Wszystko zgodne z GitHub');
+      return;
     }
+    const dev = ghDev(); snap.urzadzenie = dev; if (Z.length) snap.zmiany = Z; snap.zapisano = new Date().toISOString();
+    const zo = Z.length ? ' · poprawka ' + Z.slice(0, 3).map(ghZTxt).join(', ') + (Z.length > 3 ? ` (+${Z.length - 3})` : '') : '';
+    const r = await fetch(url, { method: 'PUT', headers: H, body: JSON.stringify({ message: `MOJE ${APP_VER}: T50 Nr ${snap.t50.n} · T60 Nr ${snap.t60.n}${zo}`, content: ghB64(JSON.stringify(snap, null, 1)), ...(rsha ? { sha: rsha } : {}) }) });
+    if ((r.status === 409 || r.status === 422) && !raz) { again = true; return; }   // ktoś zapisał w międzyczasie → jeszcze raz (pobierz, połącz)
     if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 140)}`);
-    const j = await r.json(), c2 = ghCfg();
-    c2.sha = j.content && j.content.sha; c2.last = { t: Date.now(), h, n50: snap.t50.n, n60: snap.t60.n }; c2.base = ghBase(snap); c2.err = ''; ghPut(c2);
+    const j = await r.json(), c3 = ghCfg();
+    c3.sha = j.content && j.content.sha; c3.commit = j.commit && j.commit.sha; c3.last = { t: Date.now(), h, n50: snap.t50.n, n60: snap.t60.n }; c3.base = ghBase(snap); c3.err = ''; ghPut(c3);
+    if (!lsSet(GHB, JSON.stringify({ storage: snap.storage }))) lsSet(GHB, 'null');   // brak miejsca → bez bazy (następne łączenie = suma list)
     if (Z.length) lsSet(GHZK, snap.storage[GHZK]);
-    if (manual) toast(`☁ Wysłano do ${esc(c.repo)}: T50 Nr ${fmtN(snap.t50.n)} · T60 Nr ${fmtN(snap.t60.n)}${Z.length ? '<br>' + Z.slice(0, 3).map(ghZTxt).join('<br>') : ''}`, Z.length ? 6000 : undefined);
-    else if (Z.length) toast(`☁ Poprawka kodu wysłana do GitHub:<br>${Z.slice(0, 3).map(ghZTxt).join('<br>')}`, 6000);
+    const zz = zt.length ? `<br>z ${esc((d.urzadzenie && d.urzadzenie.nazwa) || 'innego urządzenia')}: ${zt.join(' · ')}` : '';
+    if (manual) toast(`☁ Wysłano do ${esc(c.repo)}: T50 Nr ${fmtN(snap.t50.n)} · T60 Nr ${fmtN(snap.t60.n)}${Z.length ? '<br>' + Z.slice(0, 3).map(ghZTxt).join('<br>') : ''}${zz}`, Z.length || zz ? 6000 : undefined);
+    else if (Z.length) toast(`☁ Poprawka kodu wysłana do GitHub:<br>${Z.slice(0, 3).map(ghZTxt).join('<br>')}${zz}`, 6000);
+    else if (zz) toast(`☁ Połączono${zz}`, 6000);
   } catch (e) {
     const c2 = ghCfg(); c2.err = String(e.message || e).slice(0, 220); c2.errT = Date.now(); ghPut(c2);
     if (manual) toast(`☁ Nie wysłano: ${esc(c2.err)}`, 6000);
-  } finally { ghBusy = false; if (view === 'dane') render(); }
+  } finally { ghBusy = false; if (view === 'dane') render(); if (again) ghSend(manual, 1); }
 }
-async function ghRestore() {
+async function ghRestore() {   // ręcznie: stan z GitHub zastępuje kody i listy na tym urządzeniu (bez łączenia)
   const c = ghCfg(); if (!c.repo || !c.tok) { toast('Wpisz repo i klucz GitHub'); return; }
   try {
     const { d, sha, st } = await ghGet(c);
     if (!d) throw new Error(st === 404 ? 'w repo nie ma jeszcze stan.json' : 'nie da się odczytać stan.json');
     if (!d.storage || !d.t50 || !d.t60) throw new Error('to nie jest plik stanu MOJE');
     const tu = ghSnap(), R = ghRoznice(d, tu), strata = [...R.tu, ...R.dif];
-    if (!confirm(`Przywrócić na tym urządzeniu stan z GitHub (zapisany ${d.zapisano ? when(Date.parse(d.zapisano)) : '?'}${d.urzadzenie ? ', ' + d.urzadzenie.nazwa : ''})?\n\nT50: tu Nr ${fmtN(tu.t50.n)}, w GitHub Nr ${fmtN(d.t50.n)}\nT60: tu Nr ${fmtN(tu.t60.n)}, w GitHub Nr ${fmtN(d.t60.n)}\n\nKody i listy (MOJE, BANK, ZAKŁADY, RAZEM, ZESZYT) z GitHub zastąpią te na tym urządzeniu.${strata.length ? '\n\nUWAGA — to, co jest tylko tutaj, zniknie:\n' + strata.join('\n') : ''}`)) return;
+    if (!confirm(`Przywrócić na tym urządzeniu stan z GitHub (zapisany ${d.zapisano ? when(Date.parse(d.zapisano)) : '?'}${d.urzadzenie ? ', ' + d.urzadzenie.nazwa : ''})?\n\nT50: tu Nr ${fmtN(tu.t50.n)}, w GitHub Nr ${fmtN(d.t50.n)}\nT60: tu Nr ${fmtN(tu.t60.n)}, w GitHub Nr ${fmtN(d.t60.n)}\n\nKody i listy (MOJE, BANK, ZAKŁADY, RAZEM, ZESZYT) z GitHub zastąpią te na tym urządzeniu (bez łączenia).${strata.length ? '\n\nUWAGA — to, co jest tylko tutaj, zniknie:\n' + strata.join('\n') : ''}`)) return;
     Object.entries(d.storage).forEach(([k, v]) => { if (!GH_SKIP(k) && typeof v === 'string') lsSet(k, v); });
-    const c2 = ghCfg(); c2.last = null; c2.sha = sha; c2.base = ghBase(d); c2.err = ''; ghPut(c2);   // baza = stan z GitHub; następna zmiana tu wyśle pełny stan
+    const c2 = ghCfg(); c2.last = null; c2.sha = sha; c2.commit = null; c2.base = ghBase(d); c2.err = ''; ghPut(c2); lsSet(GHB, JSON.stringify({ storage: d.storage }));   // baza = stan z GitHub
     reload(); toast(`☁ Przywrócono z GitHub: T50 Nr ${fmtN(D.t50.n)} · T60 Nr ${fmtN(D.t60.n)}`, 5000);
   } catch (e) { toast(`☁ Nie przywrócono: ${esc(String(e.message || e))}`, 6000); }
 }
@@ -532,19 +588,19 @@ function ghBox() {
   const c = ghCfg(), on = !!(c.repo && c.tok);
   return `<div class="box" id="ghbox">
     <h4>☁ Kopia w GitHub — dla Claude i drugiego urządzenia</h4>
-    <div class="hint" style="margin:0 0 8px">Kody T50 / T60, modele w MOJE, BANK, ZAKŁADY, RAZEM i ZESZYT trafiają do pliku <b>${GH_FILE}</b> w Twoim <b>prywatnym</b> repo — sama, po każdej zmianie, także po poprawce kodu (tu, w RAZEM albo w ZESZYCIE). Claude czyta go w nowej rozmowie (bez eksportów), a „Przywróć” wczyta ten sam stan na komputerze. Klucz zostaje tylko w tym telefonie i nie jest wysyłany.</div>
+    <div class="hint" style="margin:0 0 8px">Kody T50 / T60, modele w MOJE, BANK, ZAKŁADY, RAZEM i ZESZYT trafiają do pliku <b>${GH_FILE}</b> w Twoim <b>prywatnym</b> repo — sama, po każdej zmianie, także po poprawce kodu (tu, w RAZEM albo w ZESZYCIE). <b>Kilka urządzeń</b> (telefon, tablet, komputer) z tym samym kluczem: MOJE łączy zmiany w obie strony — model dodany albo usunięty na jednym pojawi się / zniknie na pozostałych (przy otwarciu MOJE i co 3 min). Claude czyta go w nowej rozmowie (bez eksportów), a „Przywróć” wczyta ten sam stan na komputerze. Klucz zostaje tylko w tym telefonie i nie jest wysyłany.</div>
     ${on ? `<div class="hint">Repo <b>${esc(c.repo)}</b> · ${c.last && c.last.t ? `wysłano ${ago(c.last.t)} (${when(c.last.t)}) · T50 Nr ${fmtN(c.last.n50)} · T60 Nr ${fmtN(c.last.n60)}` : 'jeszcze nie wysłano'}${c.err ? ` · <b style="color:var(--rd)">błąd: ${esc(c.err)}</b>` : ''}</div>
       ${(() => { const L = jget(GHZK).slice(-3).reverse(); return L.length ? `<div class="hint">Poprawki kodów wysłane do GitHub: ${L.map(z => `${esc(ghZTxt(z))} · ${ago(z.czas)}`).join('<br>')}</div>` : ''; })()}
       <label class="hint" style="display:flex;gap:8px;align-items:center;margin:6px 0 8px;font-size:13px;color:var(--tx)"><input type="checkbox" data-ghauto ${c.auto !== false ? 'checked' : ''} style="width:20px;height:20px">Wysyłaj samo po zmianach</label>
       ${(() => { const x = jobj(INK) || {}, n = inPending().length; return `<div class="hint">📥 Od Claude (${GH_IN}): ${x.t ? `sprawdzono ${ago(x.t)}` : 'jeszcze nie sprawdzono'}${n ? ` · <b style="color:var(--ye)">${n} do dodania — na TERAZ</b>` : ''}${x.err && !/^404/.test(x.err) ? ` · <b style="color:var(--rd)">błąd: ${esc(x.err)}</b>` : ''}</div>`; })()}
       <button class="btn pri wide" data-ghsend="1">☁ Wyślij teraz</button>
       <button class="btn wide" data-inchk="1">📥 Sprawdź propozycje od Claude</button>
-      <button class="btn wide" data-ghrest="1">⬇ Przywróć z GitHub na tym urządzeniu</button>
+      <button class="btn wide" data-ghrest="1">⬇ Przywróć z GitHub na tym urządzeniu (zastąp, bez łączenia)</button>
       <button class="btn wide" data-ghoff="1" style="color:var(--rd)">✕ Usuń klucz z tego urządzenia</button>`
     : `<input id="gh_repo" placeholder="repo, np. px5060/kody" value="${esc(c.repo || 'px5060/kody')}" style="width:100%;margin:4px 0;padding:10px;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:8px">
       <input id="gh_tok" type="password" autocomplete="off" placeholder="klucz GitHub (github_pat_…)" style="width:100%;margin:4px 0;padding:10px;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:8px">
       <button class="btn pri wide" data-ghset="1">Zapisz i wyślij</button>
-      <details style="margin-top:6px"><summary class="hint">Jak zrobić klucz (raz)</summary><div class="hint">1. github.com → Settings → Developer settings → Personal access tokens → <b>Fine-grained tokens</b> → Generate new token.<br>2. Repository access: <b>Only select repositories</b> → wybierz swoje prywatne repo (np. kody).<br>3. Permissions → Repository → <b>Contents: Read and write</b>. Expiration: np. 1 rok.<br>4. Skopiuj klucz (github_pat_…) i wklej tutaj.</div></details>`}
+      <details style="margin-top:6px"><summary class="hint">Jak zrobić klucz (raz)</summary><div class="hint">1. github.com → Settings → Developer settings → Personal access tokens → <b>Fine-grained tokens</b> → Generate new token.<br>2. Repository access: <b>Only select repositories</b> → wybierz swoje prywatne repo (np. kody).<br>3. Permissions → Repository → <b>Contents: Read and write</b>. Expiration: np. 1 rok.<br>4. Skopiuj klucz (github_pat_…) i wklej tutaj.<br>Drugie urządzenie (tablet, komputer): otwórz MOJE w przeglądarce, wklej to samo repo i klucz → „Zapisz i wyślij” — MOJE samo pobierze kody i modele i dalej łączy zmiany w obie strony.</div></details>`}
   </div>`;
 }
 function daneBox(t) {
@@ -1638,7 +1694,7 @@ function pomoc() {
     <div class="box"><h4>Znaczki na TERAZ</h4><b style="background:#c97a45;color:#fff;border-radius:8px;padding:0 5px">2</b> pomarańczowy = ile modeli gra na następnym wierszu.<br><b style="background:#FFD700;color:#000;border-radius:8px;padding:0 5px">2,3</b> żółty = za ile wierszy grają kolejne.</div>
     <div class="box"><h4>Kody</h4>Kody są wspólne z RAZEM i SZUKAJ — wpisany tu kod jest od razu we wszystkich aplikacjach (i odwrotnie). Przy każdej tabeli widać ostatni kod i <b>kiedy</b> go wpisano. Gdy kod wpisano w innej aplikacji, MOJE pokazuje, kiedy go tu zauważyło (przy otwarciu).<br>Zakładka <b>KODY</b>: kilka kodów naraz, import pliku (z cofnięciem całego importu) i eksport z nazwami jak w RAZEM — T50: TRÓJKA <b>v13_…kod.json</b>, T60: <b>xx1_pikoff_…json</b> i <b>trojka_xx1_v13_…kod.json</b>, żeby appki na PC je wychwyciły.</div>
     <div class="box"><h4>Kopia kodów</h4>Co 10 nowych kodów (licząc od ostatniego eksportu) MOJE samo zapisuje plik kopii (T50 TRÓJKA, T60 PIKOFF) do Pobranych — przy wpisaniu kodu tutaj. Gdy telefon wyczyści pamięć, wczytaj go w KODY → Import pliku. Wyłączysz to w KODY.</div>
-    <div class="box"><h4>☁ Kopia w GitHub</h4>W KODY możesz podać swoje <b>prywatne</b> repo GitHub i klucz do niego. Wtedy MOJE samo wysyła kody T50 / T60 i listy (MOJE, BANK, ZAKŁADY, RAZEM, ZESZYT) do pliku <b>stan.json</b> — Claude czyta go w nowej rozmowie bez eksportów, a „Przywróć z GitHub” wczytuje ten sam stan na komputerze. Poprawiony kod (cofnięty i wpisany na nowo albo zmieniony w ZESZYCIE) też idzie sam — dymek „☁ Poprawka kodu wysłana”, a urządzenie ze starszymi kodami nie nadpisze jej bez pytania. Klucz zostaje tylko na tym urządzeniu.</div>
+    <div class="box"><h4>☁ Kopia w GitHub</h4>W KODY możesz podać swoje <b>prywatne</b> repo GitHub i klucz do niego. Wtedy MOJE samo wysyła kody T50 / T60 i listy (MOJE, BANK, ZAKŁADY, RAZEM, ZESZYT) do pliku <b>stan.json</b> — Claude czyta go w nowej rozmowie bez eksportów, a „Przywróć z GitHub” wczytuje ten sam stan na komputerze. Poprawiony kod (cofnięty i wpisany na nowo albo zmieniony w ZESZYCIE) też idzie sam — dymek „☁ Poprawka kodu wysłana”, a urządzenie ze starszymi kodami nie nadpisze jej bez pytania. <b>Kilka urządzeń</b> (telefon, tablet, komputer): na każdym MOJE z tym samym kluczem — modele i kody dodane gdziekolwiek trafią na pozostałe (łączenie przy otwarciu MOJE i co 3 min; usunięty model znika wszędzie). Klucz zostaje tylko na urządzeniu, na którym go wpiszesz.</div>
     <div class="box"><h4>📥 Od Claude</h4>Claude może zaproponować modele do dodania — zapisuje je w pliku <b>od_claude.json</b> w tym samym repo. MOJE sprawdza go przy otwarciu (i przyciskiem „📥 Sprawdź” w KODY) i pokazuje na górze TERAZ: <b>＋ Dodaj</b> wpisuje model do MOJE (TERAZ), BANK albo ZESZYTU tak samo jak przycisk w appce, <b>Odrzuć</b> chowa propozycję. Nic nie dodaje się samo, a zakładów Claude nie ustawia. Twoje decyzje Claude widzi w stan.json.</div>
     <div class="box"><h4>Zakładka BANK</h4>Bank +3 / +5 (bez limitu) dla modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST. Bank gra w każdym cyklu modelu tylko pierwsze 3 (5) zakłady; model trafi → WIN banku (przeniesione kroki + krok modelu) i bank od k1; nie trafi → bank przegrywa 3 (5) kroki, czeka i w następnym cyklu gra dalej. Stawki 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512, dalej ×2.<br>Model jest <b>albo na TERAZ</b> (prosta progresja k1–k8), <b>albo w BANK</b> (+3 / +5) — nigdy w obu. Przełącznik przy modelu (ekran modelu i <b>🔎 wyszukiwarka</b>): <b>🏦 Przenieś do BANK</b> / <b>🟧 Przenieś do TERAZ</b>. „✕ usuń z BANK” usuwa model całkiem (też z MOJE). Na TERAZ grupy <b>🟥 PO BUST</b> i <b>🏦 BANK</b> (zwijane jak pozostałe) pokazują to, co gra na następnym wierszu; <b>przytrzymanie</b> nagłówka przenosi do zakładki LOST / BANK. Przełącznik <b>BANK +3 / BANK +5</b> wybiera, który bank prowadzi listę. Droga modelu jak na TERAZ: 🟦 CZEKAJĄ (okno banku trwa, czeka na STEP / TRIGGER) → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ. WIN → bank od k1 i znowu CZEKAJĄ. Bank przegrał swoje 3 (5) kroki → <b>⏸ CZEKAJĄ NA BANK</b>, aż model skończy cykl (WIN albo LOST) — potem znowu CZEKAJĄ, już na kolejnym oknie (np. k4–k6). Znaczki przy BANK, T50 / T60 i +3 / +5: żółty = za ile wierszy zakład banku, pomarańczowy = ile gra na następnym. Dotknięcie modelu → szanse zamknięcia banku na kolejnych krokach, stawki, gdzie bank się zamykał (% dla okien) i usunięcie z listy.</div>
     <div class="box"><h4>Zakłady</h4>„💰 Zapisz zakład” zapisuje zakład w MOJE ZAKŁADY aplikacji, z której jest model — widać go tu i tam. Wynik liczy się sam po wpisaniu kodu.</div>
@@ -1839,10 +1895,12 @@ document.addEventListener('pointermove', e => { if (lpT && lpXY && Math.hypot(e.
 document.addEventListener('click', e => { if (lpOn || Date.now() - lpUp < 350) { e.preventDefault(); e.stopPropagation(); lpUp = 0; } }, true);   // „klik” z puszczenia palca po przytrzymaniu — nie zwijaj i nie klikaj w nowym ekranie
 document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('[data-lp],.mc[data-u],.rw[data-u]')) e.preventDefault(); });
 window.addEventListener('storage', () => reload());
-document.addEventListener('visibilitychange', () => { if (!document.hidden) reload(); else ghFlush(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { reload(); ghSchedule(2000); } else ghFlush(); });   // otwarte → szybko sprawdź zmiany z innych urządzeń
+setInterval(() => { if (!document.hidden && !ghT && !ghBusy) ghSchedule(1000); }, 180000);   // co 3 min, gdy MOJE jest na ekranie
 window.addEventListener('pagehide', ghFlush);
 setInterval(() => { if (!document.hidden && !(view === 'model' && mWid === 'z') && !(document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName))) render(); }, 30000);
 reload();
+ghSchedule(3000);   // przy otwarciu: zmiany z innych urządzeń i wysyłka
 // ?open=<t>~<app>~<cel>~<model> — z aplikacji SZUKAJ („⇢ Gram — dodaj do MOJE”): od razu ekran modelu
 (() => { const u = new URLSearchParams(location.search).get('open'); if (!u) return;
   history.replaceState(null, '', location.pathname);

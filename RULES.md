@@ -129,6 +129,19 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
   ustawia bazę i sha, a przed podmianą pokazuje, co zniknie (więcej kodów albo inne kody tutaj). „✕ Usuń klucz” zatrzymuje wysyłkę.
 - Claude czyta `stan.json` w projekcie `all50/analiza` (narzędzia przyjmują `--stan`).
 
+## ☁ Kilka urządzeń — łączenie zmian (1.35.0)
+- Prośba użytkownika: telefon, tablet i komputer mają mieć te same modele (MOJE, ZESZYT…) i kody — dodane gdziekolwiek trafiają na resztę.
+  Na każdym urządzeniu MOJE z tym samym repo i kluczem; nic nie trzeba instalować (appki z px5060.github.io w przeglądarce).
+- Synchronizacja (`ghSend`): najpierw mały zapytanie o ostatni commit `stan.json` (`/commits?path=…&per_page=1`); ten sam co po ostatniej
+  synchronizacji → bez pobierania. Inny (zapisało inne urządzenie, albo pierwsza synchronizacja tutaj) → pobierz i połącz trójstronnie:
+  baza `moje_v1_ghbase` (storage po ostatniej synchronizacji, nie jedzie w stan.json) / tutaj / GitHub. Listy (tablice obiektów: MOJE GRY,
+  BANK, ZAKŁADY, ZESZYT, rodziny, RAZEM…) element po elemencie — dodane tu i tam zostają, usunięte po jednej stronie znikają; obiekty
+  (decyzje 📥, poprawki ZESZYTU) klucz po kluczu; kody: dłuższy ciąg, gdy drugi jest jego początkiem, poprawka po jednej stronie wygrywa,
+  różne kody po obu stronach = konflikt (auto nie wysyła, ręcznie pyta — jak dotąd); inne wartości: zmiana z jednej strony wygrywa.
+  Potem wysyłka połączonego stanu z sha z GitHub; 409 (ktoś zapisał w międzyczasie) → raz od nowa. Dymek „☁ Z Android: T50 +2 kodów …”.
+- Kiedy: po zmianach (15 s), przy otwarciu i powrocie do MOJE (2–3 s), co 3 min, gdy MOJE jest na ekranie. Nowe urządzenie: repo + klucz →
+  „Zapisz i wyślij” pobiera wszystko (baza pusta = suma list). „Przywróć” zostaje jako ręczne zastąpienie bez łączenia.
+
 ## 📥 Od Claude — propozycje modeli z repo (1.34.0)
 - Prośba użytkownika: Claude ma móc sam dodawać modele do MOJE i ZESZYTU. Claude zapisuje propozycje w `od_claude.json` w tym samym prywatnym
   repo (narzędzie `all50/analiza/narzedzia/od_claude.py`); MOJE pobiera plik tym samym kluczem (przy `reload` / otwarciu, co najmniej 2 min
