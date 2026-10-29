@@ -337,59 +337,125 @@ function autoBackup(t) {
 // Stan telefonu → plik stan.json w prywatnym repo użytkownika (GitHub API, klucz „fine-grained” tylko do tego repo, Contents: Read and write):
 // kody T50 / T60 (pełne, od Nr 1), lista modeli MOJE (z krokiem) i kopia pamięci aplikacji z px5060.github.io (MOJE GRY, BANK, ZAKŁADY, RAZEM,
 // ZESZYT…) — bez klucza GitHub i bez ustawień ekranu. Wysyła sama po zmianach (co najmniej 15 s po ostatniej) i przy otwarciu, tylko gdy coś
-// się zmieniło. „Przywróć” wczytuje ten stan na innym urządzeniu (np. komputer) — te same kody i listy.
-const GHK = 'moje_v1_gh', GH_FILE = 'stan.json';
-const GH_SKIP = k => k === GHK || /token|haslo|password/i.test(k) || /^moje_v1_(octag|fold|only|bkw|bsrc|bsub|zsrc|famshut|autobk)$/.test(k) || k === 'px_theme';
+// się zmieniło; przy wyjściu z MOJE od razu. „Przywróć” wczytuje ten stan na innym urządzeniu (np. komputer) — te same kody i listy.
+// Poprawki kodów (cofnięty i wpisany na nowo kod, zmiana kodu w ZESZYCIE — też kodu z bazy) wychodzą tak samo: opis w stan.json → zmiany,
+// dziennik moje_v1_kodzm i opis zapisu w GitHub. Urządzenie ze starszymi kodami nie nadpisze samo poprawki z innego urządzenia.
+const GHK = 'moje_v1_gh', GH_FILE = 'stan.json', GHZK = 'moje_v1_kodzm', GH_TAIL = 600;   // GHZK: dziennik poprawek kodów (jedzie w stan.json)
+const GH_SKIP = k => /^moje_v1_gh/.test(k) || /token|haslo|password/i.test(k) || /^moje_v1_(octag|fold|only|bkw|bsrc|bsub|zsrc|famshut|autobk)$/.test(k) || k === 'px_theme';
+const GH_ZP = t => 'zeszyt_v1_poprawki_' + t;   // poprawki kodów z bazy zrobione w ZESZYCIE (MOJE i RAZEM liczą starym kodem)
 const ghCfg = () => jobj(GHK) || {}, ghPut = c => lsSet(GHK, JSON.stringify(c));
 const ghOn = () => { const c = ghCfg(); return !!(c.repo && c.tok && c.auto !== false); };
 function ghHash(s) { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(16); }
 function ghB64(s) { const u = new TextEncoder().encode(s); let x = ''; for (let i = 0; i < u.length; i += 0x8000) x += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(x); }
+function ghDev() {   // to urządzenie (id nie jedzie w storage i nie wraca przy „Przywróć”)
+  let id = lsGet('moje_v1_ghid', ''); if (!id) { id = Math.random().toString(36).slice(2, 10); lsSet('moje_v1_ghid', id); }
+  const u = navigator.userAgent; return { id, nazwa: /Android/.test(u) ? 'Android' : /iPhone|iPad/.test(u) ? 'iPhone' : /Windows/.test(u) ? 'Windows' : /Mac/.test(u) ? 'Mac' : /Linux/.test(u) ? 'Linux' : '?' };
+}
 function ghSnap() {
-  const storage = {};
-  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (!k || GH_SKIP(k)) continue; const v = localStorage.getItem(k); if (v != null && v.length < 250000) storage[k] = v; }
+  const storage = {}, keys = [];
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && !GH_SKIP(k)) keys.push(k); }
+  keys.sort().forEach(k => { const v = localStorage.getItem(k); if (v != null && v.length < 250000) storage[k] = v; });
   const kody = t => ({ n: (TABS[t].seed.length + readAdded(t).length) / 3, kody: TABS[t].seed + readAdded(t) });   // ciąg od Nr 1, 3 cyfry na kod
   const modele = items.map(it => ({ tabela: it.t, app: it.rz ? 'R' : it.s && it.s.a, cel: it.tg, nazwa: it.label, id: it.g && it.g.id, m: Array.isArray(it.m) ? it.m : undefined,
     krok: it.r && it.r.bs != null ? it.r.bs + 1 : undefined, faza: it.r && it.r.ph, zaklad_nr: it.r && it.r.ph === 2 ? it.r.wz + 1 : undefined, bank: !!it.hid, lost: !!it.inBust, grupa: it.grp }));
   return { app: 'MOJE', wersja: APP_VER, t50: kody('t50'), t60: kody('t60'), modele, storage };
 }
+// baza = kody, które to urządzenie ostatnio wysłało albo wczytało z GitHub — z nią porównuję, co się od tego czasu zmieniło (tu i tam)
+function ghBase(x) {
+  const b = {}; for (const t of ['t50', 't60']) { const k = x[t].kody, od = Math.max(0, x[t].n - GH_TAIL);
+    b[t] = { n: x[t].n, h: ghHash(k), h0: ghHash(k.slice(0, od * 3)), tail: k.slice(od * 3), zp: (x.storage || {})[GH_ZP(t)] || '' }; }
+  return b;
+}
+const ghSame = (b, x, t) => b[t].n === x[t].n && b[t].h === ghHash(x[t].kody) && b[t].zp === ((x.storage || {})[GH_ZP(t)] || '');
+const ghJ = s => { try { const v = JSON.parse(s || '{}'); return v && typeof v === 'object' ? v : {}; } catch (e) { return {}; } };
+function ghZmiany(b, x) {   // poprawione / cofnięte kody od bazy (ostatniej wysyłki) do teraz — do dziennika, opisu zapisu i dymka
+  const Z = []; if (!b) return Z;
+  for (const t of ['t50', 't60']) {
+    const p = b[t]; if (!p) continue;
+    const k = x[t].kody, n = x[t].n, od = p.n - p.tail.length / 3;
+    if (p.h === ghHash(k) && p.zp === ((x.storage || {})[GH_ZP(t)] || '')) continue;
+    for (let i = od; i < Math.min(p.n, n); i++) { const a = p.tail.substr((i - od) * 3, 3), c = k.substr(i * 3, 3); if (a !== c) Z.push({ t, nr: i + 1, bylo: a, jest: c }); }
+    if (n < p.n) Z.push({ t, cof: [n + 1, p.n] });
+    if (od > 0 && n >= od && ghHash(k.slice(0, od * 3)) !== p.h0) Z.push({ t, starsze: od + 1 });
+    const P0 = ghJ(p.zp), P1 = ghJ((x.storage || {})[GH_ZP(t)]), sd = nr => TABS[t].seed.substr((nr - 1) * 3, 3);
+    new Set([...Object.keys(P0), ...Object.keys(P1)]).forEach(nr => { if (P0[nr] !== P1[nr]) Z.push({ t, nr: +nr, bylo: P0[nr] || sd(+nr), jest: P1[nr] || sd(+nr), zeszyt: 1 }); });
+  }
+  return Z;
+}
+const ghZTxt = z => z.t.toUpperCase() + (z.cof ? `: cofnięte Nr ${fmtN(z.cof[0])}${z.cof[1] > z.cof[0] ? '–' + fmtN(z.cof[1]) : ''}` : z.starsze ? `: zmiana w kodach przed Nr ${fmtN(z.starsze)}` : ` Nr ${fmtN(z.nr)}: ${z.bylo}→${z.jest}${z.zeszyt ? ' (ZESZYT, kod z bazy)' : ''}`);
+function ghRoznice(d, x) {   // stan w GitHub (d) a tutaj (x): inne kody w tych samych Nr, gdzie jest więcej kodów, inne poprawki z ZESZYTU
+  const R = { dif: [], tam: [], tu: [], zesz: [] };
+  for (const t of ['t50', 't60']) {
+    const T = t.toUpperCase(), a = d[t].kody || '', k = x[t].kody, dif = [];
+    for (let i = 0, m = Math.min(d[t].n, x[t].n, a.length / 3); i < m; i++) if (a.substr(3 * i, 3) !== k.substr(3 * i, 3)) dif.push(i);
+    if (dif.length) R.dif.push(`${T} ` + dif.slice(0, 3).map(i => `Nr ${fmtN(i + 1)}: w GitHub ${a.substr(3 * i, 3)}, tu ${k.substr(3 * i, 3)}`).join('; ') + (dif.length > 3 ? ` (+${dif.length - 3})` : ''));
+    if (d[t].n > x[t].n) R.tam.push(`${T}: w GitHub do Nr ${fmtN(d[t].n)}, tu do Nr ${fmtN(x[t].n)}`);
+    if (x[t].n > d[t].n) R.tu.push(`${T}: tu do Nr ${fmtN(x[t].n)}, w GitHub do Nr ${fmtN(d[t].n)}`);
+    const zd = (d.storage || {})[GH_ZP(t)] || '', zx = (x.storage || {})[GH_ZP(t)] || '';
+    if (zd !== zx && zd && zd !== '{}') R.zesz.push(`${T}: inne poprawki kodów z bazy w ZESZYCIE`);
+  }
+  return R;
+}
+function ghKonflikt(b, x, d, dev) {   // '' = wolno nadpisać plik w GitHub; inaczej: co jest tam, a czego tu nie ma (nie gubię cudzych poprawek)
+  if (!d || !d.t50 || !d.t60) return '';
+  if (d.urzadzenie && d.urzadzenie.id === dev.id) return '';             // ostatnio zapisało to urządzenie
+  if (b && ['t50', 't60'].every(t => ghSame(b, d, t))) return '';        // kody w GitHub = baza → zmiany są tylko tutaj (np. poprawka kodu)
+  const R = ghRoznice(d, x); return [...R.dif, ...R.tam, ...R.zesz].join('\n');
+}
+const ghH = c => ({ Authorization: 'Bearer ' + c.tok, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' });
+async function ghGet(c) {   // plik stanu z GitHub → {d, sha, st}; d = null, gdy go nie ma albo jest nieczytelny
+  const url = `https://api.github.com/repos/${c.repo}/contents/${GH_FILE}`, r = await fetch(url, { headers: ghH(c), cache: 'no-store' });
+  if (r.status === 404) return { d: null, st: 404 };
+  if (!r.ok) throw new Error(`${r.status}`);
+  const j = await r.json(); let d = null;
+  try { d = j.content ? JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(j.content.replace(/\s/g, '')), ch => ch.charCodeAt(0))))
+    : await (await fetch(url, { headers: { ...ghH(c), Accept: 'application/vnd.github.raw+json' }, cache: 'no-store' })).json(); } catch (e) {}   // > 1 MB: bez content
+  return { d, sha: j.sha, st: r.status };
+}
 let ghT = 0, ghBusy = false;
-function ghSchedule(ms) { if (!ghOn()) return; clearTimeout(ghT); ghT = setTimeout(() => ghSend(false), ms == null ? 15000 : ms); }
+function ghSchedule(ms) { if (!ghOn()) return; clearTimeout(ghT); ghT = setTimeout(() => { ghT = 0; ghSend(false); }, ms == null ? 15000 : ms); }
+function ghFlush() { if (ghT) { clearTimeout(ghT); ghT = 0; ghSend(false); } }   // wychodzę z MOJE → wyślij od razu (telefon może uśpić stronę)
 async function ghSend(manual) {
   const c = ghCfg(); if (!c.repo || !c.tok) { if (manual) toast('Wpisz repo i klucz GitHub'); return; }
   if (ghBusy) { ghSchedule(5000); return; } ghBusy = true;
   try {
-    const snap = ghSnap(), h = ghHash(JSON.stringify(snap));
+    const snap = ghSnap(), Z = ghZmiany(c.base, snap);
+    if (Z.length) { const L = jget(GHZK), now = Date.now(); Z.forEach(z => L.push({ ...z, czas: now }));   // do pamięci dopiero po wysłaniu
+      snap.storage = Object.fromEntries(Object.entries({ ...snap.storage, [GHZK]: JSON.stringify(L.slice(-100)) }).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)); }   // kolejność jak w ghSnap
+    const h = ghHash(JSON.stringify(snap));
     if (!manual && c.last && c.last.h === h) return;
-    snap.zapisano = new Date().toISOString();
-    const url = `https://api.github.com/repos/${c.repo}/contents/${GH_FILE}`, H = { Authorization: 'Bearer ' + c.tok, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
-    const body = sha => JSON.stringify({ message: `MOJE ${APP_VER}: T50 Nr ${snap.t50.n} · T60 Nr ${snap.t60.n}`, content: ghB64(JSON.stringify(snap, null, 1)), ...(sha ? { sha } : {}) });
+    const dev = ghDev(); snap.urzadzenie = dev; if (Z.length) snap.zmiany = Z; snap.zapisano = new Date().toISOString();
+    const url = `https://api.github.com/repos/${c.repo}/contents/${GH_FILE}`, H = ghH(c);
+    const zt = Z.length ? ' · poprawka ' + Z.slice(0, 3).map(ghZTxt).join(', ') + (Z.length > 3 ? ` (+${Z.length - 3})` : '') : '';
+    const body = sha => JSON.stringify({ message: `MOJE ${APP_VER}: T50 Nr ${snap.t50.n} · T60 Nr ${snap.t60.n}${zt}`, content: ghB64(JSON.stringify(snap, null, 1)), ...(sha ? { sha } : {}) });
     let r = await fetch(url, { method: 'PUT', headers: H, body: body(c.sha) });
-    if (r.status === 409 || r.status === 422) {   // plik zmieniony gdzie indziej (inne urządzenie) / brak sha → sprawdź, czy tam nie ma nowszego stanu
-      const g = await fetch(url, { headers: H, cache: 'no-store' }), gj = g.ok ? await g.json() : {};
-      let d = null; try { if (gj.content) d = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(gj.content.replace(/\s/g, '')), ch => ch.charCodeAt(0)))); } catch (e) {}
-      if (d && d.t50 && d.t60 && (d.t50.n > snap.t50.n || d.t60.n > snap.t60.n)
-          && (!manual || !confirm(`W GitHub jest nowszy stan (T50 Nr ${fmtN(d.t50.n)}, T60 Nr ${fmtN(d.t60.n)}) niż tutaj (T50 Nr ${fmtN(snap.t50.n)}, T60 Nr ${fmtN(snap.t60.n)}).\nNadpisać go stanem z tego urządzenia?`)))
-        throw new Error('w GitHub jest nowszy stan (więcej kodów) — na tym urządzeniu użyj „Przywróć”');
-      r = await fetch(url, { method: 'PUT', headers: H, body: body(gj.sha) });
+    if (r.status === 409 || r.status === 422) {   // plik zmieniony gdzie indziej (inne urządzenie) / brak sha → nie nadpisuj cudzych kodów ani poprawek
+      const g = await ghGet(c), why = ghKonflikt(c.base, snap, g.d, dev);
+      if (why && (!manual || !confirm(`W GitHub jest stan z innego urządzenia${g.d.urzadzenie ? ' (' + g.d.urzadzenie.nazwa + ')' : ''} z kodami, których tu nie ma:\n${why}\n\nNadpisać go stanem z tego urządzenia? (Anuluj = zostaw; na tym urządzeniu możesz użyć „Przywróć”.)`)))
+        throw new Error(`w GitHub są inne kody z innego urządzenia (${why.split('\n')[0]}) — użyj „Przywróć” albo „Wyślij teraz”`);
+      r = await fetch(url, { method: 'PUT', headers: H, body: body(g.sha) });
     }
     if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 140)}`);
-    const j = await r.json(), c2 = ghCfg(); c2.sha = j.content && j.content.sha; c2.last = { t: Date.now(), h, n50: snap.t50.n, n60: snap.t60.n }; c2.err = ''; ghPut(c2);
-    if (manual) toast(`☁ Wysłano do ${esc(c.repo)}: T50 Nr ${fmtN(snap.t50.n)} · T60 Nr ${fmtN(snap.t60.n)}`);
+    const j = await r.json(), c2 = ghCfg();
+    c2.sha = j.content && j.content.sha; c2.last = { t: Date.now(), h, n50: snap.t50.n, n60: snap.t60.n }; c2.base = ghBase(snap); c2.err = ''; ghPut(c2);
+    if (Z.length) lsSet(GHZK, snap.storage[GHZK]);
+    if (manual) toast(`☁ Wysłano do ${esc(c.repo)}: T50 Nr ${fmtN(snap.t50.n)} · T60 Nr ${fmtN(snap.t60.n)}${Z.length ? '<br>' + Z.slice(0, 3).map(ghZTxt).join('<br>') : ''}`, Z.length ? 6000 : undefined);
+    else if (Z.length) toast(`☁ Poprawka kodu wysłana do GitHub:<br>${Z.slice(0, 3).map(ghZTxt).join('<br>')}`, 6000);
   } catch (e) {
-    const c2 = ghCfg(); c2.err = String(e.message || e).slice(0, 160); c2.errT = Date.now(); ghPut(c2);
+    const c2 = ghCfg(); c2.err = String(e.message || e).slice(0, 220); c2.errT = Date.now(); ghPut(c2);
     if (manual) toast(`☁ Nie wysłano: ${esc(c2.err)}`, 6000);
   } finally { ghBusy = false; if (view === 'dane') render(); }
 }
 async function ghRestore() {
   const c = ghCfg(); if (!c.repo || !c.tok) { toast('Wpisz repo i klucz GitHub'); return; }
   try {
-    const r = await fetch(`https://api.github.com/repos/${c.repo}/contents/${GH_FILE}`, { headers: { Authorization: 'Bearer ' + c.tok, Accept: 'application/vnd.github.raw+json' }, cache: 'no-store' });
-    if (!r.ok) throw new Error(r.status === 404 ? 'w repo nie ma jeszcze stan.json' : `${r.status}`);
-    const d = await r.json(); if (!d || !d.storage || !d.t50 || !d.t60) throw new Error('to nie jest plik stanu MOJE');
-    const tu = t => D[t].n;
-    if (!confirm(`Przywrócić na tym urządzeniu stan z GitHub (zapisany ${d.zapisano ? when(Date.parse(d.zapisano)) : '?'})?\n\nT50: tu Nr ${fmtN(tu('t50'))}, w GitHub Nr ${fmtN(d.t50.n)}\nT60: tu Nr ${fmtN(tu('t60'))}, w GitHub Nr ${fmtN(d.t60.n)}\n\nKody i listy (MOJE, BANK, ZAKŁADY, RAZEM, ZESZYT) z GitHub zastąpią te na tym urządzeniu.${tu('t50') > d.t50.n || tu('t60') > d.t60.n ? '\n\nUWAGA: tu jest więcej kodów niż w GitHub — te dodatkowe znikną.' : ''}`)) return;
+    const { d, sha, st } = await ghGet(c);
+    if (!d) throw new Error(st === 404 ? 'w repo nie ma jeszcze stan.json' : 'nie da się odczytać stan.json');
+    if (!d.storage || !d.t50 || !d.t60) throw new Error('to nie jest plik stanu MOJE');
+    const tu = ghSnap(), R = ghRoznice(d, tu), strata = [...R.tu, ...R.dif];
+    if (!confirm(`Przywrócić na tym urządzeniu stan z GitHub (zapisany ${d.zapisano ? when(Date.parse(d.zapisano)) : '?'}${d.urzadzenie ? ', ' + d.urzadzenie.nazwa : ''})?\n\nT50: tu Nr ${fmtN(tu.t50.n)}, w GitHub Nr ${fmtN(d.t50.n)}\nT60: tu Nr ${fmtN(tu.t60.n)}, w GitHub Nr ${fmtN(d.t60.n)}\n\nKody i listy (MOJE, BANK, ZAKŁADY, RAZEM, ZESZYT) z GitHub zastąpią te na tym urządzeniu.${strata.length ? '\n\nUWAGA — to, co jest tylko tutaj, zniknie:\n' + strata.join('\n') : ''}`)) return;
     Object.entries(d.storage).forEach(([k, v]) => { if (!GH_SKIP(k) && typeof v === 'string') lsSet(k, v); });
-    const c2 = ghCfg(); c2.last = null; ghPut(c2);   // następna zmiana tu wyśle pełny stan
+    const c2 = ghCfg(); c2.last = null; c2.sha = sha; c2.base = ghBase(d); c2.err = ''; ghPut(c2);   // baza = stan z GitHub; następna zmiana tu wyśle pełny stan
     reload(); toast(`☁ Przywrócono z GitHub: T50 Nr ${fmtN(D.t50.n)} · T60 Nr ${fmtN(D.t60.n)}`, 5000);
   } catch (e) { toast(`☁ Nie przywrócono: ${esc(String(e.message || e))}`, 6000); }
 }
@@ -397,8 +463,9 @@ function ghBox() {
   const c = ghCfg(), on = !!(c.repo && c.tok);
   return `<div class="box" id="ghbox">
     <h4>☁ Kopia w GitHub — dla Claude i drugiego urządzenia</h4>
-    <div class="hint" style="margin:0 0 8px">Kody T50 / T60, modele w MOJE, BANK, ZAKŁADY, RAZEM i ZESZYT trafiają do pliku <b>${GH_FILE}</b> w Twoim <b>prywatnym</b> repo — sama, po każdej zmianie. Claude czyta go w nowej rozmowie (bez eksportów), a „Przywróć” wczyta ten sam stan na komputerze. Klucz zostaje tylko w tym telefonie i nie jest wysyłany.</div>
+    <div class="hint" style="margin:0 0 8px">Kody T50 / T60, modele w MOJE, BANK, ZAKŁADY, RAZEM i ZESZYT trafiają do pliku <b>${GH_FILE}</b> w Twoim <b>prywatnym</b> repo — sama, po każdej zmianie, także po poprawce kodu (tu, w RAZEM albo w ZESZYCIE). Claude czyta go w nowej rozmowie (bez eksportów), a „Przywróć” wczyta ten sam stan na komputerze. Klucz zostaje tylko w tym telefonie i nie jest wysyłany.</div>
     ${on ? `<div class="hint">Repo <b>${esc(c.repo)}</b> · ${c.last && c.last.t ? `wysłano ${ago(c.last.t)} (${when(c.last.t)}) · T50 Nr ${fmtN(c.last.n50)} · T60 Nr ${fmtN(c.last.n60)}` : 'jeszcze nie wysłano'}${c.err ? ` · <b style="color:var(--rd)">błąd: ${esc(c.err)}</b>` : ''}</div>
+      ${(() => { const L = jget(GHZK).slice(-3).reverse(); return L.length ? `<div class="hint">Poprawki kodów wysłane do GitHub: ${L.map(z => `${esc(ghZTxt(z))} · ${ago(z.czas)}`).join('<br>')}</div>` : ''; })()}
       <label class="hint" style="display:flex;gap:8px;align-items:center;margin:6px 0 8px;font-size:13px;color:var(--tx)"><input type="checkbox" data-ghauto ${c.auto !== false ? 'checked' : ''} style="width:20px;height:20px">Wysyłaj samo po zmianach</label>
       <button class="btn pri wide" data-ghsend="1">☁ Wyślij teraz</button>
       <button class="btn wide" data-ghrest="1">⬇ Przywróć z GitHub na tym urządzeniu</button>
@@ -1500,7 +1567,7 @@ function pomoc() {
     <div class="box"><h4>Znaczki na TERAZ</h4><b style="background:#c97a45;color:#fff;border-radius:8px;padding:0 5px">2</b> pomarańczowy = ile modeli gra na następnym wierszu.<br><b style="background:#FFD700;color:#000;border-radius:8px;padding:0 5px">2,3</b> żółty = za ile wierszy grają kolejne.</div>
     <div class="box"><h4>Kody</h4>Kody są wspólne z RAZEM i SZUKAJ — wpisany tu kod jest od razu we wszystkich aplikacjach (i odwrotnie). Przy każdej tabeli widać ostatni kod i <b>kiedy</b> go wpisano. Gdy kod wpisano w innej aplikacji, MOJE pokazuje, kiedy go tu zauważyło (przy otwarciu).<br>Zakładka <b>KODY</b>: kilka kodów naraz, import pliku (z cofnięciem całego importu) i eksport z nazwami jak w RAZEM — T50: TRÓJKA <b>v13_…kod.json</b>, T60: <b>xx1_pikoff_…json</b> i <b>trojka_xx1_v13_…kod.json</b>, żeby appki na PC je wychwyciły.</div>
     <div class="box"><h4>Kopia kodów</h4>Co 10 nowych kodów (licząc od ostatniego eksportu) MOJE samo zapisuje plik kopii (T50 TRÓJKA, T60 PIKOFF) do Pobranych — przy wpisaniu kodu tutaj. Gdy telefon wyczyści pamięć, wczytaj go w KODY → Import pliku. Wyłączysz to w KODY.</div>
-    <div class="box"><h4>☁ Kopia w GitHub</h4>W KODY możesz podać swoje <b>prywatne</b> repo GitHub i klucz do niego. Wtedy MOJE samo wysyła kody T50 / T60 i listy (MOJE, BANK, ZAKŁADY, RAZEM, ZESZYT) do pliku <b>stan.json</b> — Claude czyta go w nowej rozmowie bez eksportów, a „Przywróć z GitHub” wczytuje ten sam stan na komputerze. Klucz zostaje tylko na tym urządzeniu.</div>
+    <div class="box"><h4>☁ Kopia w GitHub</h4>W KODY możesz podać swoje <b>prywatne</b> repo GitHub i klucz do niego. Wtedy MOJE samo wysyła kody T50 / T60 i listy (MOJE, BANK, ZAKŁADY, RAZEM, ZESZYT) do pliku <b>stan.json</b> — Claude czyta go w nowej rozmowie bez eksportów, a „Przywróć z GitHub” wczytuje ten sam stan na komputerze. Poprawiony kod (cofnięty i wpisany na nowo albo zmieniony w ZESZYCIE) też idzie sam — dymek „☁ Poprawka kodu wysłana”, a urządzenie ze starszymi kodami nie nadpisze jej bez pytania. Klucz zostaje tylko na tym urządzeniu.</div>
     <div class="box"><h4>Zakładka BANK</h4>Bank +3 / +5 (bez limitu) dla modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST. Bank gra w każdym cyklu modelu tylko pierwsze 3 (5) zakłady; model trafi → WIN banku (przeniesione kroki + krok modelu) i bank od k1; nie trafi → bank przegrywa 3 (5) kroki, czeka i w następnym cyklu gra dalej. Stawki 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512, dalej ×2.<br>Model jest <b>albo na TERAZ</b> (prosta progresja k1–k8), <b>albo w BANK</b> (+3 / +5) — nigdy w obu. Przełącznik przy modelu (ekran modelu i <b>🔎 wyszukiwarka</b>): <b>🏦 Przenieś do BANK</b> / <b>🟧 Przenieś do TERAZ</b>. „✕ usuń z BANK” usuwa model całkiem (też z MOJE). Na TERAZ grupy <b>🟥 PO BUST</b> i <b>🏦 BANK</b> (zwijane jak pozostałe) pokazują to, co gra na następnym wierszu; <b>przytrzymanie</b> nagłówka przenosi do zakładki LOST / BANK. Przełącznik <b>BANK +3 / BANK +5</b> wybiera, który bank prowadzi listę. Droga modelu jak na TERAZ: 🟦 CZEKAJĄ (okno banku trwa, czeka na STEP / TRIGGER) → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ. WIN → bank od k1 i znowu CZEKAJĄ. Bank przegrał swoje 3 (5) kroki → <b>⏸ CZEKAJĄ NA BANK</b>, aż model skończy cykl (WIN albo LOST) — potem znowu CZEKAJĄ, już na kolejnym oknie (np. k4–k6). Znaczki przy BANK, T50 / T60 i +3 / +5: żółty = za ile wierszy zakład banku, pomarańczowy = ile gra na następnym. Dotknięcie modelu → szanse zamknięcia banku na kolejnych krokach, stawki, gdzie bank się zamykał (% dla okien) i usunięcie z listy.</div>
     <div class="box"><h4>Zakłady</h4>„💰 Zapisz zakład” zapisuje zakład w MOJE ZAKŁADY aplikacji, z której jest model — widać go tu i tam. Wynik liczy się sam po wpisaniu kodu.</div>
     <div class="box"><h4>Dodawanie modeli</h4>W aplikacji SZUKAJ dotknij kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. Tutaj: dotknięcie kafelka → statystyki modelu, przytrzymanie → tabela wierszy. Aplikacja doda model i otworzy go tutaj.</div>
@@ -1697,7 +1764,8 @@ document.addEventListener('pointermove', e => { if (lpT && lpXY && Math.hypot(e.
 document.addEventListener('click', e => { if (lpOn || Date.now() - lpUp < 350) { e.preventDefault(); e.stopPropagation(); lpUp = 0; } }, true);   // „klik” z puszczenia palca po przytrzymaniu — nie zwijaj i nie klikaj w nowym ekranie
 document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('[data-lp],.mc[data-u],.rw[data-u]')) e.preventDefault(); });
 window.addEventListener('storage', () => reload());
-document.addEventListener('visibilitychange', () => { if (!document.hidden) reload(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) reload(); else ghFlush(); });
+window.addEventListener('pagehide', ghFlush);
 setInterval(() => { if (!document.hidden && !(view === 'model' && mWid === 'z') && !(document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName))) render(); }, 30000);
 reload();
 // ?open=<t>~<app>~<cel>~<model> — z aplikacji SZUKAJ („⇢ Gram — dodaj do MOJE”): od razu ekran modelu

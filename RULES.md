@@ -115,6 +115,15 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Plik `stan.json`: `t50` / `t60` = `{n, kody}` (pełny ciąg od Nr 1, 3 cyfry na kod), `modele` (lista MOJE: tabela, app, cel, nazwa, id, model `m`,
   krok, faza, Nr zakładu, bank, lost), `storage` = kopia pamięci px5060.github.io (MOJE GRY, BANK, ZAKŁADY, RAZEM, ZESZYT…) bez klucza GitHub
   i bez ustawień ekranu. Wysyłka sama: po zmianach (15 s po ostatniej, przy każdym `reload`) i przy otwarciu, tylko gdy stan się zmienił (skrót).
-- Gdy w GitHub jest nowszy stan (więcej kodów — inne urządzenie), MOJE go nie nadpisuje (ręcznie — tylko po potwierdzeniu); „⬇ Przywróć z GitHub”
-  wczytuje stan na tym urządzeniu (np. komputer) i zastępuje kody i listy. „✕ Usuń klucz” zatrzymuje wysyłkę.
+  Przy wyjściu z MOJE (`visibilitychange` → ukryta, `pagehide`) czekająca wysyłka idzie od razu.
+- **Poprawki kodów** (prośba użytkownika: poprawiony kod ma trafić do repo): cofnięty i wpisany na nowo kod (MOJE ↶, RAZEM ⟲), zmiana kodu
+  w ZESZYCIE (dopisany kod — wspólna lista; kod z bazy — `zeszyt_v1_poprawki_<t>`) zmieniają stan → wysyłka jak wyżej. Każde urządzenie pamięta
+  **bazę** (`moje_v1_gh.base`: n, skrót ciągu, ostatnie 600 kodów, poprawki ZESZYTU — to, co ostatnio wysłało albo wczytało) i względem niej
+  opisuje zmiany: `stan.json → zmiany` (ta wysyłka), dziennik `moje_v1_kodzm` (ostatnie 100, jedzie w `storage`), opis zapisu w GitHub
+  („poprawka T50 Nr …: 001→010”) i dymek „☁ Poprawka kodu wysłana”. KODY pokazują 3 ostatnie poprawki.
+- Konflikt (plik w GitHub zapisało inne urządzenie, 409/422): nadpisuję tylko, gdy ostatni zapis jest z tego urządzenia (`urzadzenie.id`,
+  `moje_v1_ghid` — nie jedzie w `storage`) albo kody w GitHub = baza (zmiany są tylko tutaj). Inaczej, gdy w GitHub są kody, których tu nie
+  ma (więcej kodów, inny kod w tym samym Nr, inne poprawki ZESZYTU) — auto: nie nadpisuje (błąd w KODY), ręcznie: pyta z listą różnic.
+  Urządzenie ze starszymi kodami nie skasuje więc poprawki z telefonu. „⬇ Przywróć z GitHub” wczytuje stan na tym urządzeniu (np. komputer),
+  ustawia bazę i sha, a przed podmianą pokazuje, co zniknie (więcej kodów albo inne kody tutaj). „✕ Usuń klucz” zatrzymuje wysyłkę.
 - Claude czyta `stan.json` w projekcie `all50/analiza` (narzędzia przyjmują `--stan`).
