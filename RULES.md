@@ -142,6 +142,16 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Kiedy: po zmianach (15 s), przy otwarciu i powrocie do MOJE (2–3 s), co 3 min, gdy MOJE jest na ekranie. Nowe urządzenie: repo + klucz →
   „Zapisz i wyślij” pobiera wszystko (baza pusta = suma list). „Przywróć” zostaje jako ręczne zastąpienie bez łączenia.
 
+## 🔍 OCENY — oceny modeli od Claude (1.36.0)
+- Prośba użytkownika: model po analizie Claude trafia do osobnej zakładki z całą oceną. Claude zapisuje oceny w `oceny.json` w tym samym
+  repo (narzędzie `all50/analiza/narzedzia/ocena.py`); MOJE pobiera plik razem z `od_claude.json` (ten sam klucz, co najmniej 2 min przerwy,
+  „📥 Sprawdź propozycje i oceny” — od razu) i pokazuje zakładkę **OCENY** (dolny pasek, licznik nowych).
+- Ocena: `{id, nazwa, gdzie, tabela, …model jak w 📥…, data, kody_do, krok, stawka, zaklad, werdykt (GRAĆ / OBSERWUJ / NIE GRAĆ), krotko,
+  sekcje: [{tytul, wiersze}], liczby}`. Karta: werdykt (kolor), kiedy i na jakich kodach, krok „teraz” liczony przez MOJE (SZUKAJ),
+  „Cała ocena” (sekcje), „＋ Dodaj do MOJE / ZESZYTU” (to samo zapisanie co w 📥, `inDodajP`) albo „✓ masz go”, „Ukryj”.
+- Ukryte (`moje_v1_ocukr`) i obejrzane (`moje_v1_ocseen`) jadą w stan.json (łączone między urządzeniami); pobrany plik (`moje_v1_ghoc`)
+  nie jedzie. Wszystko z pliku escapowane; najwyżej 100 ocen. Dolny pasek: 7 przycisków, szerokość wg napisu (12 px) — mieści się na 360 px.
+
 ## 📥 Od Claude — propozycje modeli z repo (1.34.0)
 - Prośba użytkownika: Claude ma móc sam dodawać modele do MOJE i ZESZYTU. Claude zapisuje propozycje w `od_claude.json` w tym samym prywatnym
   repo (narzędzie `all50/analiza/narzedzia/od_claude.py`); MOJE pobiera plik tym samym kluczem (przy `reload` / otwarciu, co najmniej 2 min

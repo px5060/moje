@@ -136,7 +136,7 @@ table.rows tr.k4 td,table.rows tr.k5 td{background:#3a2a1c}table.rows tr.k3 td,t
 table.rows tr.nx td{background:#c97a45;color:#fff;font-weight:800}
 .back{margin-bottom:8px}
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--pan);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom);z-index:20}
-nav button{flex:1;background:none;border:0;color:var(--mu);padding:12px 2px;font-size:13px;font-weight:700;position:relative}
+nav button{flex:1 1 auto;background:none;border:0;color:var(--mu);padding:12px 0;font-size:12px;letter-spacing:-.2px;font-weight:700;position:relative;min-width:0}
 nav button.on{color:var(--or2)}
 nav b.soon,.grp b.soon{position:absolute;top:3px;left:2px;min-width:16px;height:16px;border-radius:8px;background:var(--ye);color:#000;font:700 10px/16px system-ui;padding:0 4px;border:1px solid #fff}
 nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-radius:8px;background:#c97a45;color:#fff;font:700 10px/16px system-ui;font-style:normal;padding:0 4px;border:1px solid #fff}
@@ -188,12 +188,13 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
   <button data-v="bust" id="navB">LOST</button>
   <button data-v="zak" id="navZ">ZAKŁADY</button>
   <button data-v="bank" id="navK">BANK</button>
+  <button data-v="ocen" id="navO">OCENY</button>
   <button data-v="dane">KODY</button>
   <button data-v="pom">POMOC</button>
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.35.0';
+const APP_VER = '1.36.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -520,7 +521,8 @@ async function ghRestore() {   // ręcznie: stan z GitHub zastępuje kody i list
 // Plik pisze Claude: {propozycje: [{id, gdzie: 'MOJE' | 'BANK' | 'ZESZYT', tabela: 't50' | 't60', …, uwaga}]}. MOJE / BANK: app (S, S+, L), cel, model (P…),
 // m (model z puli, pola jak w SZUKAJ); ZESZYT T50: w (3 wiersze 1–28), poz, czekaj, war ('' / 'boki'), limit; T60: w (wiersze 1–30), cel, cz, limit.
 // Zapis jak „Gram — dodaj do MOJE” / „→ BANK” / „Przenieś do zeszytu”. Decyzje (dodane / jest / odrzucone) w moje_v1_odclaude — jadą w stan.json.
-const GH_IN = 'od_claude.json', INK = 'moje_v1_ghin', ODK = 'moje_v1_odclaude', IN_MAX = 20;   // INK: ostatnio pobrany plik (nie jedzie w stan.json)
+const GH_IN = 'od_claude.json', INK = 'moje_v1_ghin', ODK = 'moje_v1_odclaude', IN_MAX = 20;
+const GH_OC = 'oceny.json', OCK = 'moje_v1_ghoc', OCU = 'moje_v1_ocukr', OCS = 'moje_v1_ocseen';   // OCENY: pobrany plik (nie jedzie w stan.json), ukryte, obejrzane   // INK: ostatnio pobrany plik (nie jedzie w stan.json)
 const Z60C = ['2,3', '1', '1,2,3', 'x1x', 'xx1'];   // cele ZESZYTU T60 (jak w kodzie modelu)
 let inBusy = false;
 async function inFetch(force) {   // co najmniej 2 min między sprawdzeniami (przy reload / otwarciu), „📥 Sprawdź” — od razu
@@ -529,7 +531,9 @@ async function inFetch(force) {   // co najmniej 2 min między sprawdzeniami (pr
   try {
     const g = await ghGet(c, GH_IN), P = g.d && Array.isArray(g.d.propozycje) ? g.d.propozycje.filter(p => p && typeof p.id === 'string' && p.id.length <= 60).slice(0, 100) : [];
     const zm = JSON.stringify(P) !== JSON.stringify(x.P || []); lsSet(INK, JSON.stringify({ t: Date.now(), P, err: '' }));
-    if (zm || force) render();
+    const go = await ghGet(c, GH_OC), O = go.d && Array.isArray(go.d.oceny) ? go.d.oceny.filter(o => o && typeof o.id === 'string' && o.id.length <= 120 && typeof o.nazwa === 'string' && Array.isArray(o.sekcje)).slice(-100) : [];
+    const zo = JSON.stringify(O) !== JSON.stringify((jobj(OCK) || {}).O || []); lsSet(OCK, JSON.stringify({ t: Date.now(), O }));
+    if (zm || zo || force) render();
     if (force) toast(inPending().length ? `📥 Od Claude: ${inPending().length} do dodania (TERAZ)` : '📥 Od Claude: nic nowego');
   } catch (e) { lsSet(INK, JSON.stringify({ ...x, t: Date.now(), err: String(e.message || e).slice(0, 120) })); if (force) toast('📥 Nie sprawdzono: ' + esc(String(e.message || e))); }
   finally { inBusy = false; }
@@ -560,21 +564,54 @@ function inOpis(p) {   // propozycja → {txt, z (zapis ZESZYTU) | it (model MOJ
     return { it, txt: `${it.label} → ${p.gdzie === 'BANK' ? 'BANK' : 'MOJE (TERAZ)'} · teraz k${it.r.bs + 1} ${ST[it.r.bs]} zł` };
   } catch (e) { return { err: 'nie da się policzyć: ' + String(e.message || e).slice(0, 60) }; }
 }
-function inDodaj(id) {
-  const p = inPending().find(x => x.id === id); if (!p) return;
-  const o = inOpis(p); if (o.err) { toast('Nie dodano: ' + esc(o.err)); return; }
+function inDodajP(p) {   // model z propozycji / oceny → MOJE, BANK albo ZESZYT; → {wyn: 'dodane' | 'jest', o} albo null (błąd)
+  const o = inOpis(p); if (o.err) { toast('Nie dodano: ' + esc(o.err)); return null; }
   let wyn = 'dodane';
   if (o.z) {
     const K = p.tabela === 't50' ? 'zeszyt_v1_modele' : 'zeszyt_v1_modele60', L = jget(K), z = o.z;
     const same = m => m && Array.isArray(m.w) && m.w.join() === z.w.join() && m.limit === z.limit && (p.tabela === 't50' ? m.poz === z.poz && m.czekaj === z.czekaj && (m.war || '') === z.war : Array.isArray(m.cel) && m.cel.join() === z.cel.join() && m.cz === z.cz);
     if (L.some(same)) wyn = 'jest';
-    else { L.push({ id: (p.tabela === 't50' ? 'u' : 'v') + Date.now().toString(36), ...z }); if (!lsSet(K, JSON.stringify(L))) { alert('BŁĄD zapisu pamięci telefonu!'); return; } }
+    else { L.push({ id: (p.tabela === 't50' ? 'u' : 'v') + Date.now().toString(36), ...z }); if (!lsSet(K, JSON.stringify(L))) { alert('BŁĄD zapisu pamięci telefonu!'); return null; } }
   } else if (p.gdzie === 'BANK') {
     if (bankHas(o.it.uid)) wyn = 'jest';
-    else { const L = jget(BKK); L.push({ t: o.it.t, a: o.it.s.a, tg: o.it.tg, m: o.it.m, id: o.it.g.id, t0: Date.now(), at: D[o.it.t].n }); if (!lsSet(BKK, JSON.stringify(L))) { alert('BŁĄD zapisu pamięci telefonu!'); return; } }
+    else { const L = jget(BKK); L.push({ t: o.it.t, a: o.it.s.a, tg: o.it.tg, m: o.it.m, id: o.it.g.id, t0: Date.now(), at: D[o.it.t].n }); if (!lsSet(BKK, JSON.stringify(L))) { alert('BŁĄD zapisu pamięci telefonu!'); return null; } }
   } else if (myIn(o.it.uid) || bankHas(o.it.uid)) wyn = 'jest';
-  else if (!addMoje(o.it)) { alert('BŁĄD zapisu pamięci telefonu!'); return; }
-  inSet(id, wyn); toast(wyn === 'jest' ? `To już masz: ${esc(o.txt.split(' · ')[0])}` : `📥 Dodano: ${esc(o.txt)}`, 4000); reload();
+  else if (!addMoje(o.it)) { alert('BŁĄD zapisu pamięci telefonu!'); return null; }
+  toast(wyn === 'jest' ? `To już masz: ${esc(o.txt.split(' · ')[0])}` : `📥 Dodano: ${esc(o.txt)}`, 4000);
+  return { wyn, o };
+}
+function inDodaj(id) {
+  const p = inPending().find(x => x.id === id); if (!p) return;
+  const r = inDodajP(p); if (!r) return;
+  inSet(id, r.wyn); reload();
+}
+function inJest(p) {   // czy model z propozycji / oceny już jest (MOJE / BANK / ZESZYT)
+  const o = inOpis(p); if (o.err) return false;
+  if (o.z) { const L = jget(p.tabela === 't50' ? 'zeszyt_v1_modele' : 'zeszyt_v1_modele60'), z = o.z;
+    return L.some(m => m && Array.isArray(m.w) && m.w.join() === z.w.join() && m.limit === z.limit && (p.tabela === 't50' ? m.poz === z.poz && m.czekaj === z.czekaj && (m.war || '') === z.war : Array.isArray(m.cel) && m.cel.join() === z.cel.join() && m.cz === z.cz)); }
+  return myIn(o.it.uid) || bankHas(o.it.uid);
+}
+// ===== 🔍 OCENY (1.36.0): oceny modeli od Claude — oceny.json w tym samym repo (ocena.py w all50/analiza): stan, historia (do k8 / limitu
+// i w 3 krokach), uczciwa szansa (kalibracja), symulacja, nakładanie z MOJE, werdykt. Od najnowszej; krok „teraz” liczy MOJE na bieżących
+// kodach, „＋ Dodaj”, gdy modelu nie masz. Ukryte (moje_v1_ocukr) i obejrzane (moje_v1_ocseen) jadą w stan.json — te same na każdym urządzeniu.
+const ocKey = o => o.id + '|' + o.data;
+const ocList = () => { const x = jobj(OCK) || {}, u = jget(OCU); return (Array.isArray(x.O) ? x.O : []).filter(o => !u.includes(ocKey(o))).slice().reverse(); };
+const ocNowe = () => { const S0 = jget(OCS); return ocList().filter(o => !S0.includes(ocKey(o))).length; };
+const OCW = { 'GRAĆ': 'var(--gr)', 'OBSERWUJ': 'var(--ye)', 'NIE GRAĆ': 'var(--rd)' };
+const ocP = o => ({ ...o, id: 'oc' });   // ocena → opis jak propozycja 📥 (inOpis / inDodajP)
+function oceny() {
+  const L = ocList(), x = jobj(OCK) || {}, S0 = jget(OCS);
+  if (!L.length) return `<div class="empty">Brak ocen.<br><br>Poproś Claude o ocenę modelu (np. „oceń S+60 xx1 P2496” albo „oceń moje nowe modele”) — ocena trafi tutaj: historia, uczciwa szansa, symulacja, nakładanie z MOJE i werdykt.${x.t ? `<br><br><span class="hint">sprawdzono ${ago(x.t)}</span>` : ''}</div>`;
+  return `<div class="hint" style="margin:0 0 8px">🔍 Oceny Claude — od najnowszej. „teraz” liczy MOJE na bieżących kodach; cała ocena jest z dnia oceny.</div>` + L.map(o => {
+    const p = ocP(o), op = inOpis(p), jest = !op.err && inJest(p), k = esc(ocKey(o)), nowa = !S0.includes(ocKey(o)), d = Date.parse(o.data || '');
+    const teraz = op.err || !op.it ? '' : `k${op.it.r.bs + 1} ${ST[op.it.r.bs]} zł`;   // ZESZYT: krok w ocenie (MOJE nie liczy ZESZYTU)
+    return `<div class="box" style="border-color:${OCW[o.werdykt] || 'var(--bd)'}">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><b>${nowa ? '🆕 ' : ''}${esc(o.nazwa)}</b><b style="color:${OCW[o.werdykt] || 'var(--tx)'};white-space:nowrap">${esc(o.werdykt || '')}</b></div>
+      <div class="hint" style="margin:2px 0">ocena ${d ? ago(d) + ' (' + when(d) + ')' : ''} · kody do Nr ${o.kody_do ? fmtN(o.kody_do[o.tabela] || 0) : '?'}${teraz ? ` · teraz <b style="color:var(--tx)">${esc(teraz)}</b>` : ''}</div>
+      <div style="font-size:13px;margin:4px 0">${esc(o.krotko || '')}</div>
+      <details><summary class="hint">Cała ocena</summary>${o.sekcje.map(sk => `<div style="margin-top:6px"><b>${esc(String(sk.tytul || ''))}</b><ul style="margin:2px 0 0 16px;padding:0">${(Array.isArray(sk.wiersze) ? sk.wiersze : []).map(w => `<li style="font-size:12.5px">${esc(String(w))}</li>`).join('')}</ul></div>`).join('')}</details>
+      <div style="display:flex;gap:6px;margin-top:6px;align-items:center">${op.err ? '' : jest ? `<span class="hint">✓ masz go w ${o.gdzie === 'ZESZYT' ? 'ZESZYCIE' : 'MOJE'}</span>` : `<button class="btn pri" data-ocdod="${k}">＋ Dodaj do ${o.gdzie === 'ZESZYT' ? 'ZESZYTU' : 'MOJE'}</button>`}<button class="btn" data-ocukr="${k}">Ukryj</button></div></div>`;
+  }).join('');
 }
 function inBox() {
   const P = inPending(); if (!P.length) return '';
@@ -594,7 +631,7 @@ function ghBox() {
       <label class="hint" style="display:flex;gap:8px;align-items:center;margin:6px 0 8px;font-size:13px;color:var(--tx)"><input type="checkbox" data-ghauto ${c.auto !== false ? 'checked' : ''} style="width:20px;height:20px">Wysyłaj samo po zmianach</label>
       ${(() => { const x = jobj(INK) || {}, n = inPending().length; return `<div class="hint">📥 Od Claude (${GH_IN}): ${x.t ? `sprawdzono ${ago(x.t)}` : 'jeszcze nie sprawdzono'}${n ? ` · <b style="color:var(--ye)">${n} do dodania — na TERAZ</b>` : ''}${x.err && !/^404/.test(x.err) ? ` · <b style="color:var(--rd)">błąd: ${esc(x.err)}</b>` : ''}</div>`; })()}
       <button class="btn pri wide" data-ghsend="1">☁ Wyślij teraz</button>
-      <button class="btn wide" data-inchk="1">📥 Sprawdź propozycje od Claude</button>
+      <button class="btn wide" data-inchk="1">📥 Sprawdź propozycje i oceny od Claude</button>
       <button class="btn wide" data-ghrest="1">⬇ Przywróć z GitHub na tym urządzeniu (zastąp, bez łączenia)</button>
       <button class="btn wide" data-ghoff="1" style="color:var(--rd)">✕ Usuń klucz z tego urządzenia</button>`
     : `<input id="gh_repo" placeholder="repo, np. px5060/kody" value="${esc(c.repo || 'px5060/kody')}" style="width:100%;margin:4px 0;padding:10px;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:8px">
@@ -1695,6 +1732,7 @@ function pomoc() {
     <div class="box"><h4>Kody</h4>Kody są wspólne z RAZEM i SZUKAJ — wpisany tu kod jest od razu we wszystkich aplikacjach (i odwrotnie). Przy każdej tabeli widać ostatni kod i <b>kiedy</b> go wpisano. Gdy kod wpisano w innej aplikacji, MOJE pokazuje, kiedy go tu zauważyło (przy otwarciu).<br>Zakładka <b>KODY</b>: kilka kodów naraz, import pliku (z cofnięciem całego importu) i eksport z nazwami jak w RAZEM — T50: TRÓJKA <b>v13_…kod.json</b>, T60: <b>xx1_pikoff_…json</b> i <b>trojka_xx1_v13_…kod.json</b>, żeby appki na PC je wychwyciły.</div>
     <div class="box"><h4>Kopia kodów</h4>Co 10 nowych kodów (licząc od ostatniego eksportu) MOJE samo zapisuje plik kopii (T50 TRÓJKA, T60 PIKOFF) do Pobranych — przy wpisaniu kodu tutaj. Gdy telefon wyczyści pamięć, wczytaj go w KODY → Import pliku. Wyłączysz to w KODY.</div>
     <div class="box"><h4>☁ Kopia w GitHub</h4>W KODY możesz podać swoje <b>prywatne</b> repo GitHub i klucz do niego. Wtedy MOJE samo wysyła kody T50 / T60 i listy (MOJE, BANK, ZAKŁADY, RAZEM, ZESZYT) do pliku <b>stan.json</b> — Claude czyta go w nowej rozmowie bez eksportów, a „Przywróć z GitHub” wczytuje ten sam stan na komputerze. Poprawiony kod (cofnięty i wpisany na nowo albo zmieniony w ZESZYCIE) też idzie sam — dymek „☁ Poprawka kodu wysłana”, a urządzenie ze starszymi kodami nie nadpisze jej bez pytania. <b>Kilka urządzeń</b> (telefon, tablet, komputer): na każdym MOJE z tym samym kluczem — modele i kody dodane gdziekolwiek trafią na pozostałe (łączenie przy otwarciu MOJE i co 3 min; usunięty model znika wszędzie). Klucz zostaje tylko na urządzeniu, na którym go wpiszesz.</div>
+    <div class="box"><h4>🔍 OCENY</h4>Gdy poprosisz Claude o ocenę modelu (SZUKAJ, SZUKAJ+, LOST albo ZESZYT), ocena trafia do zakładki <b>OCENY</b>: stan teraz, historia (wygrana do k8 / limitu i w 3 krokach), uczciwa szansa po sprawdzeniu na późniejszych kodach, symulacja (LOST, koszt, czas), nakładanie z Twoimi modelami i werdykt GRAĆ / OBSERWUJ / NIE GRAĆ. Krok „teraz” liczy MOJE na bieżących kodach; „＋ Dodaj”, gdy modelu nie masz. Nowe oceny: liczba na przycisku OCENY.</div>
     <div class="box"><h4>📥 Od Claude</h4>Claude może zaproponować modele do dodania — zapisuje je w pliku <b>od_claude.json</b> w tym samym repo. MOJE sprawdza go przy otwarciu (i przyciskiem „📥 Sprawdź” w KODY) i pokazuje na górze TERAZ: <b>＋ Dodaj</b> wpisuje model do MOJE (TERAZ), BANK albo ZESZYTU tak samo jak przycisk w appce, <b>Odrzuć</b> chowa propozycję. Nic nie dodaje się samo, a zakładów Claude nie ustawia. Twoje decyzje Claude widzi w stan.json.</div>
     <div class="box"><h4>Zakładka BANK</h4>Bank +3 / +5 (bez limitu) dla modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST. Bank gra w każdym cyklu modelu tylko pierwsze 3 (5) zakłady; model trafi → WIN banku (przeniesione kroki + krok modelu) i bank od k1; nie trafi → bank przegrywa 3 (5) kroki, czeka i w następnym cyklu gra dalej. Stawki 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512, dalej ×2.<br>Model jest <b>albo na TERAZ</b> (prosta progresja k1–k8), <b>albo w BANK</b> (+3 / +5) — nigdy w obu. Przełącznik przy modelu (ekran modelu i <b>🔎 wyszukiwarka</b>): <b>🏦 Przenieś do BANK</b> / <b>🟧 Przenieś do TERAZ</b>. „✕ usuń z BANK” usuwa model całkiem (też z MOJE). Na TERAZ grupy <b>🟥 PO BUST</b> i <b>🏦 BANK</b> (zwijane jak pozostałe) pokazują to, co gra na następnym wierszu; <b>przytrzymanie</b> nagłówka przenosi do zakładki LOST / BANK. Przełącznik <b>BANK +3 / BANK +5</b> wybiera, który bank prowadzi listę. Droga modelu jak na TERAZ: 🟦 CZEKAJĄ (okno banku trwa, czeka na STEP / TRIGGER) → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ. WIN → bank od k1 i znowu CZEKAJĄ. Bank przegrał swoje 3 (5) kroki → <b>⏸ CZEKAJĄ NA BANK</b>, aż model skończy cykl (WIN albo LOST) — potem znowu CZEKAJĄ, już na kolejnym oknie (np. k4–k6). Znaczki przy BANK, T50 / T60 i +3 / +5: żółty = za ile wierszy zakład banku, pomarańczowy = ile gra na następnym. Dotknięcie modelu → szanse zamknięcia banku na kolejnych krokach, stawki, gdzie bank się zamykał (% dla okien) i usunięcie z listy.</div>
     <div class="box"><h4>Zakłady</h4>„💰 Zapisz zakład” zapisuje zakład w MOJE ZAKŁADY aplikacji, z której jest model — widać go tu i tam. Wynik liczy się sam po wpisaniu kodu.</div>
@@ -1785,9 +1823,11 @@ function render() {
   $('navB').innerHTML = `LOST${bustBadges(vitems.filter(it => it.t === only && it.inBust))}`;
   $('navZ').innerHTML = `ZAKŁADY${zakBadges(bets.filter(x => x.t === only))}`;
   $('navK').innerHTML = `BANK${bankBadges35(bitems.filter(it => it.t === only))}`;
+  { const n = ocNowe(); $('navO').innerHTML = `OCENY${n ? `<i class="nb">${n}</i>` : ''}`; }
   const ae = document.activeElement, keep = ae && ae.id && /^(in|pa|bq)_/.test(ae.id) ? [ae.id, ae.value] : null;
-  $('main').innerHTML = view === 'teraz' ? teraz() : view === 'zak' ? zaklady() : view === 'bust' ? busty() : view === 'bank' ? bankView() : view === 'bankm' ? bankModel() : view === 'model' ? model() : view === 'dane' ? dane() : pomoc();
+  $('main').innerHTML = view === 'teraz' ? teraz() : view === 'zak' ? zaklady() : view === 'bust' ? busty() : view === 'bank' ? bankView() : view === 'bankm' ? bankModel() : view === 'model' ? model() : view === 'dane' ? dane() : view === 'ocen' ? oceny() : pomoc();
   try { cyApply(); } catch (e) {}
+  if (view === 'ocen') { const K = ocList().map(ocKey), S0 = jget(OCS); if (K.some(x => !S0.includes(x))) setTimeout(() => { lsSet(OCS, JSON.stringify([...new Set([...S0, ...K])].slice(-300))); const n = ocNowe(); $('navO').innerHTML = `OCENY${n ? `<i class="nb">${n}</i>` : ''}`; }, 1500); }   // obejrzane
   if (keep && $(keep[0])) { $(keep[0]).value = keep[1]; $(keep[0]).focus(); }
 }
 let back = 'teraz', mWid = 's';   // ekran modelu: 's' statystyki, 'z' zeszyt (bieżąca gra)
@@ -1827,6 +1867,8 @@ document.addEventListener('click', e => {
     ghPut({ repo, tok, auto: true }); render(); return ghSend(true); }
   if ((b = q('[data-ghsend]'))) return ghSend(true);
   if ((b = q('[data-inchk]'))) return inFetch(true);
+  if ((b = q('[data-ocdod]'))) { const o = ocList().find(x => ocKey(x) === b.dataset.ocdod); if (o && inDodajP(ocP(o))) reload(); return; }
+  if ((b = q('[data-ocukr]'))) { const L = jget(OCU); L.push(b.dataset.ocukr); lsSet(OCU, JSON.stringify(L.slice(-300))); return render(); }
   if ((b = q('[data-indod]'))) return inDodaj(b.dataset.indod);
   if ((b = q('[data-inodr]'))) { inSet(b.dataset.inodr, 'odrzucone'); toast('Odrzucone'); reload(); return; }
   if ((b = q('[data-ghrest]'))) return ghRestore();
