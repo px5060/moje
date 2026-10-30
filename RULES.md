@@ -142,25 +142,20 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Kiedy: po zmianach (15 s), przy otwarciu i powrocie do MOJE (2–3 s), co 3 min, gdy MOJE jest na ekranie. Nowe urządzenie: repo + klucz →
   „Zapisz i wyślij” pobiera wszystko (baza pusta = suma list). „Przywróć” zostaje jako ręczne zastąpienie bez łączenia.
 
-## 🔍 OCENY — oceny modeli od Claude (1.36.0)
-- Prośba użytkownika: model po analizie Claude trafia do osobnej zakładki z całą oceną. Claude zapisuje oceny w `oceny.json` w tym samym
-  repo (narzędzie `all50/analiza/narzedzia/ocena.py`); MOJE pobiera plik razem z `od_claude.json` (ten sam klucz, co najmniej 2 min przerwy,
-  „📥 Sprawdź propozycje i oceny” — od razu) i pokazuje zakładkę **OCENY** (dolny pasek, licznik nowych).
-- Ocena: `{id, nazwa, gdzie, tabela, …model jak w 📥…, data, kody_do, krok, stawka, zaklad, werdykt (GRAĆ / OBSERWUJ / NIE GRAĆ), krotko,
-  sekcje: [{tytul, wiersze}], liczby}`. Karta: werdykt (kolor), kiedy i na jakich kodach, krok „teraz” liczony przez MOJE (SZUKAJ),
-  „Cała ocena” (sekcje), „＋ Dodaj do MOJE / ZESZYTU” (to samo zapisanie co w 📥, `inDodajP`) albo „✓ masz go”, „Ukryj”.
-- Ukryte (`moje_v1_ocukr`) i obejrzane (`moje_v1_ocseen`) jadą w stan.json (łączone między urządzeniami); pobrany plik (`moje_v1_ghoc`)
-  nie jedzie. Wszystko z pliku escapowane; najwyżej 100 ocen. Dolny pasek: 7 przycisków, szerokość wg napisu (12 px) — mieści się na 360 px.
-
-## 📥 Od Claude — propozycje modeli z repo (1.34.0)
-- Prośba użytkownika: Claude ma móc sam dodawać modele do MOJE i ZESZYTU. Claude zapisuje propozycje w `od_claude.json` w tym samym prywatnym
-  repo (narzędzie `all50/analiza/narzedzia/od_claude.py`); MOJE pobiera plik tym samym kluczem (przy `reload` / otwarciu, co najmniej 2 min
-  przerwy; „📥 Sprawdź propozycje od Claude” w KODY — od razu) i pokazuje na górze TERAZ okienko **„📥 Od Claude”**. **Nic nie dodaje się samo**:
-  „＋ Dodaj” zapisuje model tak samo jak appka, „Odrzuć” chowa propozycję. Claude nie ustawia zakładów.
-- Propozycja: `{id, gdzie, tabela, …, uwaga}`. `gdzie: 'MOJE'` → `{t}{pfx}moje_{cel}` jak `addMoje` (start = Nr teraz, s0 = krok teraz);
-  `'BANK'` → `moje_v1_bank` jak „→ BANK”; oba z `app` (S / S+ / L), `cel`, `model` (P…) i `m` (pola modelu z puli, S/L 5, S+ 7) — MOJE liczy krok
-  własnym silnikiem i pokazuje go przy propozycji. `'ZESZYT'` T50 → `zeszyt_v1_modele` `{id: 'u…', w (3 wiersze 1–28), poz, czekaj, war ('' / 'boki'),
-  limit}`, T60 → `zeszyt_v1_modele60` `{id: 'v…', w (1–3 wiersze 1–30), cel (2/3xx, 1xx, 1–3xx, x1x, xx1), jedn: 's', cz, war: '', limit, lista?}` —
-  jak „Przenieś do zeszytu”. Zły opis → okienko pokazuje błąd i tylko „Odrzuć”. Ten sam model drugi raz → „już jest”, bez duplikatu.
-- Decyzje `moje_v1_odclaude` `{id: {d: 'dodane' | 'jest' | 'odrzucone', t}}` jadą w `stan.json` (Claude widzi, co dodano); pobrany plik
-  (`moje_v1_ghin`) nie jedzie. Najwyżej 20 propozycji naraz na ekranie, `uwaga` do 300 znaków, wszystko z pliku escapowane.
+## 🔍 OCENY — propozycje i oceny od Claude (1.36.0, zastępuje 📥 Od Claude z 1.34.0)
+- Prośba użytkownika: Claude ocenia modele bardziej zaawansowanie i każda ocena trafia do MOJE z decyzją użytkownika. Dwa rodzaje:
+  - **propozycja Claude** (`rodzaj: propozycja`): Claude wybiera modele z pul SZUKAJ / S+ / LOST i z ZESZYTU wg kryteriów, każdy kandydat
+    przechodzi pełną ocenę, do telefonu idą najlepsi → **＋ Dodaj do MOJE / ZESZYTU** (zapis jak „Gram — dodaj do MOJE” / „Przenieś do
+    zeszytu”, `inDodajP`) albo **Usuń analizę**;
+  - **ocena Twojego modelu** (`rodzaj: moj`): użytkownik sam dodał model do MOJE / ZESZYTU i poprosił o ocenę → **Zostaw w MOJE** albo
+    **Usuń z MOJE** (z listy MOJE GRY appki i z BANK albo z ZESZYTU, po potwierdzeniu, `ocUsun`).
+- Plik `oceny.json` w tym samym repo (pisze `all50/analiza/narzedzia/ocena.py`); MOJE pobiera go przy otwarciu (co najmniej 2 min przerwy)
+  i przyciskiem „🔍 Sprawdź propozycje i oceny od Claude” w KODY. Ocena: `{id, rodzaj, nazwa, gdzie, tabela, …model…, data, kody_do, krok,
+  stawka, zaklad, werdykt (GRAĆ / OBSERWUJ / NIE GRAĆ), krotko, sekcje: [{tytul, wiersze}], liczby}`; zła ocena → komunikat i „Usuń analizę”.
+- Zakładka **OCENY**: „📥 Propozycje Claude”, „🔍 Oceny Twoich modeli”, na dole „Załatwione”. Karta: werdykt (kolor), kiedy i na jakich kodach,
+  krok „teraz” liczony przez MOJE (SZUKAJ), jedna linia, „Cała ocena” (stan, historia do k8 / limitu i w 3 krokach, uczciwa szansa,
+  symulacja, nakładanie, czym się kierował), decyzja. TERAZ: pasek „📥 Od Claude: … czeka na decyzję — OCENY ›”; na przycisku OCENY liczba
+  czekających.
+- Decyzje `moje_v1_ocdec` `{id|data: {d: 'dodane' | 'usunieta' | 'zostaw' | 'usuniety', t}}` jadą w stan.json (łączone między urządzeniami,
+  Claude je widzi); pobrany plik (`moje_v1_ghoc`) nie jedzie. Nowa ocena tego samego modelu (inna data) znowu czeka na decyzję. Nic nie
+  dodaje się ani nie usuwa samo; zakładów Claude nie ustawia. Dolny pasek: 7 przycisków, szerokość wg napisu (12 px) — mieści się na 360 px.
