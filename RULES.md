@@ -159,3 +159,15 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Decyzje `moje_v1_ocdec` `{id|data: {d: 'dodane' | 'usunieta' | 'zostaw' | 'usuniety', t}}` jadą w stan.json (łączone między urządzeniami,
   Claude je widzi); pobrany plik (`moje_v1_ghoc`) nie jedzie. Nowa ocena tego samego modelu (inna data) znowu czeka na decyzję. Nic nie
   dodaje się ani nie usuwa samo; zakładów Claude nie ustawia. Dolny pasek: 7 przycisków, szerokość wg napisu (12 px) — mieści się na 360 px.
+
+## 🔍 OCENY bez powielania (1.37.0) — prośba użytkownika: „żeby nam się te oceny nie powielały”
+- **Jedna ocena na model**: stałe id (`app|tabela|cel|P{nr}`, ZESZYT `Z|t50|…` / `Z|t60|…` jak `zid` w ocena.py); ocena.py `nowe` ocenia tylko
+  modele z telefonu bez oceny, ponowna ocena tylko na prośbę.
+- **Decyzje tylko w MOJE → OCENY.** ZESZYT (1.26.0) pokazuje przy modelu werdykt i „Całą ocenę” tylko do odczytu (czyta `moje_v1_ghoc`).
+- **Zamykanie samo** (`ocStan`, bez zapisu w `moje_v1_ocdec`): ocena Twojego modelu, którego już nie ma w MOJE GRY / BANK / ZESZYCIE
+  (usunięty poza OCENAMI) → Załatwione „nie ma go już”; propozycja, której model dodano samodzielnie → Załatwione „＋ dodany — poza OCENAMI”.
+  Model wraca → ocena znowu czeka. Liczy się bez symulacji (porównanie modelu), pamięć `_ocC` czyszczona przy reload / zmianie ocen / decyzji.
+- **Znaczek 🔍 GRAĆ / OBSERWUJ / NIE GRAĆ** przy karcie modelu (TERAZ / ZAKŁADY / LOST, BANK, lista BANK) — najnowsza ocena tego modelu (`clTag`).
+- „＋ Dodaj do ZESZYTU” zaznacza nowy model na karcie i otwiera listę „Modele” (jak „Przenieś do zeszytu”); „Usuń z MOJE” (ZESZYT) usuwa go też
+  z zaznaczonych.
+- Sprzątanie `oceny.json` na starcie sesji: `ocena.py wyczysc` (decyzje starsze niż 14 dni i oceny Twoich modeli, których nie ma już w telefonie).
