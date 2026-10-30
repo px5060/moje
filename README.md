@@ -12,7 +12,7 @@ ze wszystkich aplikacji SZUKAJ, SZUKAJ+ i SZUKAJ BUST (T50 i T60). Czyta wspóln
 
 - **☁ Kopia w GitHub** (KODY, 1.33.0) — kody i listy z telefonu do pliku `stan.json` w prywatnym repo (np. `px5060/kody`), sama po zmianach (także po poprawce kodu — urządzenie ze starszymi kodami jej nie nadpisze); Claude czyta go w nowej rozmowie, „Przywróć” wczytuje ten stan na innym urządzeniu. Zasady: `RULES.md`.
 - **☁ Kilka urządzeń** (1.35.0) — telefon, tablet, komputer z tym samym kluczem: MOJE łączy zmiany (modele, kody, ZESZYT) w obie strony. Zasady: `RULES.md`.
-- **📥 Od Claude** (TERAZ, 1.34.0) — propozycje modeli od Claude z pliku `od_claude.json` w tym samym repo: „＋ Dodaj” wpisuje model do MOJE, BANK albo ZESZYTU, „Odrzuć” chowa; nic nie dodaje się samo. Zasady: `RULES.md`.
+- **🔍 OCENY** (1.36.0) — propozycje Claude (＋ Dodaj / Usuń analizę) i oceny Twoich modeli (Zostaw / Usuń z MOJE) z pełną analizą: historia, uczciwa szansa, symulacja, nakładanie, werdykt (`oceny.json` w tym samym repo). Zasady: `RULES.md`.
 
 Budowa: `python3 build.py` (z `moje_template.html` + `seed_t50.txt` / `seed_t60.txt`) → `index.html`. Ikony: `python3 make_icons.py`.
 Silnik = ten sam co w SZUKAJ+ (SZUKAJ i BUST to SZUKAJ+ z 1 TRIGGEREM i bez STEP2).
