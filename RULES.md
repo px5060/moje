@@ -169,8 +169,9 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
   w środku serii (krok banku ≤ k5); inaczej prosta progresja (TERAZ, a model po LOST — LOST). W ocenie pole `gra: {zalecana: TERAZ | LOST | BANK, bank: 3 | 5, po_lost, tx}`.
 - Karta OCENY: ramka „▶ Sugestia: …” (i gdzie model jest teraz). Propozycja: **＋ Do MOJE (TERAZ)** albo **＋ Do LOST** (model po LOST —
   liczone w telefonie, `r.sinceB === 0`; trafia do MOJE GRY i sam jest w zakładce LOST) i **＋ Do BANK** (`moje_v1_bank`; którym bankiem
-  prowadzić listę — przełącznik +3 / +5 w BANK); sugestia podświetlona. Twój model: Zostaw / Usuń z MOJE, a gdy sugestia jest inna niż jego
-  miejsce — **🏦 Przenieś do BANK** / **🟧 Przenieś do TERAZ** (`moveTo`). Decyzje: `dodane_bank`, `do_banku`, `do_teraz`.
+  prowadzić listę — przełącznik +3 / +5 w BANK); sugestia podświetlona. Twój model (1.38.1, prośba użytkownika — jak przy propozycji):
+  na TERAZ / LOST — **✓ Zostaw w MOJE (TERAZ)** (albo w LOST) i **🏦 Do BANK**; w BANK — **🟧 Do MOJE (TERAZ)** (albo LOST) i **✓ Zostaw w BANK**;
+  podświetlona ta zgodna z sugestią; obok ✕ Usuń z MOJE. Przeniesienie — `moveTo`. Decyzje: `dodane_bank`, `do_banku`, `do_teraz`.
 - ZESZYT bez zmian (bank jest tylko dla modeli SZUKAJ). Stara ocena bez `gra` — jak dotąd (jeden przycisk „＋ Dodaj do MOJE”).
 
 ## 🔍 OCENY bez powielania (1.37.0) — prośba użytkownika: „żeby nam się te oceny nie powielały”
