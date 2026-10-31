@@ -160,6 +160,19 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
   Claude je widzi); pobrany plik (`moje_v1_ghoc`) nie jedzie. Nowa ocena tego samego modelu (inna data) znowu czeka na decyzję. Nic nie
   dodaje się ani nie usuwa samo; zakładów Claude nie ustawia. Dolny pasek: 7 przycisków, szerokość wg napisu (12 px) — mieści się na 360 px.
 
+## 🔍 OCENY: sposób gry — prosta progresja czy BANK (1.38.0)
+- Prośba użytkownika: po ocenie modelu sugestia, czy lepiej grać go bankiem, czy prostą progresją, i wybór, gdzie zapisać: MOJE (TERAZ),
+  LOST (tylko model po LOST — od LOST-u bez WIN) albo BANK.
+- ocena.py (modele SZUKAJ / S+ / LOST) liczy sekcję „Sposób gry” jak MOJE: prosta progresja (krok, do k8, skala 9 pkt) i BANK +3 / +5
+  (`bankOf`: krok banku teraz z przeniesionymi krokami, okno, szansa w oknie i w 2 oknach, ile serii wygranych w 1. oknie, najdłuższa seria,
+  serie > k9 / k10, skala 9 pkt banku). Sugestia BANK +w, gdy skala banku ≥ 7 i wyższa niż przy prostej progresji, a bank nie jest teraz
+  w środku serii (krok banku ≤ k5); inaczej prosta progresja (TERAZ, a model po LOST — LOST). W ocenie pole `gra: {zalecana: TERAZ | LOST | BANK, bank: 3 | 5, po_lost, tx}`.
+- Karta OCENY: ramka „▶ Sugestia: …” (i gdzie model jest teraz). Propozycja: **＋ Do MOJE (TERAZ)** albo **＋ Do LOST** (model po LOST —
+  liczone w telefonie, `r.sinceB === 0`; trafia do MOJE GRY i sam jest w zakładce LOST) i **＋ Do BANK** (`moje_v1_bank`; którym bankiem
+  prowadzić listę — przełącznik +3 / +5 w BANK); sugestia podświetlona. Twój model: Zostaw / Usuń z MOJE, a gdy sugestia jest inna niż jego
+  miejsce — **🏦 Przenieś do BANK** / **🟧 Przenieś do TERAZ** (`moveTo`). Decyzje: `dodane_bank`, `do_banku`, `do_teraz`.
+- ZESZYT bez zmian (bank jest tylko dla modeli SZUKAJ). Stara ocena bez `gra` — jak dotąd (jeden przycisk „＋ Dodaj do MOJE”).
+
 ## 🔍 OCENY bez powielania (1.37.0) — prośba użytkownika: „żeby nam się te oceny nie powielały”
 - **Jedna ocena na model**: stałe id (`app|tabela|cel|P{nr}`, ZESZYT `Z|t50|…` / `Z|t60|…` jak `zid` w ocena.py); ocena.py `nowe` ocenia tylko
   modele z telefonu bez oceny, ponowna ocena tylko na prośbę.
