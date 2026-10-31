@@ -160,6 +160,13 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
   Claude je widzi); pobrany plik (`moje_v1_ghoc`) nie jedzie. Nowa ocena tego samego modelu (inna data) znowu czeka na decyzję. Nic nie
   dodaje się ani nie usuwa samo; zakładów Claude nie ustawia. Dolny pasek: 7 przycisków, szerokość wg napisu (12 px) — mieści się na 360 px.
 
+## 🔍 OCENY: dotknięcie karty → statystyki jak w BANK (1.39.0)
+- Prośba użytkownika: dotknięcie modelu w OCENACH otwiera jego statystyki tak jak w BANK (z rozpisaniem procentowym banku +3 / +5), jakby
+  model był w BANK; „🔍 Cała ocena Claude” (rozwijane na karcie) pokazuje pełną ocenę Claude.
+- Widok `ocm` (`ocModel`): model z oceny (`inOpis` → `mkItem`, `classify`, `bankOf` +3 / +5) → nagłówek z werdyktem, sugestią i „Cała ocena”,
+  dalej `bqDet` (bez przycisków Przenieś — decyzja na karcie oceny) i `rows20(it, 1)` jak `bankModel`. „← wróć do OCEN”.
+- Dotyka się karty modelu z SZUKAJ (ZESZYT — bez zmian); przyciski i „Cała ocena” na karcie nie otwierają statystyk.
+
 ## 🔍 OCENY: sposób gry — prosta progresja czy BANK (1.38.0)
 - Prośba użytkownika: po ocenie modelu sugestia, czy lepiej grać go bankiem, czy prostą progresją, i wybór, gdzie zapisać: MOJE (TERAZ),
   LOST (tylko model po LOST — od LOST-u bez WIN) albo BANK.
