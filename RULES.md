@@ -193,3 +193,6 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - „＋ Dodaj do ZESZYTU” zaznacza nowy model na karcie i otwiera listę „Modele” (jak „Przenieś do zeszytu”); „Usuń z MOJE” (ZESZYT) usuwa go też
   z zaznaczonych.
 - Sprzątanie `oceny.json` na starcie sesji: `ocena.py wyczysc` (decyzje starsze niż 14 dni i oceny Twoich modeli, których nie ma już w telefonie).
+
+## OCENY: pełne statystyki modelu (1.40.0)
+- Dotknięcie karty oceny otwiera ten sam ekran co model w TERAZ / LOST (`modelPelne(it, true)`): Teraz (faza), Jak gra, 📊 Statystyki / 📓 Zeszyt, statystyki całej tabeli (ocena pkt, WIN na kroku, ostatnie cykle — kwadraciki, LOST-y), BANK +3 / +5 z szansami, ostatnie 20 wierszy, linki do SZUKAJ. Bez zapisu zakładu, przenoszenia, historii zakładów i usuwania — przenosi się na karcie oceny. Na górze ocena Claude.
