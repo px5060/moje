@@ -195,7 +195,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.39.0';
+const APP_VER = '1.40.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1443,17 +1443,21 @@ function model() {
   const it = items.find(x => x.uid === sel);
   if (!it) { view = 'teraz'; return teraz(); }
   if (it.rz) return rzModel(it);
+  return modelPelne(it, false);
+}
+// pełny ekran modelu (TERAZ / LOST / BANK) — od 1.40.0 też z OCEN (oc = true: bez zakładu, przenoszenia, historii zakładów i usuwania)
+function modelPelne(it, oc) {
   const m = it.m, r = it.r, C = D[it.t], lab = labOf(it), n = C.n, cyc = r.nw + r.nbu;
-  let h = `<button class="btn back" data-go="${back}">← wróć</button>
+  let h = `${oc ? '' : `<button class="btn back" data-go="${back}">← wróć</button>`}
     <div class="box" style="border-color:var(--or)"><div class="h" style="display:flex;justify-content:space-between"><b style="font-size:17px">${srcBdg(it)}${esc(it.g.id)}${it.rz ? '' : `<span class="tgt">${it.tg}</span>`}</b><span class="mu">${esc(it.s.name)} ${TABS[it.t].name} · cel ${it.tg}</span></div>
     <div class="rule mu" style="font-size:12px;margin:3px 0 6px">${esc(ruleTxt(m))}</div><div style="font-size:14.5px">Teraz: ${phaseTxt(it)}</div>
     ${it.inBust ? `<div class="neg" style="margin-top:4px">BUST w Nr ${fmtN(r.lbr + 1)} — od niego jeszcze bez WIN</div>` : ''}
     ${it.res ? `<div style="margin-top:4px">Moja gra: ${it.res.win ? `✔ WIN k${it.res.k}` : '✖ BUST'} w Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}</div>` : ''}
-    ${it.gone ? '' : `<div class="hint">Śledzę od Nr ${fmtN((it.g.start || 0) + 1)} (wejście na k${it.g.s0 || 1})${it.g.t ? ` · dodany ${ago(it.g.t)}` : ''}</div>`}
-    <div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (możesz zmienić Nr, krok i kwotę):</div>${betForm(it, 1)}<div style="margin-top:8px">${moveBtn(it)}</div></div>`;
-  h += betHist(it);
-  famOf(it.uid).forEach(([F, fi]) => { h += famCard(F, fi, 1); });
-  if (back === 'bank') h += bankBox(it);   // z zakładki BANK: bank na górze
+    ${it.gone || oc ? '' : `<div class="hint">Śledzę od Nr ${fmtN((it.g.start || 0) + 1)} (wejście na k${it.g.s0 || 1})${it.g.t ? ` · dodany ${ago(it.g.t)}` : ''}</div>`}
+    ${oc ? '' : `<div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (możesz zmienić Nr, krok i kwotę):</div>${betForm(it, 1)}<div style="margin-top:8px">${moveBtn(it)}</div>`}</div>`;
+  if (!oc) { h += betHist(it); famOf(it.uid).forEach(([F, fi]) => { h += famCard(F, fi, 1); }); }
+  const zBank = !oc && back === 'bank';
+  if (zBank) h += bankBox(it);   // z zakładki BANK: bank na górze
   h += `<div class="box"><h4>Jak gra ten model</h4><ol>
     <li><b>STEP</b>: czekam, aż wypadnie ${esc(stepTxt(m))}.</li>
     ${m[6] ? `<li><b>STEP2</b>: potem czekam na układ ${esc(m[6])}.</li>` : ''}
@@ -1464,7 +1468,7 @@ function model() {
   if (mWid === 'z') {   // bieżąca gra na kartach ZESZYTU (z nazwami meczów) zamiast statystyk i tabeli 20 wierszy
     h += `<div class="box"><h4>📓 Zeszyt — bieżąca gra</h4><div class="hint">STEP, TRIGGER, przegrane kroki i zakład do gry na kartach ZESZYTU, z nazwami meczów. ◀ ▶ — inne karty.</div>
       <iframe class="pgz" src="/zeszyt/${it.t === 't60' ? 't60.html' : ''}?znacz=${znaczZeszyt(lab, n)}" title="bieżąca gra na zeszycie"></iframe></div>`;
-    if (back !== 'bank') h += bankBox(it);
+    if (!zBank) h += bankBox(it);
   } else {
   const dist = r.wk, mx = Math.max(1, ...dist, r.nbu), last = r.ev.slice(-24);
   const gaps = r.bl.slice(-6).map((b, i, a) => i ? b[1] - a[i - 1][1] : null).slice(1);
@@ -1477,13 +1481,13 @@ function model() {
     <div class="hint" style="margin-top:8px">Ostatnie ${last.length} cykli (W = WIN na kroku, B = BUST), najnowszy z prawej:</div>
     ${cycHtml(it, 24, 'B')}
     ${r.bl.length ? `<div class="hint" style="margin-top:8px">BUST-y w wierszach: ${r.bl.slice(-6).map(b => 'Nr ' + fmtN(b[0] + 1)).join(' · ')}${gaps.length ? `<br>odstępy między nimi w cyklach: ${gaps.join(' · ')}` : ''}</div>` : ''}</div>`;
-  if (back !== 'bank') h += bankBox(it);
+  if (!zBank) h += bankBox(it);
   h += rows20(it);
   }
   const dl = v => `${it.s.url[it.t]}?model=${encodeURIComponent(it.g.m.join('|'))}&tgt=${it.tg}&v=${v}`;   // SZUKAJ otwiera od razu ten model
   h += `<a class="btn wide pri" href="${dl('stat')}">📊 Otwórz ten model w ${esc(it.s.name)} ${TABS[it.t].name} (statystyki)</a>
     <a class="btn wide" href="${dl('tab')}">📋 Otwórz tabelę tego modelu w ${esc(it.s.name)} ${TABS[it.t].name}</a>
-    <button class="btn wide" data-untrack="1" style="color:var(--rd)">${it.gone ? 'Ukryj ten BUST' : '✕ Usuń z MOJE'}</button>`;
+    ${oc ? '' : `<button class="btn wide" data-untrack="1" style="color:var(--rd)">${it.gone ? 'Ukryj ten BUST' : '✕ Usuń z MOJE'}</button>`}`;
   return h;
 }
 // ===== BANK +3 / +5 — bez limitu =====
@@ -1747,10 +1751,10 @@ function ocModel() {   // 1.39.0 (prośba użytkownika): dotknięcie modelu w OC
   const o = ocList().find(x => ocKey(x) === sel), op = o && inOpis(ocP(o)); if (!op || op.err || !op.it) { view = 'ocen'; return oceny(); }
   const it = op.it; classify(it); it.bat = D[it.t].n; it.bk = {}; BKW.forEach(w => { it.bk[w] = bankOf(it, w); });
   const g = o.gdzie !== 'ZESZYT' && o.gra && o.gra.zalecana ? o.gra : null;
-  return `<button class="btn back" data-go="ocen">← wróć do OCEN</button><div class="hint" style="margin:6px 0 0">Statystyki modelu z oceny — tak jak w BANK (zapis i przenoszenie: na karcie oceny).</div>`
+  return `<button class="btn back" data-go="ocen">← wróć do OCEN</button><div class="hint" style="margin:6px 0 0">Pełne statystyki modelu z oceny — jak w TERAZ i LOST (przenoszenie do MOJE / BANK / ZESZYTU: na karcie oceny).</div>`
     + `<div class="box" style="border-color:${OCW[o.werdykt] || 'var(--bd)'}"><b>🔍 Ocena Claude: <span style="color:${OCW[o.werdykt] || 'var(--tx)'}">${esc(o.werdykt || '')}</span></b>`
     + `${g ? `<div style="font-size:12.5px;margin-top:3px">▶ Sugestia: <b>${ocGraL(g)}</b></div>` : ''}<div class="hint" style="margin-top:3px">${esc(o.krotko || '')}</div>`
-    + `<details><summary class="hint">Cała ocena</summary>${ocSek(o)}</details></div>` + bqDet(it, true) + rows20(it, 1);
+    + `<details><summary class="hint">Cała ocena</summary>${ocSek(o)}</details></div>` + modelPelne(it, true);   // 1.40.0: pełne statystyki jak w TERAZ / LOST (z bankiem +3 / +5)
 }
 function bankModel() {   // model z listy BANK
   const it = bitems.find(x => x.uid === sel); if (!it) { view = 'bank'; return bankView(); }
