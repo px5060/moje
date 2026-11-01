@@ -199,3 +199,7 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 
 ## OCENY: modele ZESZYTU też otwierają statystyki (1.41.0)
 - Karta oceny modelu ZESZYTU (T50 / T60) → ekran z oceną Claude i ramką SZUKAJ W ZESZYCIE `?m=<kod>` (pełne statystyki: kwadraciki, LOST-y, podgląd zeszytu) + „🔎 Otwórz w SZUKAJ W ZESZYCIE”. MOJE nie liczy ZESZYTU.
+
+## Karty RAZEM w MOJE: krok i cel (1.41.1)
+- Krok z tekstu GRA także w zapisie „krok 4” (TRÓJKA), nie tylko „K4” / „krok gry 4” — wcześniej TRÓJKA pokazywała k1 przy „krok 4 · 64 zł”.
+- Cel (x1x / xx1 / 1xx): z tekstu GRA, reguły albo nazwy tabeli RAZEM (np. „TRÓJKA xx1 V1.3”) — wcześniej zawsze x1x (też przy rozliczaniu zakładów).
