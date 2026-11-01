@@ -196,3 +196,6 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 
 ## OCENY: pełne statystyki modelu (1.40.0)
 - Dotknięcie karty oceny otwiera ten sam ekran co model w TERAZ / LOST (`modelPelne(it, true)`): Teraz (faza), Jak gra, 📊 Statystyki / 📓 Zeszyt, statystyki całej tabeli (ocena pkt, WIN na kroku, ostatnie cykle — kwadraciki, LOST-y), BANK +3 / +5 z szansami, ostatnie 20 wierszy, linki do SZUKAJ. Bez zapisu zakładu, przenoszenia, historii zakładów i usuwania — przenosi się na karcie oceny. Na górze ocena Claude.
+
+## OCENY: modele ZESZYTU też otwierają statystyki (1.41.0)
+- Karta oceny modelu ZESZYTU (T50 / T60) → ekran z oceną Claude i ramką SZUKAJ W ZESZYCIE `?m=<kod>` (pełne statystyki: kwadraciki, LOST-y, podgląd zeszytu) + „🔎 Otwórz w SZUKAJ W ZESZYCIE”. MOJE nie liczy ZESZYTU.
