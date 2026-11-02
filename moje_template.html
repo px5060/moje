@@ -196,7 +196,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.41.0';
+const APP_VER = '1.41.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -860,11 +860,12 @@ function rzItems(t) {   // modele z MOJE GRY appki RAZEM → wiersze MOJE (krok,
     try { if (c) soon = w.wgSoon(c, N); } catch (e) {}
     const L = c ? c.lines : [], act = L.find(l => l.p === 1) || L.find(l => l.p === 4) || L.find(l => l.p === 3) || L[0] || null;
     const tx = act ? `${act.txt || ''} · ${act.sub || ''}` : '';
-    const km = /\bk(\d)\b/i.exec(tx) || /krok gry (\d)/.exec(tx), zm = /(\d[\d  ]*)\s?zł/.exec(act ? act.txt || '' : ''), nm = /Nr\s?([\d  ]+)/.exec(act ? act.txt || '' : '');
-    const step = km ? Math.min(8, Math.max(1, +km[1])) : 1, stake = zm ? +zm[1].replace(/\D/g, '') : ST[step - 1];
+    const km = /\bk(\d{1,2})\b/i.exec(tx) || /krok(?: gry)? (\d{1,2})/i.exec(tx), zm = /(\d[\d  ]*)\s?zł/.exec(act ? act.txt || '' : ''), nm = /Nr\s?([\d  ]+)/.exec(act ? act.txt || '' : '');
+    const step = km ? Math.min(8, Math.max(1, +km[1])) : 1, stake = zm ? +zm[1].replace(/\D/g, '') : ST[step - 1];   // 1.41.1: też „krok 4” (TRÓJKA)
+    const tgm = /\b(x1x|xx1|1xx)\b/.exec(tx) || /\b(x1x|xx1|1xx)\b/.exec(c && c.rule || '') || /\b(x1x|xx1|1xx)\b/.exec((w.document.getElementById('fr_' + g.k) || {}).title || '');   // cel: z tekstu GRA, reguły albo nazwy tabeli RAZEM (np. „TRÓJKA xx1 V1.3”), nie zawsze x1x
     let d = soon.lvl === 2 ? 1 : nm && act && act.p !== 6 ? +nm[1].replace(/\D/g, '') - N : soon.lvl === 1 ? 2 : 0;
     if (!(d >= 1)) d = 0;
-    const lab = M.lab(g.k), it = { rz: 1, t, k: g.k, s: RZS, tg: 'x1x', c, res, after, soon, act, lab,
+    const lab = M.lab(g.k), it = { rz: 1, t, k: g.k, s: RZS, tg: tgm ? tgm[1] : 'x1x', c, res, after, soon, act, lab,
       g: { id: `${lab} ${g.id}`, rid: g.id, start: g.start, t: g.t }, uid: `${t}~R~${g.k}~${g.id}`, label: `R${t.slice(1)}·${lab} ${g.id}`,
       r: { bs: step - 1, stake, ph: d ? 2 : 0, wz: d ? N + d - 1 : -1, bl: [], ev: [], lbr: res ? res.i : -1 }, d };
     it.inBust = !!(res && !res.win && !after);
