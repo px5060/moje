@@ -196,7 +196,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.41.1';
+const APP_VER = '1.42.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1405,8 +1405,23 @@ function rzZeszyt(it) {   // bieżąca gra modelu RAZEM na kartach ZESZYTU (ła�
   return `<div class="box"><h4>📓 Zeszyt — bieżąca gra</h4><div class="hint">STEP, TRIGGER, gra i zakład na kartach ZESZYTU, z nazwami meczów. ◀ ▶ — inne karty.</div>
     <iframe class="pgz" src="/zeszyt/${it.t === 't60' ? 't60.html' : ''}?znacz=${zn}" title="bieżąca gra na zeszycie"></iframe></div>`;
 }
+// 1.42.0: wszystkie cykle modelu RAZEM (krok WIN / 9 = LOST) — tabela RAZEM podaje je przy liczeniu oceny (window.top.__relG = [{K, er}])
+function rzCyc(it, G) {
+  const ev = (G && G.length && G[0].K != null ? Array.from(G).sort((a, b) => a.er - b.er) : []).map(g => [g.er, g.K >= 9 ? 2 : 1, Math.min(8, g.K)]);
+  if (!ev.length) return '';
+  const wk = Array(8).fill(0); ev.forEach(e => { if (e[1] === 1) wk[e[2] - 1]++; });
+  const nl = ev.length - wk.reduce((a, b) => a + b, 0), mx = Math.max(1, ...wk, nl), x = { uid: it.uid, r: { ev } }, L = ev.filter(e => e[1] !== 1).slice(-6);
+  return `<div class="box"><h4>Wszystkie gry modelu (${fmtN(D[it.t].n)} wierszy)</h4>
+    <div class="kv"><div><b>${ev.length}</b>cykli</div><div><b class="pos">${ev.length - nl}</b>WIN</div><div><b class="neg">${nl}</b>LOST</div></div>
+    <div class="hint" style="margin-top:8px">Na którym kroku przychodził WIN (ostatni słupek = LOST):</div>
+    <div class="bars" style="margin-top:18px">${wk.map(v => `<div style="height:${100 * v / mx}%"><span>${v}</span></div>`).join('')}<div style="height:${100 * nl / mx}%;background:#b3261e"><span>${nl}</span></div></div>
+    <div class="bl">${wk.map((_, i) => `<span>k${i + 1}</span>`).join('')}<span>LOST</span></div>
+    <div class="hint" style="margin-top:8px">Ostatnie ${Math.min(24, ev.length)} cykli (W = WIN na kroku, LOST = przegrany krok 8), najnowszy z prawej. Dotknij kwadracika — powiększy się; jeszcze raz — co było po takim wyniku:</div>
+    ${cycHtml(x, 24, 'LOST')}
+    ${L.length ? `<div class="hint" style="margin-top:8px">LOST w wierszach: ${L.map(e => 'Nr ' + fmtN(e[0] + 1)).join(' · ')}</div>` : ''}</div>`;
+}
 function rzModel(it) {
-  let rows = []; try { rows = it.c && it.c.stats ? it.c.stats() || [] : []; } catch (e) {}   // statystyki modelu z RAZEM (te same co po przytrzymaniu karty w RAZEM)
+  let rows = [], G = null; try { window.__relG = null; rows = it.c && it.c.stats ? it.c.stats() || [] : []; G = window.__relG; } catch (e) {}   // statystyki modelu z RAZEM (te same co po przytrzymaniu karty w RAZEM) + cykle do słupków i kwadracików
   const c = it.c, r = it.r;
   return `<button class="btn back" data-go="${back}">← wróć</button>
     <div class="box" style="border-color:var(--or)"><div style="display:flex;justify-content:space-between"><b style="font-size:17px"><span class="bdg R">R${it.t.slice(1)}</span>${esc(it.g.id)}</b><span class="mu">RAZEM ${TABS[it.t].name} · <span>${esc(it.lab)}</span></span></div>
@@ -1418,7 +1433,7 @@ function rzModel(it) {
     ${betHist(it)}
     ${rzHow(it)}
     <div class="spw"><button data-mwid="s" class="${mWid === 's' ? 'on' : ''}">📊 Statystyki</button><button data-mwid="z" class="${mWid === 'z' ? 'on' : ''}">📓 Zeszyt — bieżąca gra</button></div>
-    ${mWid === 'z' ? rzZeszyt(it) : (rows.length ? `<div class="box"><h4>Statystyki modelu (RAZEM ${TABS[it.t].name})</h4><table class="rows st">${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td style="text-align:right;font-weight:700">${esc(v)}</td></tr>`).join('')}</table></div>` : '') + rzRows(it)}
+    ${mWid === 'z' ? rzZeszyt(it) : (rows.length ? `<div class="box"><h4>Statystyki modelu (RAZEM ${TABS[it.t].name})</h4><table class="rows st">${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td style="text-align:right;font-weight:700">${esc(v)}</td></tr>`).join('')}</table></div>` : '') + rzCyc(it, G) + rzRows(it)}
     ${c ? `<div class="box"><h4>Co pokazuje RAZEM</h4>${(c.meta || []).map(m => `<div class="mu" style="font-size:12px">${esc(m)}</div>`).join('')}
       ${c.lines.map(l => `<div class="bt ${l.p === 1 ? 'pend' : l.p === 4 ? 'pend' : 'none'}" style="cursor:default"><div>${esc(l.txt || '')}<div class="mu" style="font-size:11px">${esc(l.sub || '')}</div></div></div>`).join('')}</div>` : ''}
     <a class="btn wide" href="${RZ[it.t].url}">Otwórz RAZEM ${TABS[it.t].name}</a>

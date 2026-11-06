@@ -203,3 +203,9 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 ## Karty RAZEM w MOJE: krok i cel (1.41.1)
 - Krok z tekstu GRA także w zapisie „krok 4” (TRÓJKA), nie tylko „K4” / „krok gry 4” — wcześniej TRÓJKA pokazywała k1 przy „krok 4 · 64 zł”.
 - Cel (x1x / xx1 / 1xx): z tekstu GRA, reguły albo nazwy tabeli RAZEM (np. „TRÓJKA xx1 V1.3”) — wcześniej zawsze x1x (też przy rozliczaniu zakładów).
+
+## Modele RAZEM w MOJE: wszystkie gry, słupki i kwadraciki (1.42.0)
+- Ekran modelu RAZEM (R50 / R60) w MOJE, pod „Statystyki modelu (RAZEM …)”: ramka **Wszystkie gry modelu** — cykle / WIN / LOST,
+  słupki „na którym kroku przychodził WIN” (k1–k8 i LOST), ostatnie 24 cykle jako kwadraciki (dotknij — powiększ; jeszcze raz — co było po takim wyniku)
+  i wiersze ostatnich LOST — tak samo jak przy modelach SZUKAJ / LOST.
+- Cykle bierzemy z tabeli RAZEM (to samo, co liczy ocenę: `window.top.__relG = [{K, er}]`, K = krok WIN, 9 = LOST). Liczenie modeli w RAZEM bez zmian.
