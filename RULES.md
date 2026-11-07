@@ -218,3 +218,28 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Pod zakładem: **teraz: 🟧 do grania TERAZ / 🟨 do grania ZA CHWILĘ / 🟦 czeka (kN)** — etap modelu teraz; dalej „▶ do …” przywraca model.
 - Dotknięcie zakładu → pełne statystyki modelu (jak w TERAZ: słupki kroków, kwadraciki, bank, zeszyt) — widok `zakm`, bez zapisu zakładu.
   Model RAZEM usunięty z MOJE — statystyki w RAZEM (MOJE nie ma jego karty).
+
+## ZAKŁADY → 📓 ZESZYT: zakłady z ZESZYTU monitorowane w MOJE (1.45.0)
+- Prośba użytkownika: zakłady postawione w ZESZYCIE 50 / 60 „giną po postawieniu” — MOJE ma je pilnować jak zakłady SZUKAJ / RAZEM:
+  oznaczone jako zakłady zeszytu, rozliczane, z kolejnym krokiem (wyższa kwota) i informacją, kiedy jest do grania.
+- Źródło: listy ZESZYTU `zeszyt_v1_zaklady` (T50) / `zeszyt_v1_zaklady60` (T60) — `{mid, nazwa, m, nr, krok, zl, t}`. MOJE czyta i dopisuje
+  (ten sam zapis co „💰 Zapisz zakład” w ZESZYCIE), więc zakład zapisany w MOJE widać w ZESZYCIE → 💰 Zakłady i odwrotnie.
+- Stan modelu liczy **silnik ZESZYTU** (`/zeszyt/silnik.js`, `/zeszyt/silnik60.js`, wczytany `fetch` + `new Function` w osobnym zakresie — te same
+  pliki co w appce ZESZYT; bez internetu z kopii MOJE) na kodach z poprawkami ZESZYTU (`zeszyt_v1_poprawki_<t>`). Wynik zakładu jak w ZESZYCIE
+  (T50: + w kolumnie gry, T60: `trafia`). Sprawdzone 1:1 z zakładką 💰 Zakłady ZESZYTU (wynik, „Dalej”, Nr i krok kolejnego zakładu).
+- Podzakładka **📓 ZESZYT** (obok RAZEM / SZUKAJ / SZUKAJ LOST / RODZINY), znaczek **Z50 / Z60**. Model = ostatni zakład modelu (`mid`):
+  - postawiony, czeka na wynik → 🟧 GRAJ TERAZ (Nr = następny wiersz) / 🟨 ZA CHWILĘ (za 2–3) / 🟦 CZEKAJĄ (później), „✓”;
+  - przegrany, gra modelu trwa (krok ≤ limit) → ta sama droga z **kolejnym krokiem**: Nr, miejsce na karcie (karta · L/P · w. / strona · w.),
+    kwota = ostatnia kwota × 2 na krok (jak progresja, jak „Dalej” w ZESZYCIE), **💰** → formularz (Nr, krok, zł; zmiana kroku przelicza kwotę);
+  - seria zamknięta → **✅ ZAKOŃCZONE**: ✔ WIN na zakładzie, WIN modelu bez zakładu (krok, Nr), ✖ LOST (k limitu przegrany), „model nie grał”;
+    pod spodem **„teraz:”** — 🟧 do grania TERAZ / 🟨🟦 do grania za N w. (nowa gra, 💰 z kwotą od Twojej ostatniej) / czeka na pustą trójkę
+    (stronę) / po LOST (kroki za limitem). 🗑 chowa wpis (`moje_v1_zzukr`: `uid@czas ostatniego zakładu`) — kolejny zakład modelu go przywraca.
+  - **📋 WSZYSTKIE ZAKŁADY ZESZYTU**: każdy zakład, wynik, gdzie jest model, „model nie grał w tym wierszu” / „w ZESZYCIE to krok N”, ✕ usuń (↶ Przywróć).
+  - Suma na górze: wynik łącznie, postawione (rozliczone), dziś — tylko zakłady ZESZYTU tej tabeli.
+- Monitorowanie poza podzakładką: modele ZESZYTU z serią w toku są w znaczkach (T50 / T60 w ZAKŁADACH i na TERAZ, dolny ZAKŁADY, przycisk
+  📓 ZESZYT), na TERAZ w pasku **💰 ZAKŁADY** (na następnym wierszu i za 2–3), a po wpisaniu kodu okienko pokazuje wynik zakładów ZESZYTU na tym
+  wierszu i „▼ 📓 Z50 … GRAJ Nr …” dla tych, które grają na następnym — z wibracją.
+- ZESZYT (1.32.0) ma odnośnik „MOJE pilnuje kolejnego kroku ›” → `/moje/?zak=t50|t60` (MOJE otwiera ZAKŁADY → 📓 ZESZYT tej tabeli).
+- Silnik ZESZYTU nie wczytany (pierwsze otwarcie bez internetu) → wynik zakładów jest, kolejny krok — komunikat; ZESZYT nie może zmieniać nazw
+  `buildBook`, `liczModel`, `modDef`, `STAWKI`, `partsOf` ani budowy wyniku `liczModel` (`gry`, `teraz`, `otw`, `pol` / `rs`) bez zmiany w MOJE.
+

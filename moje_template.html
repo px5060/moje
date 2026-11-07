@@ -87,7 +87,8 @@ details.sec>summary{list-style:none}[data-lp]{-webkit-user-select:none;user-sele
 .btf button{flex:1;min-width:120px;padding:8px}.btf.wide button{font-size:14px}
 .mc .row2{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .bdg{display:inline-block;border-radius:5px;padding:1px 6px;font-size:11px;font-weight:800;color:#fff;margin-right:4px;vertical-align:1px}
-.bdg.S{background:#2e75b6}.bdg.R{background:#1f8a4c}.bdg.Sp{background:#7030a0}.bdg.B{background:#b3261e}
+.bdg.S{background:#2e75b6}.bdg.R{background:#1f8a4c}.bdg.Sp{background:#7030a0}.bdg.B{background:#b3261e}.bdg.Z{background:#b8902e}
+.rw.Z{border-left-color:#b8902e;cursor:default}.rw .l2 a.zzln{color:#d6b25a;font-weight:700;text-decoration:none;white-space:nowrap}
 .kk{display:inline-block;border-radius:5px;padding:0 6px;background:#3d4760;font-weight:800;font-size:12.5px}
 .pos{color:var(--gr)}.neg{color:var(--rd)}.mu{color:var(--mu)}
 .sertx{font-size:12px;color:var(--mu)}.sertx b{color:var(--tx)}
@@ -144,7 +145,7 @@ nav b.soon,.grp b.soon{position:absolute;top:3px;left:2px;min-width:16px;height:
 nav i.nb{position:absolute;top:3px;right:2px;min-width:16px;height:16px;border-radius:8px;background:#c97a45;color:#fff;font:700 10px/16px system-ui;font-style:normal;padding:0 4px;border:1px solid #fff}
 .toast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:#000d;color:#fff;padding:8px 14px;border-radius:9px;font-size:13px;z-index:70;max-width:92vw}
 .respop{position:fixed;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);z-index:60;width:min(94vw,560px);border-radius:12px;padding:10px 14px;color:#fff;box-shadow:0 8px 30px #000a;cursor:pointer}
-.respop.win{background:#1f8a4c}.respop.loss{background:#b3261e}.respop.nil{background:#2b3245}
+.respop.win{background:#1f8a4c}.respop.loss{background:#b3261e}.respop.nil{background:#2b3245}.respop.zgo{background:#9a6a12}
 /* bank +3 / +5 */
 .bkl{margin-top:3px;font-size:12.5px;color:var(--mu)}.bkl b.w{display:inline-block;min-width:46px;color:var(--or2)}.bkl.go{color:#ffd0a8}.bkl.go b.w{color:#fff}
 .bst{display:flex;gap:6px;align-items:center;margin-top:6px}.bst input{flex:1;min-width:0;background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:7px 9px;font-size:15px}
@@ -196,7 +197,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.44.0';
+const APP_VER = '1.45.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -259,12 +260,12 @@ function codeSrcOf(t, i, c) { const L = jget('codesrc_v1_' + t); for (let j = L.
 function validCode(t, c) { return t === 't50' ? /^[01]{3}$/.test(c) : /^[0-3][01]{2}$/.test(c); }
 function addCode(t, c) {
   if (!validCode(t, c)) { toast(t === 't50' ? 'Kod T50: trzy cyfry 0/1, np. 010' : 'Kod T60: pierwsza cyfra 0–3, potem dwie 0/1, np. 210'); return; }
-  const row = D[t].n, before = vitems.filter(it => !it.rz && it.t === t && it.grp !== 'done' && it.r.ph === 2 && it.r.wz === row);
+  const row = D[t].n, before = vitems.filter(it => !it.rz && it.t === t && it.grp !== 'done' && it.r.ph === 2 && it.r.wz === row), zb = zzBefore(t, row);
   const old0 = readAdded(t); if (!lsSet(TABS[t].key, old0 + c)) { alert('BŁĄD zapisu pamięci telefonu!'); return; } codeSrcLog(t, old0, old0 + c, 'MOJE');
   const inp = $('in_' + t); if (inp) inp.value = '';   // pole od razu puste na następny kod   // czytaj-zmień-zapisz: nie gubi kodów z innych aplikacji
   const L = jget(LOGK(t)); L.push({ n: row + 1, c, t: Date.now(), here: 1 }); lsSet(LOGK(t), JSON.stringify(L.slice(-300)));
   reload();
-  resultPop(t, row, c, before);
+  resultPop(t, row, c, before, zb);
   autoBackup(t);
 }
 // ===== KODY: wklejanie kilku naraz, import pliku, eksport (nazwy i format jak w RAZEM: PIKOFF / TRÓJKA — appki na PC je wychwytują) =====
@@ -721,16 +722,19 @@ function undoCode(t) {
   if (!confirm(`Cofnąć ostatni kod ${a.slice(-3)} (Nr ${fmtN(D[t].n)}) w ${TABS[t].name}?\nZniknie we wszystkich aplikacjach (RAZEM, SZUKAJ…).`)) return;
   lsSet(TABS[t].key, a.slice(0, -3)); lsSet(MAXK(t), String(D[t].n - 1)); reload(); toast('Cofnięto ostatni kod');
 }
-function resultPop(t, row, c, list) {   // okienko wyniku: moje modele, które grały na tym wierszu
+function resultPop(t, row, c, list, zb) {   // okienko wyniku: moje modele, które grały na tym wierszu (+ 📓 zakłady ZESZYTU i to, co z nich gra teraz)
   const o = $('respop'); if (o) o.remove();
   const res = list.map(it => { const w = D[t].Y[it.tg][D[t].X[row]] === 1, k = it.r.bs + 1; return { it, w, k, v: w ? 2 * ST[k - 1] : -ST[k - 1] }; });
-  const sum = res.reduce((a, x) => a + x.v, 0), d = document.createElement('div');
-  d.id = 'respop'; d.className = 'respop ' + (!res.length ? 'nil' : sum >= 0 && res.some(x => x.w) ? 'win' : 'loss');
+  const Z = zzPop(t, row, zb || []), zr = Z.filter(x => !x.nx), zn = Z.filter(x => x.nx);
+  const sum = res.reduce((a, x) => a + x.v, 0) + zr.reduce((a, x) => a + x.v, 0), d = document.createElement('div'), any = res.length + zr.length;
+  d.id = 'respop'; d.className = 'respop ' + (!any ? (zn.length ? 'zgo' : 'nil') : sum >= 0 && (res.some(x => x.w) || zr.some(x => x.w)) ? 'win' : 'loss');
   d.innerHTML = `<div class="h">${TABS[t].name} Nr ${fmtN(row + 1)} = ${c}</div>` +
-    (res.length ? res.map(x => `<div class="i">${x.w ? '✔ WIN' : x.k === 8 ? '✖ BUST' : '✗ przegrana'} · ${esc(x.it.label)} · k${x.k} ${ST[x.k - 1]} zł → ${x.w ? '+' + 2 * ST[x.k - 1] : '−' + ST[x.k - 1]} zł</div>`).join('') +
-      `<div class="i"><b>razem ${sum >= 0 ? '+' : '−'}${Math.abs(sum)} zł</b> (gdy zagrane wszystkie)</div>` : `<div class="i">Żaden z moich modeli nie grał na tym wierszu.</div>`) +
+    (res.length ? res.map(x => `<div class="i">${x.w ? '✔ WIN' : x.k === 8 ? '✖ BUST' : '✗ przegrana'} · ${esc(x.it.label)} · k${x.k} ${ST[x.k - 1]} zł → ${x.w ? '+' + 2 * ST[x.k - 1] : '−' + ST[x.k - 1]} zł</div>`).join('') : '') + zr.map(x => `<div class="i">${x.tx}</div>`).join('') +
+    (res.length ? `<div class="i"><b>razem ${sum >= 0 ? '+' : '−'}${Math.abs(sum)} zł</b> (gdy zagrane wszystkie)</div>` : !zr.length ? `<div class="i">Żaden z moich modeli nie grał na tym wierszu.</div>` : '') +
+    zn.map(x => `<div class="i"><b>${x.tx}</b></div>`).join('') +
     `<div class="x">dotknij, żeby zamknąć</div>`;
-  d.onclick = () => d.remove(); document.body.appendChild(d); setTimeout(() => d.remove(), res.length ? 12000 : 4000);
+  if (zn.length) try { navigator.vibrate && navigator.vibrate([60, 60, 60]); } catch (e) {}   // ZESZYT: kolejny krok na następnym wierszu — nie przegap
+  d.onclick = () => d.remove(); document.body.appendChild(d); setTimeout(() => d.remove(), any || zn.length ? 12000 : 4000);
 }
 
 // ===== SILNIK — ten sam co w SZUKAJ / SZUKAJ+ / BUST (SZUKAJ i BUST = SZUKAJ+ z 1 TRIGGEREM i bez STEP2) =====
@@ -832,6 +836,7 @@ function gather() {
   for (const t in RZ) { const R = rzItems(t); R.forEach(it => byUid.set(it.uid, it)); items.push(...R); bets.push(...rzBets(t, byUid)); }
   bitems = bankItems(); BKMAP = new Map(bitems.map(b => [b.uid, b]));
   items.forEach(it => { it.hid = !it.rz && !it.gone && BKMAP.has(it.uid); }); vitems = items.filter(it => !it.hid);   // model w BANK nie jest na TERAZ / LOST
+  zzGather();   // 📓 zakłady ZESZYTU (1.45.0)
 }
 // ===== RAZEM (etap 2): MOJE GRY i MOJE ZAKŁADY z T50 / T60 RAZEM =====
 // Stan modeli RAZEM liczy sama appka RAZEM — MOJE otwiera ją w ukrytej ramce (ten sam adres i pamięć) i czyta jej MOJE GRY, karty i zakłady.
@@ -978,7 +983,7 @@ function phaseTxt(it) {
 
 // ===== EKRANY =====
 let view = 'teraz', sel = null, only = lsGet('moje_v1_only', 't50'); if (!TABS[only]) only = 't50';   // wybrana tabela (T50 / T60) — każda ma swój ekran
-function reload() { Object.keys(TABS).forEach(loadCodes); _lab.clear(); _ocC = null; gather(); render(); rzLoad(); ghSchedule(); inFetch(); }
+function reload() { Object.keys(TABS).forEach(loadCodes); _lab.clear(); _ocC = null; gather(); render(); rzLoad(); zzLoad(); ghSchedule(); inFetch(); }
 // zgubione kody: tylko baza (brak dopisanych) albo mniej kodów niż ostatnio widziane → podpowiedź „wczytaj kopię”
 const MAXK = t => 'moje_v1_maxn_' + t;
 function lostBox(t) {
@@ -1017,7 +1022,7 @@ const GRP = [['now', '🟧 GRAJ TERAZ', 'zakład na następnym wierszu'], ['soon
 // ---- przełącznik tabeli: T50 | T60 (duże przyciski ze znaczkami) ----
 const bdg = (now, ds) => { const soon = [...new Set(ds.filter(d => d >= 2 && d <= 3))].sort(); return (soon.length ? `<b class="soon">${soon.join(',')}</b>` : '') + (now ? `<i class="nb">${now}</i>` : ''); };
 function allBadges(t) {   // TERAZ: znaczki T50 / T60 = wszystko do gry — moje modele, PO LOST, po zakładzie i oba banki
-  const near = [...vitems.filter(it => it.t === t && it.grp !== 'done' && it.r.ph === 2), ...zakState(vis(bets.filter(x => x.t === t))).CH.filter(it => it.grp === 'done')];
+  const near = [...vitems.filter(it => it.t === t && it.grp !== 'done' && it.r.ph === 2), ...zakState(vis(bets.filter(x => x.t === t))).CH.filter(it => it.grp === 'done'), ...zzAct(t)];
   const B = bitems.filter(b => b.t === t), bn = [3, 5].reduce((a, w) => a + B.filter(b => bState(b, w) === 'now').length, 0), bs = [3, 5].flatMap(w => B.filter(b => bState(b, w) === 'soon').map(b => b.d));
   return bdg(near.filter(it => it.d === 1).length + bn, [...near.map(it => it.d), ...bs]);
 }
@@ -1139,8 +1144,10 @@ function teraz() {
   if (BL.length) h += `<details class="sec sheld" ${foldAt('T-bank', 1)}><summary class="sh" data-lp="bank"><span>🏦 BANK +3 / +5 · ${BL.length}${bkS.length ? `<b class="soon">${bkS.join(',')}</b>` : ''}${bkN ? `<i class="nb">${bkN}</i>` : ''}</span><span class="m">przytrzymaj → BANK</span></summary>
     ${bkRows.length ? bkRows.join('') : none('żaden bank (+3 ani +5)')}</details>`;
   const ZS = zakState(vis(bets.filter(x => x.t === t))), zc = ZS.CH, zNear = near(zc);
-  if (zc.length) h += `<details class="sec szak" ${foldAt('T-zak', 1)}><summary class="sh" data-lp="zak"><span>💰 ZAKŁADY · ${zc.length}${bustBadges(zc)}</span><span class="m">przytrzymaj → ZAKŁADY</span></summary>
-    ${zNear.length ? zNear.map(it => ddTag(row(it, zakLb(ZS.M.get(it.uid)), 0, 1), it.d)).join('') : none('żaden model po zakładzie')}</details>`;
+  const zz = zzAct(t), zzN = [...zz.filter(zi => zi.d === 1), ...zz.filter(zi => zi.d >= 2 && zi.d <= 3).sort((a, b) => a.d - b.d)];   // 📓 ZESZYT (1.45.0)
+  if (zc.length || zz.length) h += `<details class="sec szak" ${foldAt('T-zak', 1)}><summary class="sh" data-lp="zak"><span>💰 ZAKŁADY · ${zc.length + zz.length}${bustBadges([...zc, ...zz])}</span><span class="m">przytrzymaj → ZAKŁADY</span></summary>
+    ${zNear.length || zzN.length ? zNear.filter(it => it.d === 1).map(it => ddTag(row(it, zakLb(ZS.M.get(it.uid)), 0, 1), it.d)).join('') + zzN.filter(zi => zi.d === 1).map(zi => zzRow(zi)).join('')
+      + zNear.filter(it => it.d !== 1).map(it => ddTag(row(it, zakLb(ZS.M.get(it.uid)), 0, 1), it.d)).join('') + zzN.filter(zi => zi.d !== 1).map(zi => zzRow(zi)).join('') : none('żaden model po zakładzie')}</details>`;
   const Z = L.filter(it => it.grp === 'done' && !it.inBust);   // po LOST-cie → zakładka LOST (tam gra od k1 jako pierwszy cykl po LOST-cie)
   if (Z.length) h += sec('✅ ZAKOŃCZONE', 'WIN albo BUST (krok 8)', Z, { key: 'T-done', cls: 'sdone', after: rsBtn, extra: it => (it.rz ? `${it.res.win ? '✔ WIN' : '<span class="neg">✖ BUST / LOSS</span>'} · Nr ${fmtN(it.res.i + 1)}` : `${it.res.win ? `✔ WIN k${it.res.k}` : '<span class="neg">✖ BUST k8</span>'} · Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}`) + (it.res.win ? '' : it.inBust ? ' · <b>w zakładce BUST</b>' : ' · potem WIN') + (it.rz ? '' : `<br><span class="sertx">▶ start: Nr ${fmtN((it.g.start || 0) + 1)}${it.g.t ? ' · ' + ago(it.g.t) + ' (' + when(it.g.t) + ')' : ''} · <b>k${it.g.s0 || 1} → k${it.res.win ? it.res.k : 8}</b></span>`) });
   return h;
@@ -1187,7 +1194,7 @@ function busty() {
   return h;
 }
 const ZG = x => x.s.a === 'R' ? 'R' : x.s.a === 'L' ? 'L' : 'S';   // grupa zakładu: RAZEM · SZUKAJ (S i S+) · SZUKAJ LOST
-let zsrc = (v => ['R', 'S', 'L', 'F'].includes(v) ? v : 'R')(lsGet('moje_v1_zsrc', 'R'));
+let zsrc = (v => ['R', 'S', 'L', 'Z', 'F'].includes(v) ? v : 'R')(lsGet('moje_v1_zsrc', 'R'));   // Z = 📓 ZESZYT (1.45.0)
 // modele po zakładzie: ostatni zakład przegrany / czeka / model nie grał — dopóki po nim nie wejdzie WIN (wtedy ZAKOŃCZONE)
 // ▶ graj od nowa: model z ZAKOŃCZONE (po WIN) wraca do gry od teraz — w MOJE GRY aplikacji źródłowej start = teraz, wejście od bieżącego kroku (po WIN = k1)
 const rsTo = it => { const r = it.r, d = r.ph === 2 ? r.wz + 1 - D[it.t].n : 0; return d === 1 ? `🟧 GRAJ TERAZ (k${r.bs + 1} · ${fmtN(ST[r.bs])} zł)` : d >= 2 ? `🟨 ZA CHWILĘ (za ${d} w. · k${r.bs + 1})` : `🟦 CZEKAJĄ (k${r.bs + 1})`; };   // dokąd trafi model po „graj od nowa”
@@ -1227,7 +1234,7 @@ function zukBox() {   // 🙈 ukryte modele tej tabeli (zakłady liczą się do 
   return `<details class="sec" ${foldAt('zakukr', 0)}><summary class="sh"><span>🙈 UKRYTE MODELE · ${L.length}</span><span class="m">zakłady liczą się do wyniku</span></summary>` +
     L.map(x => `<div class="bt"><div>${esc(x.n || x.u)}<br><span class="hint">ukryty ${ago(x.t)} · ${bets.filter(y => y.uid === x.u).length} zakł.</span></div><div class="r"><button class="ub" data-zukpok="${esc(x.u)}">↶ Pokaż</button></div></div>`).join('') + '</details>';
 }
-function zakBadges(A) { const Z = zakState(A); return bdg(Z.CH.filter(it => it.d === 1).length + Z.CHB.filter(e => bkD(e) === 1).length, [...Z.CH.map(it => it.d), ...Z.CHB.map(bkD)]); }
+function zakBadges(A, ZZA) { const Z = zakState(A), zz = ZZA || []; return bdg(Z.CH.filter(it => it.d === 1).length + Z.CHB.filter(e => bkD(e) === 1).length + zz.filter(zi => zi.d === 1).length, [...Z.CH.map(it => it.d), ...Z.CHB.map(bkD), ...zz.map(zi => zi.d)]); }   // ZZA = modele ZESZYTU z serią zakładów w toku
 function zakBankRow(e, extra) {   // karta zakładu banku w ZAKŁADY: wiersz banku (+3 / +5) i ostatni zakład
   const cur = bkw; bkw = e.w; let h = bankRow(e.b).replace('<span class="kk">', `<span class="bw w${e.w}">🏦 +${e.w}</span><span class="kk">`); bkw = cur;
   return ddTag(h.replace('<div class="l2">', `<div class="l2">${extra}<br>`), bkD(e));
@@ -1325,16 +1332,194 @@ function famView() {
   FA.forEach(([F, fi]) => { h += famCard(F, fi); });
   return h;
 }
+// ===== 📓 ZESZYT w ZAKŁADACH (1.45.0, prośba użytkownika): zakłady zapisane w ZESZYCIE T50 / T60 (zeszyt_v1_zaklady / zeszyt_v1_zaklady60)
+// monitorowane jak zakłady SZUKAJ / RAZEM: po przegranym zakładzie model gra dalej kolejny krok — 🟦 CZEKAJĄ → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ;
+// 💰 zapisuje kolejny krok (kwota ×2 jak progresja, do zmiany) na tę samą listę ZESZYTU (widać go też w ZESZYCIE → 💰 Zakłady).
+// Seria zamknięta (WIN na zakładzie, WIN modelu bez zakładu, LOST) → ✅ ZAKOŃCZONE, a tam etap modelu teraz (czeka / do grania) i 💰 na nową grę.
+// Stan modelu liczy silnik ZESZYTU (/zeszyt/silnik.js, silnik60.js — ten sam plik co w appce ZESZYT, wczytany w osobnym zakresie)
+// na kodach z poprawkami ZESZYTU (zeszyt_v1_poprawki_<t>), więc krok i Nr kolejnego kroku są takie jak w ZESZYCIE.
+const ZZ = {
+  t50: { js: '/zeszyt/silnik.js', zk: 'zeszyt_v1_zaklady', url: '/zeszyt/', g: 'Z50', ok: z => Array.isArray(z.m.w) },
+  t60: { js: '/zeszyt/silnik60.js', zk: 'zeszyt_v1_zaklady60', url: '/zeszyt/t60.html', g: 'Z60', ok: z => Array.isArray(z.m.w) && Array.isArray(z.m.cel) },
+};
+const ZZHK = 'moje_v1_zzukr';   // schowane z ✅ ZAKOŃCZONE: [`${uid}@${czas ostatniego zakładu}`] — nowy zakład modelu pokazuje go znowu
+const zzE = {}, zzSt = {};   // t → silnik ZESZYTU (buildBook, liczModel, modDef, STAWKI, partsOf) · '' / 'wczytuję' / 'ok' / 'błąd'
+const zzRaw = t => jget(ZZ[t].zk).filter(z => z && z.m && typeof z.m === 'object' && ZZ[t].ok(z) && z.nr > 0 && z.krok >= 1 && z.zl > 0);
+const zzSt8 = s => 8 * Math.pow(2, Math.max(0, s - 2));   // stawki ZESZYTU: 8, 8, 16, 32 … (krok do 40)
+const zz60 = (cd, cel) => (cd[0] !== '0' && cel.includes(cd[0])) || (cd[1] === '1' && cel.includes('x1x')) || (cd[2] === '1' && cel.includes('xx1'));   // jak trafia() w silnik60.js
+const zzCel = (t, m) => t === 't60' ? (d => [d.length ? (d.length === 3 ? '1-3xx' : d.join('/') + 'xx') : '', m.cel.includes('x1x') ? 'x1x' : '', m.cel.includes('xx1') ? 'xx1' : ''].filter(Boolean).join('+'))(['1', '2', '3'].filter(x => m.cel.includes(x)))
+  : ['+XX', 'X+X', 'XX+'][m.poz == null ? 1 : m.poz];
+function zzLoad() {   // silnik ZESZYTU — tylko gdy są zakłady ZESZYTU (pobranie z tego samego adresu; bez internetu z kopii MOJE)
+  for (const t in ZZ) {
+    if (zzSt[t] === 'ok' || zzSt[t] === 'wczytuję' || !zzRaw(t).length) continue;
+    zzSt[t] = 'wczytuję';
+    (async () => {
+      try { const r = await fetch(ZZ[t].js, { cache: 'no-cache' }); if (!r.ok) throw new Error(r.status);
+        zzE[t] = new Function(await r.text() + '\n;return { buildBook, liczModel, modDef, STAWKI, partsOf };')(); zzSt[t] = 'ok'; }
+      catch (e) { zzSt[t] = 'błąd'; }
+      gather(); render();
+    })();
+  }
+}
+const _zzC = {};   // t → {k (ciąg + poprawki), c: kody, B: karty, M: Map(model → wynik silnika)}
+function zzCodes(t) {   // kody jak w ZESZYCIE: wspólny ciąg + poprawki kodów z bazy zrobione w ZESZYCIE
+  const P = jobj(GH_ZP(t)) || {}, k = D[t].s + '|' + JSON.stringify(P), o = _zzC[t];
+  if (o && o.k === k) return o;
+  const c = D[t].s.match(/\d{3}/g) || [], nS = TABS[t].seed.length / 3;
+  for (const nr in P) if (+nr >= 1 && +nr <= nS && /^\d{3}$/.test(P[nr])) c[nr - 1] = P[nr];
+  return (_zzC[t] = { k, c, B: null, M: new Map() });
+}
+function zzModel(t, m) {   // wynik silnika ZESZYTU + Nr każdego rozegranego kroku (at: Nr → [gra, krok]; gra w toku = M.gry.length), koniec gry (end), Nr przegranego kroku limitu (lim)
+  const E = zzE[t]; if (!E) return null;
+  const C = zzCodes(t), key = JSON.stringify(m); let M = C.M.get(key); if (M) return M;
+  if (!C.B) C.B = E.buildBook(C.c.length);
+  const n = C.c.length, B = C.B, at = new Map();
+  try { M = E.liczModel(C.c, B, E.modDef(m)); } catch (e) { return null; }
+  const nrs = key => { const [k, p, r] = key.split('.').map(Number), row = B.cards[k].parts[p][r - 1]; return [...row.pre, ...(row.nr ? [row.nr] : []), ...row.dop].filter(x => x <= n); };
+  const mark = (g, gi) => { let last = 0; g.pol.forEach(h => h.rs.forEach(o => { const xs = nrs(o.key); o.s.forEach((s, j) => { const x = xs[j]; if (!x) return; at.set(x, [gi, s]); last = x; if (s === M.limit) g.lim = x; }); })); g.end = last; };
+  M.gry.forEach(mark); if (M.otw) mark(M.otw, M.gry.length);
+  M.at = at; M.B = B; C.M.set(key, M); return M;
+}
+const zzRes = (t, c, z) => z.nr > c.length ? 'pend' : (t === 't60' ? zz60(c[z.nr - 1], z.m.cel) : c[z.nr - 1][z.m.poz == null ? 1 : z.m.poz] === '1') ? 'win' : 'lost';
+const zzVal = x => x.res === 'win' ? 2 * x.z.zl : x.res === 'lost' ? -x.z.zl : 0;
+function zzGdzie(t, M, nr) {   // miejsce na kartach zeszytu: T50 karta · połowa · wiersz, T60 strona · wiersz
+  const E = zzE[t], p = M && M.B && M.B.pos[nr]; if (!p || !E) return '';
+  return t === 't60' ? `strona ${p.k} · w.${p.r}` : `karta ${p.k} ${E.partsOf(p.k).length === 2 ? (p.p ? 'P' : 'L') : 'cz.' + (p.p + 1)} · w.${p.r}`;
+}
+let zbets = [], zitems = [];   // zakłady ZESZYTU · modele ZESZYTU z zakładami (stan po ostatnim zakładzie)
+function zzGather() {
+  zbets = []; zitems = [];
+  const H = new Set(jget(ZZHK));
+  for (const t in ZZ) {
+    if (!D[t]) continue;
+    const c = zzCodes(t).c, n = c.length, G = new Map();
+    zzRaw(t).forEach(z => { const x = { t, z, mid: String(z.mid || z.nazwa), res: zzRes(t, c, z) }; zbets.push(x); const k = x.mid; (G.get(k) || G.set(k, []).get(k)).push(x); });
+    for (const [mid, L] of G) {
+      L.sort((a, b) => a.z.nr - b.z.nr || a.z.t - b.z.t);
+      const x = L[L.length - 1], z = x.z, M = zzModel(t, z.m), T = M && M.teraz, lim = M ? M.limit : z.m.limit || 9;
+      let j = L.length - 1; while (j > 0 && L[j - 1].res !== 'win') j--;   // seria: od pierwszego zakładu po ostatnim WIN na zakładzie
+      const zi = { uid: `Z~${t}~${mid}`, t, mid, nazwa: z.nazwa || mid, m: z.m, M, L, x, ser: L.slice(j), d: 0, st: 'done', end: null, now: null };
+      x.zi = zi; L.forEach(y => { y.zi = zi; });
+      const gra = T && T.gra && T.s <= lim ? { nr: T.nr, s: T.s, d: T.nr - n } : null;   // gra modelu w toku (krok do limitu): Nr i krok następnego zakładu
+      if (x.res === 'pend') { zi.d = z.nr - n; zi.nr = z.nr; zi.krok = z.krok; zi.zl = z.zl; zi.set = 1; }   // postawiony, czeka na wynik
+      else if (x.res === 'win') zi.end = { w: 1, bet: 1 };
+      else if (!M) { zi.st = 'wait'; zi.load = 1; }   // silnik ZESZYTU jeszcze się wczytuje
+      else {
+        const g = M.gry.find(g => g.end >= z.nr);   // gra, która skończyła się po przegranym zakładzie
+        if (g) zi.end = g.s <= lim ? { w: 1, nr: g.end, s: g.s } : { l: 1, nr: g.lim, s: lim };
+        else if (gra) { zi.d = gra.d; zi.nr = gra.nr; zi.krok = gra.s; zi.zl = Math.max(1, Math.round(z.zl * zzSt8(gra.s) / zzSt8(z.krok))); }   // kolejny krok — kwota rośnie jak progresja
+        else if (T && T.gra) zi.end = { l: 1, nr: M.otw && M.otw.lim, s: lim };   // gra w toku już za limitem = LOST
+        else zi.end = { none: 1 };   // po zakładzie model nie grał (zakład poza grą modelu)
+      }
+      if (!zi.end && !zi.load) zi.st = zi.d === 1 ? 'now' : zi.d >= 2 && zi.d <= 3 ? 'soon' : 'wait';
+      if (zi.end) {   // ✅ ZAKOŃCZONE: etap modelu teraz (nowa gra — 💰 od jej kroku; kwota od Twojej ostatniej, jak „Dalej” w ZESZYCIE)
+        zi.now = gra ? { ...gra, zl: Math.max(1, Math.round(z.zl * zzSt8(gra.s) / zzSt8(z.krok))) } : null;
+        if (zi.now) { zi.d = gra.d; zi.nr = gra.nr; zi.krok = gra.s; zi.zl = zi.now.zl; }
+        zi.hid = H.has(`${zi.uid}@${z.t}`);
+      }
+      zitems.push(zi);
+    }
+  }
+}
+const zzAct = t => zitems.filter(zi => zi.t === t && zi.st !== 'done');   // seria trwa: po przegranym zakładzie albo zakład czeka na wynik
+let zzForm = null;   // otwarty formularz zakładu ZESZYTU (uid)
+function zzBetForm(zi) {
+  const x = zi.x.z, k0 = zi.set ? x.krok : zi.krok, z0 = zi.set ? x.zl : zi.zl;
+  return `<div class="btf" data-k0="${k0}" data-zl0="${z0}"><label>Nr wiersza<input class="fNr" type="number" inputmode="numeric" value="${zi.nr || D[zi.t].n + 1}"></label><label>krok<input class="fK" type="number" inputmode="numeric" min="1" max="40" value="${zi.krok || 1}"></label><label>postawione zł<input class="fZl" type="number" inputmode="numeric" min="1" value="${zi.zl || 8}"></label><button class="btn sm ${zi.d === 1 ? 'pri' : 'ok'}" data-zzsave="${esc(zi.uid)}">💰 Zapisz w ZESZYCIE</button></div>`;
+}
+function zzSave(zi, nr, krok, zl) {   // kolejny zakład → lista zakładów ZESZYTU (ten sam zapis co „💰 Zapisz zakład” w ZESZYCIE)
+  if (!(nr >= 1) || !(krok >= 1 && krok <= 40) || !(zl > 0)) { toast('Podaj Nr wiersza, krok 1–40 i kwotę w zł'); return; }
+  const K = ZZ[zi.t].zk, a = jget(K);
+  if (a.some(z => z && String(z.mid || z.nazwa) === zi.mid && z.nr === nr) && !confirm(`Na Nr ${fmtN(nr)} jest już zakład ${zi.nazwa}. Zapisać jeszcze jeden?`)) return;
+  a.push({ mid: zi.x.z.mid || zi.mid, nazwa: zi.nazwa, m: zi.m, nr, krok, zl, t: Date.now() });
+  if (!lsSet(K, JSON.stringify(a))) { alert('BŁĄD zapisu pamięci telefonu!'); return; }
+  zzForm = null; toast(`📓 Zapisano zakład ${ZZ[zi.t].g} ${esc(zi.nazwa)}: Nr ${fmtN(nr)} · k${krok} · ${zl} zł`); reload();
+}
+let zzLastDel = null;
+function zzDel(x) {
+  if (!x || !confirm(`Usunąć zakład ZESZYTU ${x.z.nazwa} (Nr ${fmtN(x.z.nr)}, k${x.z.krok}, ${x.z.zl} zł)?\nZniknie też z ZESZYTU → 💰 Zakłady.`)) return;
+  const K = ZZ[x.t].zk; lsSet(K, JSON.stringify(jget(K).filter(z => !(z && z.t === x.z.t && z.nr === x.z.nr && String(z.mid || z.nazwa) === x.mid))));
+  zzLastDel = x; reload(); toast(`Usunięto zakład ${esc(x.z.nazwa)} · Nr ${fmtN(x.z.nr)} <button class="ub" data-zzrest="1">↶ Przywróć</button>`, 7000);
+}
+function zzRest() { const x = zzLastDel; zzLastDel = null; if (!x) return; const K = ZZ[x.t].zk, a = jget(K); if (!a.some(z => z && z.t === x.z.t && z.nr === x.z.nr)) { a.push(x.z); lsSet(K, JSON.stringify(a)); } reload(); toast(`Przywrócono zakład ${esc(x.z.nazwa)}`); }
+const zzSerTxt = zi => { const S = zi.ser, f = S[0], put = S.reduce((a, y) => a + y.z.zl, 0), wyn = S.filter(y => y.res !== 'pend').reduce((a, y) => a + zzVal(y), 0);
+  return `<br><span class="sertx">▶ start: Nr ${fmtN(f.z.nr)} · ${ago(f.z.t)} (${when(f.z.t)}) · <b>k${f.z.krok} → k${zi.x.z.krok}</b> · ${S.length} zakł. · postawione ${fmtN(put)} zł${S.some(y => y.res !== 'pend') ? ' · wynik ' + zl(wyn) : ''}</span>`; };
+const zzLb = zi => { const z = zi.x.z, r = zi.x.res;
+  return `ostatni zakład Nr ${fmtN(z.nr)} · k${z.krok} · ${fmtN(z.zl)} zł ${r === 'lost' ? '<span class="neg">✖ przegrany</span>' : r === 'win' ? `<span class="pos">✔ WIN ${zl(zzVal(zi.x))}</span>` : '<span style="color:var(--or2)">czeka na wynik</span>'}` + zzSerTxt(zi); };
+function zzEta(zi) {   // etap modelu teraz (ZAKOŃCZONE i lista zakładów): do grania TERAZ / za N w. / czeka
+  const M = zi.M, T = M && M.teraz; if (!M) return zzSt[zi.t] === 'błąd' ? 'silnik ZESZYTU niedostępny' : '⏳ liczę…';
+  if (zi.now) { const gd = zzGdzie(zi.t, M, zi.now.nr); return (zi.now.d === 1 ? `🟧 do grania TERAZ — k${zi.now.s} · Nr ${fmtN(zi.now.nr)}` : `${zi.now.d <= 3 ? '🟨' : '🟦'} do grania za ${zi.now.d} w. — k${zi.now.s} · Nr ${fmtN(zi.now.nr)}`) + (gd ? ` (${gd})` : ''); }
+  if (T && T.gra) return `🟦 po LOST — krok ${T.s} za limitem k${M.limit}, nie gramy; czeka na trafienie`;
+  return `🟦 czeka na ${zi.t === 't60' ? 'pustą stronę' : 'pustą trójkę'}${T && T.bez ? ' (z warunkiem +bok)' : ''} — potem gra od k1`;
+}
+function zzRow(zi, opt) {   // karta modelu ZESZYTU z zakładem: znaczek Z50 / Z60, krok i kwota kolejnego zakładu, Nr i miejsce na kartach, ostatni zakład i seria
+  opt = opt || {};
+  const t = zi.t, n = D[t].n, done = zi.st === 'done', gr = zi.nr && !(done && !zi.now), can = gr && !zi.set && zi.d >= 1;
+  const gd = gr ? zzGdzie(t, zi.M, zi.nr) : '', ln = ` · <a class="zzln" href="${ZZ[t].url}">📓 ZESZYT ›</a>`;
+  let l2;
+  if (zi.load) l2 = `${zzSt[t] === 'błąd' ? '<span class="neg">silnik ZESZYTU niedostępny — kolejny krok pokażę po otwarciu z internetem</span>' : '⏳ wczytuję silnik ZESZYTU…'}<br>${zzLb(zi)}${ln}`;
+  else if (done) {
+    const e = zi.end, z = zi.x.z;
+    l2 = (e.bet ? `<span class="pos">✔ WIN na zakładzie</span> Nr ${fmtN(z.nr)} · k${z.krok} · ${fmtN(z.zl)} zł · ${zl(zzVal(zi.x))}` + zzSerTxt(zi)
+      : zzLb(zi) + `<br>potem ${e.w ? `<span class="pos">WIN modelu k${e.s}</span> w Nr ${fmtN(e.nr)} (bez zakładu)` : e.l ? `<span class="neg">✖ LOST</span> — k${e.s} przegrany${e.nr ? ' w Nr ' + fmtN(e.nr) : ''}` : '<span class="mu">model nie grał po tym zakładzie</span>'}`)
+      + `<div class="zwh">teraz: ${zzEta(zi)}${ln}</div>`;
+  } else {
+    const kd = zi.set ? `postawiony k${zi.krok} · ${fmtN(zi.zl)} zł` : `kolejny krok <b>k${zi.krok} · ${fmtN(zi.zl)} zł</b>`;
+    l2 = (zi.d === 1 ? `<b>GRAJ Nr ${fmtN(zi.nr)}</b> · ${kd}` : `${zi.set ? 'zakład' : 'kolejny krok'} na Nr ${fmtN(zi.nr)} · za ${zi.d} ${zi.d <= 4 ? 'wiersze' : 'wierszy'}${zi.set ? ` · ${kd}` : ''}`)
+      + (gd ? ` · <span class="mu">${gd}</span>` : '') + (zi.set ? (zi.ser.length > 1 ? (y => `<br>poprzedni zakład Nr ${fmtN(y.z.nr)} · k${y.z.krok} · ${fmtN(y.z.zl)} zł <span class="neg">✖ przegrany</span>`)(zi.ser[zi.ser.length - 2]) : '') + zzSerTxt(zi) : '<br>' + zzLb(zi));
+    const T = zi.M && zi.M.teraz;
+    if (zi.set && T && T.gra && T.nr !== zi.nr) l2 += `<br><span class="neg">⚠ w ZESZYCIE kolejny krok tego modelu: Nr ${fmtN(T.nr)} · k${T.s}</span>`;
+    if (!zi.set) l2 += `<br><span class="nxk">➜ ${zi.d === 1 ? 'postaw teraz' : 'następny zakład'}: <b>k${zi.krok} · ${fmtN(zi.zl)} zł</b> (×2 jak progresja — kwotę zmienisz)</span>`;
+    l2 += ln;
+  }
+  const btn = `<span class="sbt">${can ? `<button class="btn sm ${zi.d === 1 ? 'pri' : ''}" data-zzfo="${esc(zi.uid)}">💰</button>` : zi.set ? '<span class="pos ok">✓</span>' : ''}${done ? `<button class="btn sm zdel" data-zzhide="${esc(zi.uid)}@${zi.x.z.t}" title="schowaj z ZAKOŃCZONYCH">🗑</button>` : ''}</span>`;
+  const h = `<div class="rw Z${zi.d === 1 && gr ? ' now' : ''}" data-zz="${esc(zi.uid)}"><div class="l1"><span class="bdg Z">${ZZ[t].g}</span><b>${esc(zi.nazwa)}</b><span class="tgt">${zzCel(t, zi.m)}</span><span class="sp"></span>${gr ? `<span class="kk">k${zi.krok}</span><b class="zl">${fmtN(zi.zl)} zł</b>` : ''}</div>
+    <div class="l2">${btn}${l2}${opt.ex || ''}</div>${zzForm === zi.uid && can ? zzBetForm(zi) : ''}</div>`;
+  return gr ? ddTag(h, zi.d) : h;
+}
+function zzView() {   // ZAKŁADY → 📓 ZESZYT (wybrana tabela)
+  const t = only, n = D[t].n, A = zbets.filter(x => x.t === t), done = A.filter(x => x.res !== 'pend'), Z = zitems.filter(zi => zi.t === t);
+  const day = new Date(); day.setHours(0, 0, 0, 0);
+  let h = `<div class="sum"><div><b>${zl(done.reduce((a, x) => a + zzVal(x), 0))}</b>wynik łącznie</div><div><b>${fmtN(done.reduce((a, x) => a + x.z.zl, 0))} zł</b>postawione (rozliczone)</div><div><b>${zl(done.filter(x => x.z.t >= day.getTime()).reduce((a, x) => a + zzVal(x), 0))}</b>dziś</div></div>
+    <div class="hint" style="margin:-4px 0 10px">Zakłady z ZESZYTU ${TABS[t].name} (💰 Zapisz zakład przy modelu w ZESZYCIE) i zapisane tutaj. Po przegranym zakładzie model gra dalej: 🟦 CZEKAJĄ → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ — <b>💰</b> zapisuje kolejny krok (kwota ×2) w ZESZYCIE. Seria zamknięta → ✅ ZAKOŃCZONE, tam etap modelu teraz.</div>`;
+  if (zzSt[t] === 'wczytuję') h += `<div class="hint" style="margin:-4px 0 8px">⏳ Wczytuję silnik ZESZYTU ${TABS[t].name}…</div>`;
+  if (zzSt[t] === 'błąd') h += `<div class="hint neg" style="margin:-4px 0 8px">Nie udało się wczytać silnika ZESZYTU — otwórz raz ZESZYT z internetem i wróć do MOJE.</div>`;
+  if (!A.length) return h + `<div class="empty">Brak zakładów ZESZYTU ${TABS[t].name}.<br><br>W ZESZYCIE przytrzymaj model, który GRA → <b>💰 Zapisz zakład</b>. Zakład pojawi się tutaj i MOJE poprowadzi go do WIN — z informacją, kiedy postawić kolejny krok.</div>`;
+  const act = Z.filter(zi => zi.st !== 'done'), now = act.filter(zi => zi.st === 'now').sort((a, b) => b.krok - a.krok), soon = act.filter(zi => zi.st === 'soon').sort((a, b) => a.d - b.d), wait = act.filter(zi => zi.st === 'wait').sort((a, b) => (a.d || 99) - (b.d || 99));
+  const box = (key, cls, title, sub, L, empty) => `<details class="sec ${cls}" ${foldAt(key, 1)}><summary class="sh"><span>${title}${L.length ? ` · ${L.length}` : ''}</span><span class="m">${sub}</span></summary>${L.length ? L.map(zi => zzRow(zi)).join('') : `<div class="none">${empty}</div>`}</details>`;
+  h += box('ZZ-now', 'snow', `🟧 GRAJ TERAZ · Nr ${fmtN(n + 1)}`, now.length ? `razem ${fmtN(now.reduce((a, zi) => a + zi.zl, 0))} zł` : '', now, `Na Nr ${fmtN(n + 1)} żaden model ZESZYTU z zakładem nie gra.`);
+  if (soon.length) h += box('ZZ-soon', 'ssoon', '🟨 ZA CHWILĘ', 'kolejny krok za 2–3 wiersze', soon, '');
+  if (wait.length) h += box('ZZ-wait', 'swait', '🟦 CZEKAJĄ', 'kolejny krok później', wait, '');
+  const D0 = Z.filter(zi => zi.st === 'done' && !zi.hid).sort((a, b) => (a.now ? a.now.d : 999) - (b.now ? b.now.d : 999) || b.x.z.nr - a.x.z.nr), hidN = Z.filter(zi => zi.st === 'done' && zi.hid).length;
+  h += `<details class="sec sdone" ${foldAt('ZZ-done', 1)}><summary class="sh"><span>✅ ZAKOŃCZONE · ${D0.length}</span><span class="m">seria zamknięta · etap teraz</span></summary>${D0.length ? D0.map(zi => zzRow(zi)).join('') : '<div class="none">Żadna seria zakładów ZESZYTU jeszcze się nie zamknęła.</div>'}${hidN ? `<div class="hint" style="margin-top:4px">schowane: ${hidN} · <button class="ub" data-zzshow="${t}">↶ pokaż</button></div>` : ''}</details>`;
+  const where = x => { const zi = x.zi; if (zi.x !== x) return 'wcześniejszy zakład serii'; return zi.st === 'done' ? '→ ✅ ZAKOŃCZONE' : zi.st === 'now' ? '→ 🟧 GRAJ TERAZ' : zi.st === 'soon' ? '→ 🟨 ZA CHWILĘ' : '→ 🟦 CZEKAJĄ'; };
+  const L2 = A.slice().sort((a, b) => b.z.t - a.z.t || b.z.nr - a.z.nr);
+  h += `<details class="sec" ${foldAt('ZZ-all', 0)}><summary class="sh"><span>📋 WSZYSTKIE ZAKŁADY ZESZYTU · ${L2.length}</span><span class="m">najnowszy na górze</span></summary>${L2.map(x => { const M = x.zi.M, a = M && M.at && M.at.get(x.z.nr);
+    return `<div class="bt ${x.res}"><span class="bdg Z">${ZZ[t].g}</span><div>${esc(x.z.nazwa)}<span class="tgt">${zzCel(t, x.z.m)}</span> · Nr ${fmtN(x.z.nr)} · k${x.z.krok} · ${fmtN(x.z.zl)} zł<div class="mu" style="font-size:11px">zapisany ${ago(x.z.t)} (${when(x.z.t)})${M && x.res !== 'pend' && !a ? ' · model nie grał w tym wierszu' : a && a[1] !== x.z.krok ? ` · w ZESZYCIE to krok ${a[1]}` : ''}</div><div class="zwh">${where(x)}</div>${x.zi.x === x && x.zi.st === 'done' ? `<div class="zwh">teraz: ${zzEta(x.zi)}</div>` : ''}</div>
+    <div class="r">${x.res === 'pend' ? '<span style="color:var(--or2)">czeka</span>' : zl(zzVal(x))}<br><button class="ub" data-zzdel="${esc(x.t + '|' + x.z.t + '|' + x.z.nr)}">✕ usuń</button></div></div>`; }).join('')}</details>`;
+  return h;
+}
+function zzBefore(t, row) { return zitems.filter(zi => zi.t === t && zi.st !== 'done' && zi.nr === row + 1).map(zi => ({ uid: zi.uid, set: zi.set, krok: zi.krok, zl: zi.zl, nazwa: zi.nazwa, g: ZZ[t].g })); }   // przed wpisaniem kodu: modele ZESZYTU grające na tym wierszu
+function zzPop(t, row, B) {   // okienko wyniku: zakłady ZESZYTU na tym wierszu i to, co gra teraz na następnym
+  const out = [];
+  B.forEach(b => { const zi = zitems.find(z => z.uid === b.uid), x = zi && zi.L.find(y => y.z.nr === row + 1 && b.set), w = x ? x.res === 'win' : zi && zi.end && zi.end.w;
+    out.push(b.set ? { v: w ? 2 * b.zl : -b.zl, w, tx: `📓 ${b.g} ${esc(b.nazwa)} · k${b.krok} ${b.zl} zł → ${w ? '✔ WIN +' + 2 * b.zl : '✗ przegrana −' + b.zl} zł${w ? '' : zi && zi.st !== 'done' ? ` · dalej k${zi.krok}` : ''}` }
+      : { v: 0, w, tx: `📓 ${b.g} ${esc(b.nazwa)} · k${b.krok} <b>nie postawiony</b> → model ${w ? '✔ WIN' : `✗ dalej k${zi ? zi.krok : b.krok + 1}`}` }); });
+  zitems.filter(zi => zi.t === t && zi.st !== 'done' && zi.d === 1).forEach(zi => out.push({ v: 0, nx: 1, tx: `▼ 📓 ${ZZ[t].g} ${esc(zi.nazwa)} — ${zi.set ? 'postawiony' : 'GRAJ'} Nr ${fmtN(zi.nr)} · k${zi.krok} · ${fmtN(zi.zl)} zł` }));
+  return out;
+}
 function zaklady() {
   const LA = vis(bets.filter(x => x.t === only)), np = g => LA.filter(x => ZG(x) === g && x.res === 'pend').length;
   const zb = (g, lab) => { const A = LA.filter(x => ZG(x) === g); return `<button class="${zsrc === g ? 'on' : ''}" data-zsrc="${g}">${lab} <small>· ${A.length}</small>${zakBadges(A)}</button>`; };
-  const zt = `<div class="tsw">${Object.keys(TABS).map(k => { const A = vis(bets.filter(x => x.t === k)); return `<button class="${only === k ? 'on' : ''}" data-only="${k}">${TABS[k].name} <small>· ${A.length}</small>${zakBadges(A)}</button>`; }).join('')}</div>`;
+  const zt = `<div class="tsw">${Object.keys(TABS).map(k => { const A = vis(bets.filter(x => x.t === k)), nZ = zbets.filter(x => x.t === k).length; return `<button class="${only === k ? 'on' : ''}" data-only="${k}">${TABS[k].name} <small>· ${A.length + nZ}</small>${zakBadges(A, zzAct(k))}</button>`; }).join('')}</div>`;
+  const zzb = `<button class="${zsrc === 'Z' ? 'on' : ''}" data-zsrc="Z">📓 ZESZYT <small>· ${zbets.filter(x => x.t === only).length}</small>${zakBadges([], zzAct(only))}</button>`;   // 1.45.0: zakłady z ZESZYTU T50 / T60
   const L = LA.filter(x => ZG(x) === zsrc).sort((a, b) => b.b.t - a.b.t);
   const done = bets.filter(x => x.t === only && ZG(x) === zsrc && (x.res === 'win' || x.res === 'lost')), put = done.reduce((a, x) => a + x.b.stake, 0), res = done.reduce((a, x) => a + betVal(x), 0);
   const day = new Date(); day.setHours(0, 0, 0, 0); const today = done.filter(x => x.b.t >= day.getTime()).reduce((a, x) => a + betVal(x), 0);
-  let h = zt + `<div class="tsw sub zs">${zb('R', '🧮 RAZEM')}${zb('S', '🔎 SZUKAJ')}${zb('L', '🔻 SZUKAJ LOST')}<button class="${zsrc === 'F' ? 'on' : ''}" data-zsrc="F">👪 RODZINY <small>· ${famGet().filter(F => F.t === only).length}</small>${famBadge(only)}</button></div><div class="sum"><div><b>${zl(res)}</b>wynik łącznie</div><div><b>${fmtN(put)} zł</b>postawione (rozliczone)</div><div><b>${zl(today)}</b>dziś</div></div>
+  let h = zt + `<div class="tsw sub zs">${zb('R', '🧮 RAZEM')}${zb('S', '🔎 SZUKAJ')}${zb('L', '🔻 SZUKAJ LOST')}${zzb}<button class="${zsrc === 'F' ? 'on' : ''}" data-zsrc="F">👪 RODZINY <small>· ${famGet().filter(F => F.t === only).length}</small>${famBadge(only)}</button></div><div class="sum"><div><b>${zl(res)}</b>wynik łącznie</div><div><b>${fmtN(put)} zł</b>postawione (rozliczone)</div><div><b>${zl(today)}</b>dziś</div></div>
     <div class="hint" style="margin:-4px 0 10px">WIN = +2 × stawka (kurs 3,0), przegrana = −stawka. Zakłady zapisane tutaj albo w aplikacjach SZUKAJ.</div>`;
-  if (zsrc === 'F') return zt + `<div class="tsw sub zs">${zb('R', '🧮 RAZEM')}${zb('S', '🔎 SZUKAJ')}${zb('L', '🔻 SZUKAJ LOST')}<button class="on" data-zsrc="F">👪 RODZINY <small>· ${famGet().filter(F => F.t === only).length}</small>${famBadge(only)}</button></div>` + famView();
+  if (zsrc === 'F') return zt + `<div class="tsw sub zs">${zb('R', '🧮 RAZEM')}${zb('S', '🔎 SZUKAJ')}${zb('L', '🔻 SZUKAJ LOST')}${zzb}<button class="on" data-zsrc="F">👪 RODZINY <small>· ${famGet().filter(F => F.t === only).length}</small>${famBadge(only)}</button></div>` + famView();
+  if (zsrc === 'Z') return zt + `<div class="tsw sub zs">${zb('R', '🧮 RAZEM')}${zb('S', '🔎 SZUKAJ')}${zb('L', '🔻 SZUKAJ LOST')}${zzb}<button data-zsrc="F">👪 RODZINY <small>· ${famGet().filter(F => F.t === only).length}</small>${famBadge(only)}</button></div>` + zzView();
   // modele, których ostatni zakład przegrał albo czeka — dopóki model nie trafi WIN po tym zakładzie, gram dalej kolejny krok
   const { M, CH, ZK, CHB, ZKB } = zakState(L);
   if (CH.length || CHB.length) {
@@ -1853,6 +2038,7 @@ function pomoc() {
     <div class="box"><h4>🔍 OCENY — propozycje i oceny od Claude</h4>Dwa rodzaje, oba z pełną oceną (stan teraz, historia — wygrana do k8 / limitu i w 3 krokach, uczciwa szansa po sprawdzeniu na późniejszych kodach, symulacja — LOST, koszt, czas, nakładanie z Twoimi modelami, werdykt GRAĆ / OBSERWUJ / NIE GRAĆ):<br>• <b>Propozycje Claude</b> — Claude wybiera modele z pul SZUKAJ / SZUKAJ+ / LOST i z ZESZYTU wg kryteriów, ocenia je i wysyła najlepsze: <b>＋ Dodaj do MOJE</b> albo <b>Usuń analizę</b>.<br>• <b>Oceny Twoich modeli</b> — sam dodajesz model do MOJE i prosisz Claude o ocenę: <b>Zostaw w MOJE</b> albo <b>Usuń z MOJE</b>.<br>Gdy coś czeka na decyzję, na TERAZ jest pasek „📥 Od Claude”, a na przycisku OCENY liczba. Załatwione zostają na dole listy. Każdy model oceniany jest raz (nowa ocena tylko na prośbę). Oceniony model ma przy karcie znaczek <b>🔍 GRAĆ / OBSERWUJ / NIE GRAĆ</b> (TERAZ, LOST, BANK, a w ZESZYCIE przy modelu — tam tylko do odczytu). Decyzje podejmujesz tylko tutaj. Przy modelach z SZUKAJ ocena podpowiada też <b>sposób gry</b>: prosta progresja (TERAZ, a model po LOST — zakładka LOST) albo <b>BANK +3 / +5</b> — i daje wybór: <b>＋ Do MOJE (TERAZ)</b> / <b>＋ Do LOST</b> (tylko model po LOST) / <b>＋ Do BANK</b> (podświetlona sugestia); przy Twoim modelu — <b>Zostaw</b> tam, gdzie jest, albo <b>Do BANK</b> / <b>Do MOJE (TERAZ)</b>, też z podświetloną sugestią. <b>Dotknij karty</b> modelu z SZUKAJ — otworzą się jego statystyki jak w BANK (z rozpisaniem banku +3 / +5); <b>„🔍 Cała ocena Claude”</b> — pełna ocena. Jeśli proponowany model dodasz w SZUKAJ / ZESZYCIE albo swój model usuniesz gdzie indziej, ocena sama przechodzi do Załatwionych. Decyzje widzi Claude i każde Twoje urządzenie. Nic nie dodaje się ani nie usuwa samo, a zakładów Claude nie ustawia.</div>
     <div class="box"><h4>Zakładka BANK</h4>Bank +3 / +5 (bez limitu) dla modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST. Bank gra w każdym cyklu modelu tylko pierwsze 3 (5) zakłady; model trafi → WIN banku (przeniesione kroki + krok modelu) i bank od k1; nie trafi → bank przegrywa 3 (5) kroki, czeka i w następnym cyklu gra dalej. Stawki 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512, dalej ×2.<br>Model jest <b>albo na TERAZ</b> (prosta progresja k1–k8), <b>albo w BANK</b> (+3 / +5) — nigdy w obu. Przełącznik przy modelu (ekran modelu i <b>🔎 wyszukiwarka</b>): <b>🏦 Przenieś do BANK</b> / <b>🟧 Przenieś do TERAZ</b>. „✕ usuń z BANK” usuwa model całkiem (też z MOJE). Na TERAZ grupy <b>🟥 PO BUST</b> i <b>🏦 BANK</b> (zwijane jak pozostałe) pokazują to, co gra na następnym wierszu; <b>przytrzymanie</b> nagłówka przenosi do zakładki LOST / BANK. Przełącznik <b>BANK +3 / BANK +5</b> wybiera, który bank prowadzi listę. Droga modelu jak na TERAZ: 🟦 CZEKAJĄ (okno banku trwa, czeka na STEP / TRIGGER) → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ. WIN → bank od k1 i znowu CZEKAJĄ. Bank przegrał swoje 3 (5) kroki → <b>⏸ CZEKAJĄ NA BANK</b>, aż model skończy cykl (WIN albo LOST) — potem znowu CZEKAJĄ, już na kolejnym oknie (np. k4–k6). Znaczki przy BANK, T50 / T60 i +3 / +5: żółty = za ile wierszy zakład banku, pomarańczowy = ile gra na następnym. Dotknięcie modelu → szanse zamknięcia banku na kolejnych krokach, stawki, gdzie bank się zamykał (% dla okien) i usunięcie z listy.</div>
     <div class="box"><h4>Zakłady</h4>„💰 Zapisz zakład” zapisuje zakład w MOJE ZAKŁADY aplikacji, z której jest model — widać go tu i tam. Wynik liczy się sam po wpisaniu kodu.</div>
+    <div class="box"><h4>📓 Zakłady z ZESZYTU</h4>ZAKŁADY → <b>📓 ZESZYT</b> (T50 / T60): zakłady zapisane w ZESZYCIE („💰 Zapisz zakład” przy modelu) — z oznaczeniem <span class="bdg Z">Z50</span> / <span class="bdg Z">Z60</span>. MOJE liczy model tym samym silnikiem co ZESZYT. Postawiony zakład czeka na wynik (🟧 GRAJ TERAZ, gdy gra na następnym wierszu); przegrany → model gra dalej: 🟦 CZEKAJĄ → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ z Nr i miejscem na karcie, a <b>💰</b> zapisuje kolejny krok (kwota ×2 jak progresja, do zmiany) — trafia też do ZESZYTU. WIN na zakładzie, WIN modelu bez zakładu albo LOST → <b>✅ ZAKOŃCZONE</b>; tam „teraz:” pokazuje, czy model czeka, czy jest do grania (💰 na nową grę), a 🗑 chowa wpis do kolejnego zakładu. Modele ZESZYTU grające na następnym wierszu i za 2–3 wiersze są też na TERAZ w pasku 💰 ZAKŁADY, w znaczkach i w okienku po wpisaniu kodu (z wibracją).</div>
     <div class="box"><h4>Dodawanie modeli</h4>W aplikacji SZUKAJ dotknij kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. Tutaj: dotknięcie kafelka → statystyki modelu, przytrzymanie → tabela wierszy. Aplikacja doda model i otworzy go tutaj.</div>
     <div class="hint">MOJE ${APP_VER}</div>`;
 }
@@ -1938,7 +2124,7 @@ function render() {
   $('navT').innerHTML = `TERAZ${allBadges(only)}`;
   // znaczki jak na TERAZ: żółty = za ile wierszy grają (2, 3), pomarańczowy = ile gra na następnym wierszu
   $('navB').innerHTML = `LOST${bustBadges(vitems.filter(it => it.t === only && it.inBust))}`;
-  $('navZ').innerHTML = `ZAKŁADY${zakBadges(vis(bets.filter(x => x.t === only)))}`;
+  $('navZ').innerHTML = `ZAKŁADY${zakBadges(vis(bets.filter(x => x.t === only)), zzAct(only))}`;
   $('navK').innerHTML = `BANK${bankBadges35(bitems.filter(it => it.t === only))}`;
   { const n = ocPending().length; $('navO').innerHTML = `OCENY${n ? `<i class="nb">${n}</i>` : ''}`; }
   const ae = document.activeElement, keep = ae && ae.id && /^(in|pa|bq)_/.test(ae.id) ? [ae.id, ae.value] : null;
@@ -2003,9 +2189,15 @@ document.addEventListener('click', e => {
   if ((b = q('[data-bksave]'))) { const v = b.dataset.bksave, w = +v.slice(0, v.indexOf('#')), it = BKMAP.get(v.slice(v.indexOf('#') + 1)), f = b.closest('.btf'); if (it) saveBet(it, +f.querySelector('.fNr').value - 1, +f.querySelector('.fK').value, +f.querySelector('.fZl').value, w); return; }
   if ((b = q('[data-bsave]'))) { const it = items.find(x => x.uid === b.dataset.bsave), f = b.closest('.btf'); if (it) saveBet(it, +f.querySelector('.fNr').value - 1, +f.querySelector('.fK').value, +f.querySelector('.fZl').value); return; }
   if ((b = q('[data-fo]'))) { formU = formU === b.dataset.fo ? null : b.dataset.fo; return render(); }
+  if ((b = q('[data-zzfo]'))) { zzForm = zzForm === b.dataset.zzfo ? null : b.dataset.zzfo; return render(); }   // 📓 ZESZYT: formularz kolejnego kroku
+  if ((b = q('[data-zzsave]'))) { const zi = zitems.find(x => x.uid === b.dataset.zzsave), f = b.closest('.btf'); if (zi) zzSave(zi, +f.querySelector('.fNr').value, +f.querySelector('.fK').value, +f.querySelector('.fZl').value); return; }
   if (q('.btf')) return;   // pola formularza zakładu — nie otwieraj modelu
   if ((b = q('[data-restun]'))) { e.stopPropagation(); document.querySelectorAll('.toast').forEach(t => t.remove()); return restUn(); }
   if ((b = q('[data-restbet]'))) { e.stopPropagation(); document.querySelectorAll('.toast').forEach(t => t.remove()); return restBet(); }
+  if ((b = q('[data-zzrest]'))) { e.stopPropagation(); document.querySelectorAll('.toast').forEach(t => t.remove()); return zzRest(); }
+  if ((b = q('[data-zzdel]'))) { e.stopPropagation(); const [t, tm, nr] = b.dataset.zzdel.split('|'); return zzDel(zbets.find(x => x.t === t && String(x.z.t) === tm && x.z.nr === +nr)); }
+  if ((b = q('[data-zzhide]'))) { e.stopPropagation(); const a = jget(ZZHK); a.push(b.dataset.zzhide); lsSet(ZZHK, JSON.stringify(a.slice(-300))); toast('Schowane z ZAKOŃCZONYCH — wróci przy kolejnym zakładzie tego modelu'); return reload(); }
+  if ((b = q('[data-zzshow]'))) { const t = b.dataset.zzshow; lsSet(ZZHK, JSON.stringify(jget(ZZHK).filter(k => !k.startsWith(`Z~${t}~`)))); return reload(); }
   if ((b = q('[data-tocz]'))) { e.stopPropagation(); return toCzekaj(bets[+b.dataset.tocz]); }
   if ((b = q('[data-delbet]'))) { e.stopPropagation(); return delBet(bets[+b.dataset.delbet]); }
   if ((b = q('[data-mwid]'))) { mWid = b.dataset.mwid; return render(); }
@@ -2037,7 +2229,9 @@ document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id
 document.addEventListener('input', e => {   // formularz zakładu: zmiana kroku → stawka tego kroku (dopóki kwoty nie zmieniono ręcznie)
   const c = e.target.classList; if (!c) return;
   if (c.contains('fZl')) e.target.dataset.ed = '1';
-  if (c.contains('fK')) { const z = e.target.closest('.btf').querySelector('.fZl'), k = +e.target.value; if (!z.dataset.ed && k >= 1 && k <= 8) z.value = ST[k - 1]; }
+  if (c.contains('fK')) { const f = e.target.closest('.btf'), z = f.querySelector('.fZl'), k = +e.target.value; if (z.dataset.ed) return;
+    if (f.dataset.k0) { if (k >= 1 && k <= 40) z.value = Math.max(1, Math.round(+f.dataset.zl0 * zzSt8(k) / zzSt8(+f.dataset.k0))); }   // 📓 ZESZYT: kwota rośnie jak progresja od kwoty, którą grasz
+    else if (k >= 1 && k <= 8) z.value = ST[k - 1]; }
 });
 document.addEventListener('input', e => { if (e.target.id === 'bq_in') { bq = e.target.value; bqSel = ''; if (bq.trim()) plLoad(only); bqUpd(); } });   // wyszukiwarka modeli (BANK)
 document.addEventListener('input', e => {   // 3 cyfry → od razu dodaj
@@ -2072,6 +2266,9 @@ ghSchedule(3000);   // przy otwarciu: zmiany z innych urządzeń i wysyłka
 (() => { const u = new URLSearchParams(location.search).get('open'); if (!u) return;
   history.replaceState(null, '', location.pathname);
   if (items.some(x => x.uid === u)) go('model', u); else toast('Model jeszcze nie jest w MOJE'); })();
+// ?zak=t50 | t60 — z ZESZYTU („MOJE pilnuje kolejnego kroku ›”, 1.45.0): od razu ZAKŁADY → 📓 ZESZYT tej tabeli
+(() => { const t = new URLSearchParams(location.search).get('zak'); if (!TABS[t]) return;
+  history.replaceState(null, '', location.pathname); only = t; zsrc = 'Z'; lsSet('moje_v1_only', t); lsSet('moje_v1_zsrc', 'Z'); go('zak'); })();
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('moje-sw.js').catch(() => {});
 </script>
 <script>
