@@ -70,6 +70,8 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - W aplikacji MOJE są też modele z MOJE GRY w RAZEM 50/60 (stan liczy RAZEM w ukrytej ramce).
 - Wpis kodów w MOJE: przy każdej tabeli ostatni kod i kiedy wpisany („5 minut temu”, „2 dni temu”).
 
+- **🙈 Ukryte w ZAKŁADACH (1.43.0)**: model z zakładami można ukryć z OCEN („🙈 Usuń analizę i ukryj w ZAKŁADACH”, z potwierdzeniem) — znika z wszystkich list ZAKŁADÓW, z TERAZ / LOST i ze znaczków, ale **wynik zostaje** (zakłady liczą się dalej, decyzja użytkownika). Lista `moje_v1_zakukr` [{u: uid, n, t}] jedzie w `stan.json`; „↶ Pokaż” w ZAKŁADY → 🙈 UKRYTE MODELE cofa.
+
 ## Kolejność stanów w MOJE (aplikacja MOJE)
 
 - Grupy 🟧 GRAJ TERAZ, 🟨 ZA CHWILĘ, 🟦 CZEKAJĄ (i ✅ ZAKOŃCZONE, ⏸ CZEKAJĄ NA BANK) na TERAZ, LOST i BANK można zwijać i rozwijać (dotknięcie nagłówka). Stan każdej grupy jest zapamiętany (`moje_v1_fold`) i zostaje po wpisaniu kodu / odświeżeniu. Domyślnie: GRAJ TERAZ i ZA CHWILĘ rozwinięte, CZEKAJĄ na TERAZ zwinięte.
