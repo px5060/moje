@@ -650,6 +650,7 @@ function ocKarta(o, dec) {
   const dod = g ? `<button class="btn${zB ? '' : ' pri'}" data-ocdod="${k}">＋ Do ${pLost ? 'LOST' : 'MOJE (TERAZ)'}</button><button class="btn${zB ? ' pri' : ''}" data-ocdob="${k}">＋ Do BANK</button>`
     : `<button class="btn pri" data-ocdod="${k}">＋ Dodaj do ${gdzie}</button>`;
   const btn = dec ? `<span class="hint">${OCDT[dec.d] || esc(dec.d)}${dec.auto ? (dec.d === 'nie_ma' ? ` w ${gdzieW} (usunięty poza OCENAMI)` : ' — dodany poza OCENAMI') : ' · ' + ago(dec.t)}</span>`
+      + (dec.d === 'usunieta' && !moj && !jest && ocZak(o) ? `<button class="btn" data-ocukr="${k}" style="color:var(--rd)">🙈 Ukryj w ZAKŁADACH</button>` : '')   // 1.43.0: wcześniej usunięta analiza — ukrycie później
     : op.err ? `<span class="neg">${esc(op.err)}</span><button class="btn" data-ocusa="${k}">Usuń analizę</button>`
     : moj ? (jest ? `${mv || `<button class="btn pri" data-oczost="${k}">✓ Zostaw w ${gdzieW}</button>`}<button class="btn" data-ocusm="${k}" style="color:var(--rd)">✕ Usuń z ${gdzie}</button>`
                   : `<span class="hint">nie ma go już w ${gdzieW}</span><button class="btn" data-ocusa="${k}">Usuń analizę</button>`)
@@ -1980,7 +1981,7 @@ document.addEventListener('click', e => {
   if ((b = q('[data-ocmv]'))) { const o = ocList().find(x => ocKey(x) === b.dataset.ocmv), op = o && inOpis(ocP(o)); if (op && op.it) { BKI[op.it.uid] = op.it; ocSet(o, b.dataset.w === 'B' ? 'do_banku' : 'do_teraz'); moveTo(op.it.uid, b.dataset.w); } return; }
   if ((b = q('[data-ocukr]'))) { const o = ocList().find(x => ocKey(x) === b.dataset.ocukr), u = o && ocZak(o); if (!u) return;
     const n = bets.filter(x => x.uid === u).length;
-    if (!confirm(`Usunąć analizę i ukryć ${o.nazwa} w ZAKŁADACH?\n\nZniknie z GRAJ TERAZ / ZA CHWILĘ / CZEKAJĄ, ZAKOŃCZONYCH i WSZYSTKICH ZAKŁADÓW (${n} ${pl(n, ['zakład', 'zakłady', 'zakładów'])}). Wynik zostaje — te zakłady dalej się liczą. Cofniesz w ZAKŁADY → 🙈 UKRYTE MODELE.`)) return;
+    if (!confirm(`${ocStan(o) ? 'Ukryć' : 'Usunąć analizę i ukryć'} ${o.nazwa} w ZAKŁADACH?\n\nZniknie z GRAJ TERAZ / ZA CHWILĘ / CZEKAJĄ, ZAKOŃCZONYCH i WSZYSTKICH ZAKŁADÓW (${n} ${pl(n, ['zakład', 'zakłady', 'zakładów'])}). Wynik zostaje — te zakłady dalej się liczą. Cofniesz w ZAKŁADY → 🙈 UKRYTE MODELE.`)) return;
     zukAdd(u, o.nazwa); ocSet(o, 'usunieta_ukr'); toast('Analiza usunięta · model ukryty w ZAKŁADACH'); reload(); return; }
   if ((b = q('[data-zukpok]'))) { zukDel(b.dataset.zukpok); toast('Model znowu widać w ZAKŁADACH'); reload(); return; }
   if ((b = q('[data-ocusa]'))) { const o = ocList().find(x => ocKey(x) === b.dataset.ocusa); if (o) { ocSet(o, 'usunieta'); toast('Analiza usunięta'); render(); } return; }
