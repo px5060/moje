@@ -211,3 +211,10 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
   słupki „na którym kroku przychodził WIN” (k1–k8 i LOST), ostatnie 24 cykle jako kwadraciki (dotknij — powiększ; jeszcze raz — co było po takim wyniku)
   i wiersze ostatnich LOST — tak samo jak przy modelach SZUKAJ / LOST.
 - Cykle bierzemy z tabeli RAZEM (to samo, co liczy ocenę: `window.top.__relG = [{K, er}]`, K = krok WIN, 9 = LOST). Liczenie modeli w RAZEM bez zmian.
+
+## ZAKŁADY: „Pozostałe zakłady” i statystyki modelu po dotknięciu (1.44.0)
+- Lista **📋 POZOSTAŁE ZAKŁADY** (dawniej „Wszystkie zakłady”) pokazuje tylko zakłady modeli, których nie ma w innych sekcjach / zakładkach
+  (model usunięty z MOJE). Modele z MOJE są wyżej (GRAJ TERAZ, ZA CHWILĘ, CZEKAJĄ, ZAKOŃCZONE), zakłady banku — w BANK.
+- Pod zakładem: **teraz: 🟧 do grania TERAZ / 🟨 do grania ZA CHWILĘ / 🟦 czeka (kN)** — etap modelu teraz; dalej „▶ do …” przywraca model.
+- Dotknięcie zakładu → pełne statystyki modelu (jak w TERAZ: słupki kroków, kwadraciki, bank, zeszyt) — widok `zakm`, bez zapisu zakładu.
+  Model RAZEM usunięty z MOJE — statystyki w RAZEM (MOJE nie ma jego karty).

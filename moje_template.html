@@ -196,7 +196,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.43.0';
+const APP_VER = '1.44.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1368,9 +1368,12 @@ function zaklady() {
   // dokąd trafi model po powrocie: GRAJ TERAZ (gra na następnym wierszu) · ZA CHWILĘ (TRIGGER był) · CZEKAJĄ — wg jego stanu teraz
   const backTo = x => { const r = x.it ? x.it.r : mkItem(x.t, x.s, x.tg, { m: x.b.m, id: x.b.id, start: D[x.t].n, s0: 1 }).r, d = r.ph === 2 ? r.wz + 1 - D[x.t].n : 0;
     return d === 1 ? `🟧 GRAJ TERAZ (k${r.bs + 1} · ${fmtN(ST[r.bs])} zł)` : d >= 2 ? `🟨 ZA CHWILĘ (za ${d} w. · k${r.bs + 1})` : `🟦 CZEKAJĄ (k${r.bs + 1})`; };
-  const all = L.map((x, i) => `<div class="bt ${x.res}${x.it && x.it.inBust ? ' lsrc' : ''}" data-bi="${bets.indexOf(x)}"><span class="bdg ${x.s.cls}">${x.s.a}${x.t.slice(1)}</span><div>${esc(x.b.id)}${x.tg ? `<span class="tgt">${x.tg}</span>` : ""}${x.b.bank ? ` · <b style="color:var(--bl)">🏦 +${x.b.bank}</b>` : ''} · Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł<div class="mu" style="font-size:11px">zapisany ${ago(x.b.t)} (${when(x.b.t)})</div><div class="zwh">${whereOf(x)}</div>${canBack(x) ? `<button class="btn sm ok" data-tocz="${bets.indexOf(x)}" style="margin-top:4px">▶ do ${backTo(x)}</button>` : ''}</div>
+  // 1.44.0 (prośba użytkownika): tu tylko zakłady modeli, których nie ma w innych sekcjach / zakładkach (model usunięty z MOJE) — z etapem modelu teraz
+  const L2 = L.filter(x => !x.it && !(x.b.bank && BKMAP.get(x.uid)));
+  const etap = x => x.rz ? '' : `<div class="zwh">teraz: ${backTo(x).replace('🟧 GRAJ TERAZ', '🟧 do grania TERAZ').replace('🟨 ZA CHWILĘ', '🟨 do grania ZA CHWILĘ').replace('🟦 CZEKAJĄ', '🟦 czeka')}</div>`;
+  const all = L2.map((x, i) => `<div class="bt ${x.res}${x.it && x.it.inBust ? ' lsrc' : ''}" data-bi="${bets.indexOf(x)}"><span class="bdg ${x.s.cls}">${x.s.a}${x.t.slice(1)}</span><div>${esc(x.b.id)}${x.tg ? `<span class="tgt">${x.tg}</span>` : ""}${x.b.bank ? ` · <b style="color:var(--bl)">🏦 +${x.b.bank}</b>` : ''} · Nr ${fmtN(x.b.row + 1)} · k${x.b.step} · ${x.b.stake} zł<div class="mu" style="font-size:11px">zapisany ${ago(x.b.t)} (${when(x.b.t)})</div><div class="zwh">${whereOf(x)}</div>${etap(x)}${canBack(x) ? `<button class="btn sm ok" data-tocz="${bets.indexOf(x)}" style="margin-top:4px">▶ do ${backTo(x)}</button>` : ''}</div>
     <div class="r">${x.res === 'pend' ? '<span style="color:var(--or2)">czeka</span>' : x.res === 'win' ? zl(betVal(x)) : x.res === 'lost' ? zl(betVal(x)) : '<span class="mu">model nie grał</span>'}<br><button class="ub" data-delbet="${bets.indexOf(x)}">✕ usuń</button></div></div>`).join('');
-  h += `<details class="sec" ${foldAt('zakall', 0)}><summary class="sh"><span>📋 WSZYSTKIE ZAKŁADY · ${L.length}</span><span class="m">najnowszy na górze</span></summary><div class="hint" style="margin:2px 0 6px">Tu każdy zakład osobno — wyżej każdy model raz (z ostatnim zakładem). Pod zakładem: gdzie jest jego model.</div>${all}</details>`;
+  h += `<details class="sec" ${foldAt('zakall', 0)}><summary class="sh"><span>📋 POZOSTAŁE ZAKŁADY · ${L2.length}</span><span class="m">najnowszy na górze</span></summary><div class="hint" style="margin:2px 0 6px">Zakłady modeli, których nie ma już w MOJE (modele z MOJE są wyżej: GRAJ TERAZ, ZA CHWILĘ, CZEKAJĄ, ZAKOŃCZONE). Pod zakładem: na jakim etapie jest model teraz. Dotknij zakładu — statystyki modelu.</div>${all || '<div class="none">Brak — wszystkie modele z zakładami są wyżej.</div>'}</details>`;
   h += zukBox();
   return h;
 }
@@ -1803,6 +1806,11 @@ function ocModel() {   // 1.39.0 (prośba użytkownika): dotknięcie modelu w OC
     + `${g ? `<div style="font-size:12.5px;margin-top:3px">▶ Sugestia: <b>${ocGraL(g)}</b></div>` : ''}<div class="hint" style="margin-top:3px">${esc(o.krotko || '')}</div>`
     + `<details><summary class="hint">Cała ocena</summary>${ocSek(o)}</details></div>` + modelPelne(it, true);   // 1.40.0: pełne statystyki jak w TERAZ / LOST (z bankiem +3 / +5)
 }
+function zakModel() {   // 1.44.0: dotknięcie zakładu modelu usuniętego z MOJE — pełne statystyki modelu (jak w OCENACH: bez zapisu zakładu)
+  const x = bets[+sel]; if (!x || x.rz) { view = 'zak'; return zaklady(); }
+  const it = mkItem(x.t, x.s, x.tg, { m: x.b.m, id: x.b.id, start: 0 }); classify(it); it.res = null;   // bez „Moja gra” (wynik zakładu jest na liście) it.bat = D[it.t].n; it.bk = {}; BKW.forEach(w => { it.bk[w] = bankOf(it, w); });
+  return `<button class="btn back" data-go="zak">← wróć do ZAKŁADÓW</button><div class="hint" style="margin:6px 0 0">Model usunięty z MOJE — statystyki jak w TERAZ. Wrócić do gry: „▶ do …” przy zakładzie.</div>` + modelPelne(it, true);
+}
 function bankModel() {   // model z listy BANK
   const it = bitems.find(x => x.uid === sel); if (!it) { view = 'bank'; return bankView(); }
   return '<button class="btn back" data-go="bank">← wróć</button>' + bqDet(it) + rows20(it, 1);
@@ -1924,7 +1932,7 @@ function nxtBtnUpd() { const b = $('nxtBtn'); if (!b || !D[only]) return; let s 
 function render() {
   try { nxtBtnUpd(); nxtFill(); } catch (e) {}
   $('ver').textContent = APP_VER;
-  const v = view === 'model' ? back : view === 'bankm' ? 'bank' : view === 'ocm' ? 'ocen' : view;
+  const v = view === 'model' ? back : view === 'bankm' ? 'bank' : view === 'ocm' ? 'ocen' : view === 'zakm' ? 'zak' : view;
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
   // znaczki na dolnym pasku tylko dla wybranej tabeli (T50 albo T60) — jak na przycisku T50 / T60
   $('navT').innerHTML = `TERAZ${allBadges(only)}`;
@@ -1934,7 +1942,7 @@ function render() {
   $('navK').innerHTML = `BANK${bankBadges35(bitems.filter(it => it.t === only))}`;
   { const n = ocPending().length; $('navO').innerHTML = `OCENY${n ? `<i class="nb">${n}</i>` : ''}`; }
   const ae = document.activeElement, keep = ae && ae.id && /^(in|pa|bq)_/.test(ae.id) ? [ae.id, ae.value] : null;
-  $('main').innerHTML = view === 'teraz' ? teraz() : view === 'zak' ? zaklady() : view === 'bust' ? busty() : view === 'bank' ? bankView() : view === 'bankm' ? bankModel() : view === 'model' ? model() : view === 'dane' ? dane() : view === 'ocen' ? oceny() : view === 'ocm' ? ocModel() : pomoc();
+  $('main').innerHTML = view === 'teraz' ? teraz() : view === 'zak' ? zaklady() : view === 'bust' ? busty() : view === 'bank' ? bankView() : view === 'bankm' ? bankModel() : view === 'model' ? model() : view === 'dane' ? dane() : view === 'ocen' ? oceny() : view === 'ocm' ? ocModel() : view === 'zakm' ? zakModel() : pomoc();
   try { cyApply(); } catch (e) {}
   if (keep && $(keep[0])) { $(keep[0]).value = keep[1]; $(keep[0]).focus(); }
 }
@@ -2023,7 +2031,7 @@ document.addEventListener('click', e => {
   if ((b = q('[data-untr]'))) { e.stopPropagation(); const it = items.find(x => x.uid === b.dataset.untr) || vitems.find(x => x.uid === b.dataset.untr); if (it) untrack(it, 1); return; }
   if ((b = q('[data-restart]'))) { e.stopPropagation(); return restartMy(b.dataset.restart); }
   if ((b = q('.mc[data-u],.rw[data-u]'))) return go('model', b.dataset.u);
-  if ((b = q('.bt[data-bi]'))) { const x = bets[+b.dataset.bi]; if (x && x.it) go('model', x.it.uid); else toast('Tego modelu nie ma już w MOJE'); }
+  if ((b = q('.bt[data-bi]'))) { const x = bets[+b.dataset.bi]; if (x && x.it) go('model', x.it.uid); else if (x && !x.rz) go('zakm', b.dataset.bi); else toast('Tego modelu RAZEM nie ma już w MOJE — statystyki w RAZEM'); }
 });
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id && e.target.id.startsWith('in_')) { const t = e.target.id.slice(3); addCode(t, e.target.value.trim()); } });
 document.addEventListener('input', e => {   // formularz zakładu: zmiana kroku → stawka tego kroku (dopóki kwoty nie zmieniono ręcznie)
