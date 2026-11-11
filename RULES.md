@@ -250,3 +250,4 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - „nie postawione N kroków (kA–kB)”: kroki tego cyklu ponad najwyższy krok, który postawiłem w tym cyklu (do WIN / LOST albo do bieżącego kroku).
 - „model był tu na kN”, gdy zapisany krok jest inny niż krok modelu w tym wierszu (SZUKAJ / S+ / LOST). RAZEM: cykle z tabeli RAZEM (`__relG`), krok bieżący z karty.
 - Zakłady banku (+3 / +5) bez tego okienka (bank ma swoje cykle w BANK).
+- Ramka „Jak gra ten model” (modele MOJE / RAZEM / LOST / OCENY) jest zwijana; domyślnie zwinięta, stan zapamiętany (`data-fold="jak"`).

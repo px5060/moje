@@ -125,6 +125,7 @@ details{margin-top:10px}summary{cursor:pointer;font-weight:700;color:var(--mu);p
 .kv{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
 .kv div{background:var(--card);border-radius:7px;padding:5px;text-align:center;font-size:11px;color:var(--mu)}
 .kv b{display:block;font-size:15px;color:var(--tx)}
+.jak>summary{font-weight:800;font-size:14px;cursor:pointer}.jak[open]>summary{margin-bottom:6px}
 .cyk{margin-top:4px;font-size:12px;border-radius:6px;padding:3px 6px;line-height:1.35}.cyk.cw{background:rgba(46,125,79,.22);color:#7fdc9f}.cyk.cl{background:rgba(179,38,30,.22);color:#ff8a80}.cyk.ct{background:rgba(201,122,69,.18);color:var(--or2)}
 .bars{display:flex;gap:4px;align-items:flex-end;height:70px;margin-top:6px}
 .bars div{flex:1;background:#2e75b6;border-radius:3px 3px 0 0;position:relative;min-height:2px}
@@ -1595,7 +1596,7 @@ function rzRows(it) {
 function rzHow(it) {
   const X = rzA(it); let d = ''; try { d = X && X.A.descTxt ? X.A.descTxt(X.mi) : ''; } catch (e) {}
   d = d || (it.c && it.c.rule) || '';
-  return d ? `<div class="box"><h4>Jak gra ten model</h4><div style="font-size:13.5px">${esc(d)}</div><div class="hint" style="margin-top:6px">Tabela <span>${esc(it.lab)}</span> w RAZEM ${TABS[it.t].name}. Przegrana → następny krok; WIN → od nowa k1; przegrany krok 8 = LOST.</div></div>` : '';
+  return d ? `<details class="box jak" ${foldAt('jak', 0)}><summary>Jak gra ten model</summary><div style="font-size:13.5px">${esc(d)}</div><div class="hint" style="margin-top:6px">Tabela <span>${esc(it.lab)}</span> w RAZEM ${TABS[it.t].name}. Przegrana → następny krok; WIN → od nowa k1; przegrany krok 8 = LOST.</div></details>` : '';
 }
 // historia zakładów na modelu (na górze ekranu modelu): każdy zapisany zakład — Nr wiersza, krok, kwota, wynik; zakłady banku z oznaczeniem 🏦 +3 / +5
 // 1.46.0 (prośba użytkownika): przy każdym zakładzie — jego cykl modelu: zakończony (WIN / LOST na kroku, w którym Nr; zielony / czerwony)
@@ -1702,12 +1703,12 @@ function modelPelne(it, oc) {
   if (!oc) { h += betHist(it); famOf(it.uid).forEach(([F, fi]) => { h += famCard(F, fi, 1); }); }
   const zBank = !oc && back === 'bank';
   if (zBank) h += bankBox(it);   // z zakładki BANK: bank na górze
-  h += `<div class="box"><h4>Jak gra ten model</h4><ol>
+  h += `<details class="box jak" ${foldAt('jak', 0)}><summary>Jak gra ten model</summary><ol>
     <li><b>STEP</b>: czekam, aż wypadnie ${esc(stepTxt(m))}.</li>
     ${m[6] ? `<li><b>STEP2</b>: potem czekam na układ ${esc(m[6])}.</li>` : ''}
     <li><b>TRIGGER</b>: potem czekam na ${esc(m[3])}${TN(m) > 1 ? ` — ${TN(m)} razy` : ''}.</li>
     <li><b>Zakład</b>: ${m[4] === 1 ? 'w następnym wierszu po TRIGGERZE' : `w ${m[4]}. wierszu po TRIGGERZE`} gram na <b>${it.tg}</b> (kurs 3,0).</li>
-    <li>Przegrana → następny krok: 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512 zł. WIN → od nowa k1. Przegrany krok 8 = <b>BUST</b>.</li></ol></div>`;
+    <li>Przegrana → następny krok: 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512 zł. WIN → od nowa k1. Przegrany krok 8 = <b>BUST</b>.</li></ol></details>`;   // 1.46.0: zwijane (zapamiętane)
   h += `<div class="spw"><button data-mwid="s" class="${mWid === 's' ? 'on' : ''}">📊 Statystyki</button><button data-mwid="z" class="${mWid === 'z' ? 'on' : ''}">📓 Zeszyt — bieżąca gra</button></div>`;
   if (mWid === 'z') {   // bieżąca gra na kartach ZESZYTU (z nazwami meczów) zamiast statystyk i tabeli 20 wierszy
     h += `<div class="box"><h4>📓 Zeszyt — bieżąca gra</h4><div class="hint">STEP, TRIGGER, przegrane kroki i zakład do gry na kartach ZESZYTU, z nazwami meczów. ◀ ▶ — inne karty.</div>
