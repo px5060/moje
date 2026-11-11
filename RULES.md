@@ -243,3 +243,10 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Silnik ZESZYTU nie wczytany (pierwsze otwarcie bez internetu) → wynik zakładów jest, kolejny krok — komunikat; ZESZYT nie może zmieniać nazw
   `buildBook`, `liczModel`, `modDef`, `STAWKI`, `partsOf` ani budowy wyniku `liczModel` (`gry`, `teraz`, `otw`, `pol` / `rs`) bez zmiany w MOJE.
 
+
+## Historia zakładów: cykl każdego zakładu (1.46.0)
+- W „💰 Historia zakładów na tym modelu” pod wynikiem zakładu jest okienko jego cyklu modelu:
+  **cykl zakończony: ✔ WIN kN** (zielone) / **✖ LOST k8** (czerwone) · Nr zamknięcia, albo **cykl trwa: teraz kN** (pomarańczowe).
+- „nie postawione N kroków (kA–kB)”: kroki tego cyklu ponad najwyższy krok, który postawiłem w tym cyklu (do WIN / LOST albo do bieżącego kroku).
+- „model był tu na kN”, gdy zapisany krok jest inny niż krok modelu w tym wierszu (SZUKAJ / S+ / LOST). RAZEM: cykle z tabeli RAZEM (`__relG`), krok bieżący z karty.
+- Zakłady banku (+3 / +5) bez tego okienka (bank ma swoje cykle w BANK).
