@@ -199,7 +199,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.46.0';
+const APP_VER = '1.47.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1605,16 +1605,19 @@ function betCyk(it, x, B, ev) {
   if (x.b.bank || !ev) return '';
   const n = D[it.t].n, R = x.b.row, e = ev.find(z => z[0] >= R);
   const cyc = row => { const i = ev.findIndex(z => z[0] >= row); return i < 0 ? ev.length : i; }, ci = cyc(R), inCyc = y => !y.b.bank && cyc(y.b.row) === ci;   // zakłady z tego samego cyklu
-  const myMax = Math.max(...B.filter(inCyc).map(y => y.b.step), x.b.step);
+  const P = [...new Set([...B.filter(inCyc).map(y => y.b.step), x.b.step])].sort((a, b) => a - b);   // 1.47.0: postawione kroki w tym cyklu
+  const kr = A => A.map(v => 'k' + v).join(', '), ile = n => `${n} ${n === 1 ? 'krok' : n < 5 ? 'kroki' : 'kroków'}`;
+  const st = do_ => { const om = Array.from({ length: Math.max(0, do_) }, (_, i) => i + 1).filter(v => !P.includes(v));
+    return `<br>postawione: <b>${kr(P)}</b>${om.length ? ` · <b>nie postawione ${ile(om.length)}</b>: ${kr(om)}` : ''}`; };
   let wiersz = '';
   if (!it.rz && R < n) { try { const L = labOf(it); if (L.K[R] === 6 || L.K[R] === 7 || L.K[R] === 8) { if (L.A[R] !== x.b.step) wiersz = ` · model był tu na <b>k${L.A[R]}</b>`; } else if (x.res !== 'none') wiersz = ' · model nie grał w tym wierszu'; } catch (er) {} }
   if (e) {
-    const win = e[1] === 1, K = win ? e[2] : 8, om = Math.max(0, K - myMax);
-    return `<div class="cyk ${win ? 'cw' : 'cl'}">cykl zakończony: <b>${win ? '✔ WIN' : '✖ LOST'} k${K}</b> · Nr ${fmtN(e[0] + 1)}${om ? ` · <b>nie postawione ${om} ${om === 1 ? 'krok' : om < 5 ? 'kroki' : 'kroków'}</b> (k${myMax + 1}${K > myMax + 1 ? '–k' + K : ''})` : ''}${wiersz}</div>`;
+    const win = e[1] === 1, K = win ? e[2] : 8;
+    return `<div class="cyk ${win ? 'cw' : 'cl'}">cykl zakończony: <b>${win ? '✔ WIN' : '✖ LOST'} k${K}</b> · Nr ${fmtN(e[0] + 1)}${wiersz}${st(K)}</div>`;
   }
   if (R >= n) return '';
-  const k = it.r.bs + 1, om = Math.max(0, k - 1 - myMax);
-  return `<div class="cyk ct">cykl trwa: <b>teraz k${k}</b> (${fmtN(it.rz ? it.r.stake : ST[k - 1])} zł)${om ? ` · <b>nie postawione ${om} ${om === 1 ? 'krok' : om < 5 ? 'kroki' : 'kroków'}</b> (k${myMax + 1}${k - 1 > myMax + 1 ? '–k' + (k - 1) : ''})` : ''}${wiersz}</div>`;
+  const k = it.r.bs + 1;
+  return `<div class="cyk ct">cykl trwa: <b>teraz k${k}</b> (${fmtN(it.rz ? it.r.stake : ST[k - 1])} zł)${wiersz}${st(k - 1)}</div>`;
 }
 function betHist(it, G) {
   const B = betsOf(it).sort((a, b) => b.b.row - a.b.row || b.b.t - a.b.t); if (!B.length) return '';

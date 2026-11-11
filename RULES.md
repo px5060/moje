@@ -251,3 +251,7 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - „model był tu na kN”, gdy zapisany krok jest inny niż krok modelu w tym wierszu (SZUKAJ / S+ / LOST). RAZEM: cykle z tabeli RAZEM (`__relG`), krok bieżący z karty.
 - Zakłady banku (+3 / +5) bez tego okienka (bank ma swoje cykle w BANK).
 - Ramka „Jak gra ten model” (modele MOJE / RAZEM / LOST / OCENY) jest zwijana; domyślnie zwinięta, stan zapamiętany (`data-fold="jak"`).
+
+## Historia zakładów: postawione i nie postawione kroki cyklu (1.47.0)
+- W okienku cyklu: **postawione: k1, k4, k7** (moje zakłady w tym cyklu) · **nie postawione N kroków: k2, k3, k5, k6** —
+  kroki cyklu od k1 do kroku WIN / LOST (zakończony) albo do kroku przed bieżącym (cykl trwa), na których nie było mojego zakładu.
