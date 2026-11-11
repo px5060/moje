@@ -255,3 +255,7 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 ## Historia zakładów: postawione i nie postawione kroki cyklu (1.47.0)
 - W okienku cyklu: **postawione: k1, k4, k7** (moje zakłady w tym cyklu) · **nie postawione N kroków: k2, k3, k5, k6** —
   kroki cyklu od k1 do kroku WIN / LOST (zakończony) albo do kroku przed bieżącym (cykl trwa), na których nie było mojego zakładu.
+
+## Historia zakładów: numer cyklu (1.48.0)
+- Okienko cyklu zaczyna się od **cykl #N** — numer cyklu modelu od początku tabeli (zakończone cykle po kolei, bieżący = następny).
+  Ten sam numer przy dwóch zakładach = ten sam cykl.

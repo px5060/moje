@@ -199,7 +199,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.47.0';
+const APP_VER = '1.48.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1613,11 +1613,11 @@ function betCyk(it, x, B, ev) {
   if (!it.rz && R < n) { try { const L = labOf(it); if (L.K[R] === 6 || L.K[R] === 7 || L.K[R] === 8) { if (L.A[R] !== x.b.step) wiersz = ` · model był tu na <b>k${L.A[R]}</b>`; } else if (x.res !== 'none') wiersz = ' · model nie grał w tym wierszu'; } catch (er) {} }
   if (e) {
     const win = e[1] === 1, K = win ? e[2] : 8;
-    return `<div class="cyk ${win ? 'cw' : 'cl'}">cykl zakończony: <b>${win ? '✔ WIN' : '✖ LOST'} k${K}</b> · Nr ${fmtN(e[0] + 1)}${wiersz}${st(K)}</div>`;
+    return `<div class="cyk ${win ? 'cw' : 'cl'}"><b>cykl #${ci + 1}</b> zakończony: <b>${win ? '✔ WIN' : '✖ LOST'} k${K}</b> · Nr ${fmtN(e[0] + 1)}${wiersz}${st(K)}</div>`;
   }
   if (R >= n) return '';
   const k = it.r.bs + 1;
-  return `<div class="cyk ct">cykl trwa: <b>teraz k${k}</b> (${fmtN(it.rz ? it.r.stake : ST[k - 1])} zł)${wiersz}${st(k - 1)}</div>`;
+  return `<div class="cyk ct"><b>cykl #${ci + 1}</b> trwa: <b>teraz k${k}</b> (${fmtN(it.rz ? it.r.stake : ST[k - 1])} zł)${wiersz}${st(k - 1)}</div>`;
 }
 function betHist(it, G) {
   const B = betsOf(it).sort((a, b) => b.b.row - a.b.row || b.b.t - a.b.t); if (!B.length) return '';
