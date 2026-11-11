@@ -125,6 +125,8 @@ details{margin-top:10px}summary{cursor:pointer;font-weight:700;color:var(--mu);p
 .kv{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
 .kv div{background:var(--card);border-radius:7px;padding:5px;text-align:center;font-size:11px;color:var(--mu)}
 .kv b{display:block;font-size:15px;color:var(--tx)}
+.jak>summary{font-weight:800;font-size:14px;cursor:pointer}.jak[open]>summary{margin-bottom:6px}
+.cyk{margin-top:4px;font-size:12px;border-radius:6px;padding:3px 6px;line-height:1.35}.cyk.cw{background:rgba(46,125,79,.22);color:#7fdc9f}.cyk.cl{background:rgba(179,38,30,.22);color:#ff8a80}.cyk.ct{background:rgba(201,122,69,.18);color:var(--or2)}
 .bars{display:flex;gap:4px;align-items:flex-end;height:70px;margin-top:6px}
 .bars div{flex:1;background:#2e75b6;border-radius:3px 3px 0 0;position:relative;min-height:2px}
 .bars span{position:absolute;top:-15px;left:0;right:0;text-align:center;font-size:10.5px;color:var(--tx)}
@@ -197,7 +199,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.45.0';
+const APP_VER = '1.46.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1594,18 +1596,36 @@ function rzRows(it) {
 function rzHow(it) {
   const X = rzA(it); let d = ''; try { d = X && X.A.descTxt ? X.A.descTxt(X.mi) : ''; } catch (e) {}
   d = d || (it.c && it.c.rule) || '';
-  return d ? `<div class="box"><h4>Jak gra ten model</h4><div style="font-size:13.5px">${esc(d)}</div><div class="hint" style="margin-top:6px">Tabela <span>${esc(it.lab)}</span> w RAZEM ${TABS[it.t].name}. Przegrana → następny krok; WIN → od nowa k1; przegrany krok 8 = LOST.</div></div>` : '';
+  return d ? `<details class="box jak" ${foldAt('jak', 0)}><summary>Jak gra ten model</summary><div style="font-size:13.5px">${esc(d)}</div><div class="hint" style="margin-top:6px">Tabela <span>${esc(it.lab)}</span> w RAZEM ${TABS[it.t].name}. Przegrana → następny krok; WIN → od nowa k1; przegrany krok 8 = LOST.</div></details>` : '';
 }
 // historia zakładów na modelu (na górze ekranu modelu): każdy zapisany zakład — Nr wiersza, krok, kwota, wynik; zakłady banku z oznaczeniem 🏦 +3 / +5
-function betHist(it) {
+// 1.46.0 (prośba użytkownika): przy każdym zakładzie — jego cykl modelu: zakończony (WIN / LOST na kroku, w którym Nr; zielony / czerwony)
+// albo trwa (teraz krok N); ile kroków tego cyklu nie postawiłem. ev = zakończone cykle [wiersz, 1 WIN / 2 LOST, krok]; RAZEM — z tabeli (__relG)
+function betCyk(it, x, B, ev) {
+  if (x.b.bank || !ev) return '';
+  const n = D[it.t].n, R = x.b.row, e = ev.find(z => z[0] >= R);
+  const cyc = row => { const i = ev.findIndex(z => z[0] >= row); return i < 0 ? ev.length : i; }, ci = cyc(R), inCyc = y => !y.b.bank && cyc(y.b.row) === ci;   // zakłady z tego samego cyklu
+  const myMax = Math.max(...B.filter(inCyc).map(y => y.b.step), x.b.step);
+  let wiersz = '';
+  if (!it.rz && R < n) { try { const L = labOf(it); if (L.K[R] === 6 || L.K[R] === 7 || L.K[R] === 8) { if (L.A[R] !== x.b.step) wiersz = ` · model był tu na <b>k${L.A[R]}</b>`; } else if (x.res !== 'none') wiersz = ' · model nie grał w tym wierszu'; } catch (er) {} }
+  if (e) {
+    const win = e[1] === 1, K = win ? e[2] : 8, om = Math.max(0, K - myMax);
+    return `<div class="cyk ${win ? 'cw' : 'cl'}">cykl zakończony: <b>${win ? '✔ WIN' : '✖ LOST'} k${K}</b> · Nr ${fmtN(e[0] + 1)}${om ? ` · <b>nie postawione ${om} ${om === 1 ? 'krok' : om < 5 ? 'kroki' : 'kroków'}</b> (k${myMax + 1}${K > myMax + 1 ? '–k' + K : ''})` : ''}${wiersz}</div>`;
+  }
+  if (R >= n) return '';
+  const k = it.r.bs + 1, om = Math.max(0, k - 1 - myMax);
+  return `<div class="cyk ct">cykl trwa: <b>teraz k${k}</b> (${fmtN(it.rz ? it.r.stake : ST[k - 1])} zł)${om ? ` · <b>nie postawione ${om} ${om === 1 ? 'krok' : om < 5 ? 'kroki' : 'kroków'}</b> (k${myMax + 1}${k - 1 > myMax + 1 ? '–k' + (k - 1) : ''})` : ''}${wiersz}</div>`;
+}
+function betHist(it, G) {
   const B = betsOf(it).sort((a, b) => b.b.row - a.b.row || b.b.t - a.b.t); if (!B.length) return '';
+  const ev = it.rz ? (G && G.length && G[0].K != null ? Array.from(G).sort((a, b) => a.er - b.er).map(g => [g.er, g.K >= 9 ? 2 : 1, Math.min(8, g.K)]) : null) : (it.r.ev || []);
   const done = B.filter(x => x.res === 'win' || x.res === 'lost'), put = B.reduce((a, x) => a + x.b.stake, 0), res = done.reduce((a, x) => a + betVal(x), 0), pend = B.filter(x => x.res === 'pend');
   const rs = x => x.res === 'win' ? `<b class="pos">✔ WIN ${zl(betVal(x))}</b>` : x.res === 'lost' ? `<b class="neg">✖ przegrany ${zl(betVal(x))}</b>` : x.res === 'pend' ? '<b style="color:var(--or2)">● czeka na wynik</b>' : '<span class="mu">model nie grał w tym wierszu</span>';
   return `<div class="box" style="border-color:var(--bl)"><h4>💰 Historia zakładów na tym modelu · ${B.length}</h4>
     <div class="kv"><div><b>${fmtN(put)} zł</b>postawione</div><div><b>${zl(res)}</b>wynik</div><div><b class="pos">${done.filter(x => x.res === 'win').length}</b>WIN</div><div><b class="neg">${done.filter(x => x.res === 'lost').length}</b>przegrane</div></div>
     ${pend.length ? `<div class="hint" style="margin-top:6px">czeka na wynik: ${pend.map(x => `Nr ${fmtN(x.b.row + 1)} · ${x.b.stake} zł`).join(' · ')}</div>` : ''}
     <table class="rows hist" style="margin-top:8px"><tr class="mu"><td>Nr</td><td>krok</td><td style="text-align:right">kwota</td><td>wynik</td><td></td></tr>
-    ${B.map(x => `<tr><td class="nr">${fmtN(x.b.row + 1)}</td><td>${x.b.bank ? `<span class="bw w${x.b.bank}">🏦 +${x.b.bank}</span> ` : ''}k${x.b.step}</td><td style="text-align:right"><b>${fmtN(x.b.stake)} zł</b></td><td>${rs(x)}<div class="mu" style="font-size:11px">${ago(x.b.t)}</div></td><td><button class="btn sm" data-delbet="${bets.indexOf(x)}">✕</button></td></tr>`).join('')}</table></div>`;
+    ${B.map(x => `<tr><td class="nr">${fmtN(x.b.row + 1)}</td><td>${x.b.bank ? `<span class="bw w${x.b.bank}">🏦 +${x.b.bank}</span> ` : ''}k${x.b.step}</td><td style="text-align:right"><b>${fmtN(x.b.stake)} zł</b></td><td>${rs(x)}<div class="mu" style="font-size:11px">${ago(x.b.t)}</div>${betCyk(it, x, B, ev)}</td><td><button class="btn sm" data-delbet="${bets.indexOf(x)}">✕</button></td></tr>`).join('')}</table></div>`;
 }
 function rzZeszyt(it) {   // bieżąca gra modelu RAZEM na kartach ZESZYTU (łańcuch zakładu z RAZEM: STEP, TRIGGER, gra, zakład)
   const X = rzA(it); let zn = ''; try { zn = X && X.U && X.U.znacz ? X.U.znacz(X.mi) : ''; } catch (e) {}
@@ -1638,7 +1658,7 @@ function rzModel(it) {
     ${it.res ? `<div style="margin-top:4px">Od dodania: ${it.res.win ? '✔ WIN' : '✖ BUST / LOSS'} w Nr ${fmtN(it.res.i + 1)}${it.after ? ` · potem WIN w Nr ${fmtN(it.after.i + 1)}` : ''}</div>` : ''}
     <div class="hint">Śledzę od Nr ${fmtN((it.g.start || 0) + 1)}${it.g.t ? ` · dodany ${ago(it.g.t)}` : ''}</div>
     <div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (wynik zobaczysz w ZAKŁADY):</div>${betForm(it, 1)}</div>
-    ${betHist(it)}
+    ${betHist(it, G)}
     ${rzHow(it)}
     <div class="spw"><button data-mwid="s" class="${mWid === 's' ? 'on' : ''}">📊 Statystyki</button><button data-mwid="z" class="${mWid === 'z' ? 'on' : ''}">📓 Zeszyt — bieżąca gra</button></div>
     ${mWid === 'z' ? rzZeszyt(it) : (rows.length ? `<div class="box"><h4>Statystyki modelu (RAZEM ${TABS[it.t].name})</h4><table class="rows st">${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td style="text-align:right;font-weight:700">${esc(v)}</td></tr>`).join('')}</table></div>` : '') + rzCyc(it, G) + rzRows(it)}
@@ -1683,12 +1703,12 @@ function modelPelne(it, oc) {
   if (!oc) { h += betHist(it); famOf(it.uid).forEach(([F, fi]) => { h += famCard(F, fi, 1); }); }
   const zBank = !oc && back === 'bank';
   if (zBank) h += bankBox(it);   // z zakładki BANK: bank na górze
-  h += `<div class="box"><h4>Jak gra ten model</h4><ol>
+  h += `<details class="box jak" ${foldAt('jak', 0)}><summary>Jak gra ten model</summary><ol>
     <li><b>STEP</b>: czekam, aż wypadnie ${esc(stepTxt(m))}.</li>
     ${m[6] ? `<li><b>STEP2</b>: potem czekam na układ ${esc(m[6])}.</li>` : ''}
     <li><b>TRIGGER</b>: potem czekam na ${esc(m[3])}${TN(m) > 1 ? ` — ${TN(m)} razy` : ''}.</li>
     <li><b>Zakład</b>: ${m[4] === 1 ? 'w następnym wierszu po TRIGGERZE' : `w ${m[4]}. wierszu po TRIGGERZE`} gram na <b>${it.tg}</b> (kurs 3,0).</li>
-    <li>Przegrana → następny krok: 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512 zł. WIN → od nowa k1. Przegrany krok 8 = <b>BUST</b>.</li></ol></div>`;
+    <li>Przegrana → następny krok: 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512 zł. WIN → od nowa k1. Przegrany krok 8 = <b>BUST</b>.</li></ol></details>`;   // 1.46.0: zwijane (zapamiętane)
   h += `<div class="spw"><button data-mwid="s" class="${mWid === 's' ? 'on' : ''}">📊 Statystyki</button><button data-mwid="z" class="${mWid === 'z' ? 'on' : ''}">📓 Zeszyt — bieżąca gra</button></div>`;
   if (mWid === 'z') {   // bieżąca gra na kartach ZESZYTU (z nazwami meczów) zamiast statystyk i tabeli 20 wierszy
     h += `<div class="box"><h4>📓 Zeszyt — bieżąca gra</h4><div class="hint">STEP, TRIGGER, przegrane kroki i zakład do gry na kartach ZESZYTU, z nazwami meczów. ◀ ▶ — inne karty.</div>
