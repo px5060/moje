@@ -206,6 +206,14 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Krok z tekstu GRA także w zapisie „krok 4” (TRÓJKA), nie tylko „K4” / „krok gry 4” — wcześniej TRÓJKA pokazywała k1 przy „krok 4 · 64 zł”.
 - Cel (x1x / xx1 / 1xx): z tekstu GRA, reguły albo nazwy tabeli RAZEM (np. „TRÓJKA xx1 V1.3”) — wcześniej zawsze x1x (też przy rozliczaniu zakładów).
 
+## Karty RAZEM w MOJE: krok, gdy karta go nie pisze (1.47.1)
+- Zgłoszenie użytkownika: 200 M4 po przegranym k5 (Nr 15 519) — w MOJE „cykl trwa: teraz k1 (8 zł)” i formularz k1 · 8 zł, a RAZEM liczy k6 · 128 zł.
+  Przyczyna: karta RAZEM, gdy model czeka na STEP / T1 / TRIGGER, nie pisze kroku („T1 jeśli wpadnie 001 → potem T2 x0x”), a MOJE wtedy brało k1.
+  To samo w T60 TOP5 / TOP7 (np. TOP7 M2 po przegranym k6 → k7).
+- Teraz (`rzLast`): karta bez kroku → krok z tabeli modelu w RAZEM (`UT.A.cell`, wiersze gry wstecz): ostatni przegrany kN → k(N+1), stawka tą samą
+  progresją co postawiona (TRÓJKA 8 · 16 · 32…, reszta 8 · 8 · 16…); WIN / BUST / LOST albo przegrany k8 → k1. Sprawdzone na wszystkich modelach
+  RAZEM T50 (1T / 200 / 2T — z krokiem silnika) i T60 TOP5 / TOP7 (`live.nextK`): 0 różnic.
+
 ## Modele RAZEM w MOJE: wszystkie gry, słupki i kwadraciki (1.42.0)
 - Ekran modelu RAZEM (R50 / R60) w MOJE, pod „Statystyki modelu (RAZEM …)”: ramka **Wszystkie gry modelu** — cykle / WIN / LOST,
   słupki „na którym kroku przychodził WIN” (k1–k8 i LOST), ostatnie 24 cykle jako kwadraciki (dotknij — powiększ; jeszcze raz — co było po takim wyniku)
