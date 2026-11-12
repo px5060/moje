@@ -263,3 +263,19 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 ## Historia zakładów: postawione i nie postawione kroki cyklu (1.47.0)
 - W okienku cyklu: **postawione: k1, k4, k7** (moje zakłady w tym cyklu) · **nie postawione N kroków: k2, k3, k5, k6** —
   kroki cyklu od k1 do kroku WIN / LOST (zakończony) albo do kroku przed bieżącym (cykl trwa), na których nie było mojego zakładu.
+
+## 📓 Model ZESZYTU: statystyki i historia zakładów (1.48.0)
+- Prośba użytkownika: dotknięcie modelu ZESZYTU w MOJE (karta w ZAKŁADY → 📓 ZESZYT, w pasku 💰 ZAKŁADY na TERAZ, wiersz w „Wszystkie zakłady
+  ZESZYTU”) otwiera ekran modelu (`zzm`), jak przy modelach SZUKAJ / RAZEM:
+  - nagłówek: Z50 / Z60, nazwa, opis (cel, wiersze, start, limit), **Teraz** (kolejny krok, kwota, Nr, miejsce na karcie albo etap po zamkniętej
+    serii), formularz zakładu (zapis do ZESZYTU), odnośnik do ZESZYTU;
+  - **💰 Historia zakładów na tym modelu** (jak 1.47.0): postawione, wynik, WIN, przegrane; przy każdym zakładzie wynik, miejsce na karcie i ramka
+    gry modelu — „cykl zakończony: ✔ WIN kN / ✖ LOST k(limit) · Nr …” albo „cykl trwa: teraz kN (kwota)”, „postawione / nie postawione” kroki
+    tej gry, „w ZESZYCIE to kN”, gdy krok zakładu inny, „model nie grał w tym wierszu”; ✕ usuwa zakład;
+  - **📊 Statystyki** z silnika ZESZYTU: gry, WIN, LOST, bilans (stawki 8 · 8 · 16 …, kurs 3), najdłuższa gra, słupki „WIN na kroku k1…k(limit) + LOST”,
+    ostatnie 24 gry (kwadraciki; LOST w `cyPanel` ma kod 99, bo ZESZYT ma W9, W10…), LOST w wierszach; pod spodem pełne statystyki z SZUKAJ W ZESZYCIE
+    (ramka `?m=`) — zgodne z naszymi liczbami;
+  - **📓 Zeszyt — ten model**: ramka ZESZYTU `?podglad=<kod>` (wiersze modelu i gra na kartach, z nazwami meczów).
+- Poprawka liczenia: gra w toku obejmuje też wiersze bieżącej połowy karty (`teraz.rs`) — wcześniej zakład w tej połowie (np. 4·9·22 k7 na Nr 15 520)
+  był opisany „model nie grał w tym wierszu”.
+
