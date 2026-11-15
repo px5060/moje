@@ -209,7 +209,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.50.2';
+const APP_VER = '1.50.3';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1191,16 +1191,37 @@ function rpScan() {
     if (n - o.n > 40) { rpDiff(it, o, cur, cur.ev, e0, add); continue; }   // duży import — tylko zamknięte cykle i stan na koniec
     let a = o; for (let k = o.n + 1; k <= n; k++) { const c = k === n ? cur : rpStan(it, k); rpDiff(it, a, c, cur.ev, e0, add); a = c; }   // kod po kodzie
   }
+  for (const t in ZZ) { if (!zzE[t]) continue;   // 📓 modele ZESZYTU (1.50.3): z list ZESZYTU i z zakładów ZESZYTU
+    const n = zzCodes(t).c.length, Z = new Map();
+    zzList(t).forEach(m => Z.set(String(m.id), { m, naz: m.nazwa || (zzE[t].modDef(m) || {}).nazwa || m.id }));
+    zitems.filter(zi => zi.t === t).forEach(zi => { if (!Z.has(zi.mid)) Z.set(zi.mid, { m: zi.m, naz: zi.nazwa }); });
+    for (const [mid, z] of Z) {
+      const uid = `Z~${t}~${mid}`; if (seen.has(uid)) continue; seen.add(uid);
+      const M = zzModel(t, z.m); if (!M) continue;
+      const T = M.teraz, L = M.limit, ga = T && T.gra ? 1 : 0, cur = { n, g: M.gry.length, s: ga ? T.s : 0, d: ga ? T.nr - n : 0, ga }, o = S[uid]; S[uid] = cur;
+      if (first || !o || o.n >= n) continue;
+      const e0 = { t, uid, lab: `${ZZ[t].g}·${z.naz}`, ts: now, zz: 1 }, nowe = [];
+      M.gry.forEach((g, i) => { const w = g.s <= L, r = w ? g.end : g.lim; if (r > o.n && r <= n) nowe.push(Object.assign({}, e0, w ? { nr: r, c: 'w', ci: i, s: `✔ WIN k${g.s}`, txt: `✔ WIN k${g.s} · cykl #${i + 1} → nowa gra po pustej trójce` } : { nr: r, c: 'l', ci: i, s: `✖ LOST k${L}`, txt: `✖ LOST k${L} · cykl #${i + 1} → Modele LOST` })); });
+      if (M.otw && M.otw.lim > o.n && M.otw.lim <= n) nowe.push(Object.assign({}, e0, { nr: M.otw.lim, c: 'l', ci: M.gry.length, s: `✖ LOST k${L}`, txt: `✖ LOST k${L} · cykl #${M.gry.length + 1} (gra trwa za limitem) → Modele LOST` }));
+      add.push(...nowe.sort((a, b) => a.nr - b.nr));
+      if (!nowe.length && ga && o.ga && cur.s > o.s && o.s) add.push(Object.assign({}, e0, { nr: n, c: 'k', s: `✗ k${o.s} → k${cur.s}`, txt: `✗ przegrana k${o.s}${cur.s > o.s + 1 ? '–k' + (cur.s - 1) : ''} → dalej k${cur.s}${cur.s > L ? ' (za limitem)' : ''}` }));
+      if (ga && (!o.ga || nowe.length) && cur.s === 1) add.push(Object.assign({}, e0, { nr: n, c: 's', s: `🟣 pusta trójka → k1`, txt: `🟣 pusta trójka (trigger) → gra od k1 na Nr ${fmtN(T.nr)}` }));
+      if (ga && cur.d === 1 && o.d !== 1 && cur.s <= L) add.push(Object.assign({}, e0, { nr: n, c: 'n', s: `🟧 GRAJ k${cur.s}`, txt: `→ 🟧 GRAJ TERAZ · Nr ${fmtN(T.nr)} · k${cur.s}` }));
+    }
+  }
   const ks = Object.keys(S); if (ks.length > 600) ks.slice(0, ks.length - 600).forEach(k => delete S[k]);
   lsSet(RPS, JSON.stringify(S));
   { let od = {}; try { od = JSON.parse(lsGet(RPOD, '{}')) || {}; } catch (e) {} let ch = 0;   // od kiedy raport śledzi tabelę (1.50.1)
-    for (const t in TABS) { if (!od[t] && all.some(it => it.t === t)) { od[t] = { n: D[t].n, ts: now }; ch = 1; } if (od[t] && od[t].last !== D[t].n) { od[t].last = D[t].n; od[t].lts = now; ch = 1; } }
+    for (const t in TABS) { if (!od[t] && (all.some(it => it.t === t) || [...seen].some(u => u.startsWith(`Z~${t}~`)))) { od[t] = { n: D[t].n, ts: now }; ch = 1; } if (od[t] && od[t].last !== D[t].n) { od[t].last = D[t].n; od[t].lts = now; ch = 1; } }
     if (ch) lsSet(RPOD, JSON.stringify(od)); }
   if (add.length || L.length !== L0.length) { add.forEach((x, i) => { x.id = now.toString(36) + i; }); lsSet(RPK, JSON.stringify([...L, ...add].slice(-600))); }
 }
 const RPOD = 'moje_v1_raport_od', RPSEEN = 'moje_v1_raport_seen', rpSeen = t => { try { return (JSON.parse(lsGet(RPSEEN, '{}')) || {})[t] || 0; } catch (e) { return 0; } };
 const RPC = { w: 'rw-w', l: 'rw-l', k: 'rw-k', n: 'rw-n', s: 'rw-s' };
 function rpTeraz(uid) {   // stan modelu teraz (koniec karty raportu)
+  if (uid.startsWith('Z~')) { const [, t, mid] = uid.split('~'), zl = zzList(t).find(m => String(m.id) === mid), zi = zitems.find(z => z.uid === uid), m = zl || (zi && zi.m), M = m && zzE[t] && zzModel(t, m), T = M && M.teraz;
+    if (!M) return '<span class="mu">model ZESZYTU</span>'; const n = zzCodes(t).c.length;
+    return T && T.gra ? (T.s > M.limit ? `✖ za limitem (k${T.s}) — czeka na koniec gry` : `${T.nr - n === 1 ? '🟧 GRAJ TERAZ' : '🟨 gra'} k${T.s} · Nr ${fmtN(T.nr)}`) : '🟦 czeka na pustą trójkę'; }
   const it = items.find(y => y.uid === uid), b = bitems.find(y => y.uid === uid), x = it || b; if (!x) return '<span class="mu">usunięty z MOJE</span>';
   if (it && it.inBust) return `🟥 LOST · czeka na WIN (k${x.r.bs + 1})`;
   return x.d === 1 ? `🟧 GRAJ TERAZ k${x.r.bs + 1} · ${rpZl(x, x.r.bs)} zł` : x.d >= 2 ? `🟨 ZA CHWILĘ · za ${x.d} w. · k${x.r.bs + 1}` : `🟦 czeka · k${x.r.bs + 1}`;
@@ -1228,6 +1249,9 @@ function rpSec(t) {
 // przytrzymanie wpisu raportu → zakładka, w której model jest teraz (TERAZ / LOST / BANK), kafelek modelu mignie
 function rpTam(id) {
   const x = rpList().filter(y => y.uid === id || y.id === id).pop(); if (!x) return;
+  if (x.uid.startsWith('Z~')) { const [, t, mid] = x.uid.split('~');   // ZESZYT: zakładka ZAKŁADY → 📓 ZESZYT (gdy ma zakłady), inaczej ZESZYT z tym modelem
+    if (!zitems.some(z => z.uid === x.uid)) { location.href = `/zeszyt/${t === 't60' ? 't60.html' : ''}?m=${encodeURIComponent(mid)}`; return; }
+    only = t; zsrc = 'Z'; RPFL = { uid: x.uid, until: Date.now() + 3500 }; go('zak'); setTimeout(() => { const el = rpFlash(); if (el) el.scrollIntoView({ block: 'center' }); else toast(`${esc(x.lab)} — w ZAKŁADY → 📓 ZESZYT`); }, 60); return; }
   const it = items.find(y => y.uid === x.uid), bk = bitems.find(y => y.uid === x.uid);
   if (!it && !bk) return toast('Tego modelu nie ma już w MOJE ani w BANK');
   const v = !it || it.hid || x.bank ? 'bank' : it.inBust ? 'bust' : 'teraz', gdzie = { bank: '🏦 BANK', bust: '🟥 LOST', teraz: 'TERAZ' }[v];
@@ -1239,7 +1263,7 @@ function rpTam(id) {
 let RPFL = null;   // kafelek do mignięcia po przytrzymaniu wpisu — miga dalej także po odświeżeniu ekranu (np. gdy doczyta się RAZEM / ZESZYT)
 function rpFlash() {
   if (!RPFL || Date.now() > RPFL.until) { RPFL = null; return null; }
-  const q = CSS.escape(RPFL.uid), el = document.querySelector(`#main [data-u="${q}"],#main [data-bkm="${q}"]`); if (!el) return null;   // kafelek TERAZ / LOST albo wiersz BANK
+  const q = CSS.escape(RPFL.uid), el = document.querySelector(`#main [data-u="${q}"],#main [data-bkm="${q}"],#main [data-zz="${q}"]`); if (!el) return null;   // kafelek TERAZ / LOST albo wiersz BANK
   for (let d = el.closest('details'); d; d = d.parentElement && d.parentElement.closest('details')) d.open = true;
   el.classList.add('rpfl'); return el;
 }
@@ -1250,7 +1274,7 @@ function teraz() {
   if (rzSt[t] === 'wczytuję') h += `<div class="hint" style="margin:-2px 0 8px">⏳ Wczytuję modele z RAZEM ${TABS[t].name}…</div>`;
   if (rzSt[t] === 'błąd') h += `<div class="hint neg" style="margin:-2px 0 8px">Nie udało się wczytać RAZEM ${TABS[t].name} — otwórz MOJE ponownie.</div>`;
   const L = vitems.filter(it => it.t === t);
-  if (!vitems.length && !bitems.length && rzSt[t] !== 'wczytuję') return h + `<div class="empty">Brak modeli w MOJE.<br><br>W SZUKAJ, SZUKAJ+ albo SZUKAJ BUST dotknij kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. W RAZEM: dotknij kartę → <b>▶ Gram — dodaj do aplikacji MOJE</b>.</div>`;
+  if (!vitems.length && !bitems.length && rzSt[t] !== 'wczytuję') return h + rpSec(t) + `<div class="empty">Brak modeli w MOJE.<br><br>W SZUKAJ, SZUKAJ+ albo SZUKAJ BUST dotknij kartę modelu → <b>⇢ Gram — dodaj do MOJE</b>. W RAZEM: dotknij kartę → <b>▶ Gram — dodaj do aplikacji MOJE</b>.</div>`;
   const act = L.filter(it => it.grp !== 'done'), play = act.filter(it => it.grp !== 'bust'), now = play.filter(it => it.d === 1).sort(byApp);
   const sum = now.reduce((a, it) => a + ST[it.r.bs], 0);
   // 1. CO GRAM NA NASTĘPNYM WIERSZU — tylko moje modele (LOST, BANK i ZAKŁADY mają swoje zakładki; na TERAZ tylko paski z tym, co gra)
@@ -1484,6 +1508,7 @@ const ZZ = {
 };
 const ZZHK = 'moje_v1_zzukr';   // schowane z ✅ ZAKOŃCZONE: [`${uid}@${czas ostatniego zakładu}`] — nowy zakład modelu pokazuje go znowu
 const zzE = {}, zzSt = {};   // t → silnik ZESZYTU (buildBook, liczModel, modDef, STAWKI, partsOf) · '' / 'wczytuję' / 'ok' / 'błąd'
+const ZZL = { t50: 'zeszyt_v1_modele', t60: 'zeszyt_v1_modele60' }, zzList = t => jget(ZZL[t]).filter(m => m && m.id && Array.isArray(m.w) && (t === 't50' || Array.isArray(m.cel)));   // 1.50.3: modele z list ZESZYTU (Modele, Modele LOST) — do RAPORTU
 const zzRaw = t => jget(ZZ[t].zk).filter(z => z && z.m && typeof z.m === 'object' && ZZ[t].ok(z) && z.nr > 0 && z.krok >= 1 && z.zl > 0);
 const zzSt8 = s => 8 * Math.pow(2, Math.max(0, s - 2));   // stawki ZESZYTU: 8, 8, 16, 32 … (krok do 40)
 const zz60 = (cd, cel) => (cd[0] !== '0' && cel.includes(cd[0])) || (cd[1] === '1' && cel.includes('x1x')) || (cd[2] === '1' && cel.includes('xx1'));   // jak trafia() w silnik60.js
@@ -1491,7 +1516,7 @@ const zzCel = (t, m) => t === 't60' ? (d => [d.length ? (d.length === 3 ? '1-3xx
   : ['+XX', 'X+X', 'XX+'][m.poz == null ? 1 : m.poz];
 function zzLoad() {   // silnik ZESZYTU — tylko gdy są zakłady ZESZYTU (pobranie z tego samego adresu; bez internetu z kopii MOJE)
   for (const t in ZZ) {
-    if (zzSt[t] === 'ok' || zzSt[t] === 'wczytuję' || !zzRaw(t).length) continue;
+    if (zzSt[t] === 'ok' || zzSt[t] === 'wczytuję' || (!zzRaw(t).length && !zzList(t).length)) continue;   // 1.50.3: też gdy są modele na listach ZESZYTU (RAPORT)
     zzSt[t] = 'wczytuję';
     (async () => {
       try { const r = await fetch(ZZ[t].js, { cache: 'no-cache' }); if (!r.ok) throw new Error(r.status);
@@ -1693,7 +1718,7 @@ function zzModelView() {
   const teraz = zi.load ? '⏳ liczę…' : done ? zzEta(zi) : zi.set ? `${zi.d === 1 ? '<b>GRAJ</b>' : 'zakład'} na Nr ${fmtN(zi.nr)} · postawiony k${zi.krok} · ${fmtN(zi.zl)} zł` + (zi.d > 1 ? ` · za ${zi.d} w.` : '')
     : `${zi.d === 1 ? '<b>GRAJ</b> — kolejny krok' : 'kolejny krok'} <b>k${zi.krok} · ${fmtN(zi.zl)} zł</b> na Nr ${fmtN(zi.nr)}${zi.d > 1 ? ` · za ${zi.d} w.` : ''}`;
   const gd = zi.nr && !(done && !zi.now) ? zzGdzie(t, zi.M, zi.nr) : '';
-  return `<button class="btn back" data-go="${back === 'zzm' ? 'zak' : back}">← wróć</button>
+  return `<button class="btn back" data-go="${back === 'zzm' ? 'zak' : back}">← wróć</button>${rpBar(zi)}
     <div class="box" style="border-color:#b8902e"><div style="display:flex;justify-content:space-between;gap:6px"><b style="font-size:17px"><span class="bdg Z">${ZZ[t].g}</span>${esc(zi.nazwa)}</b><span class="mu">ZESZYT ${TABS[t].name}</span></div>
     <div class="mu" style="font-size:12px;margin:3px 0 6px">${esc(zzOpis(t, zi.m))}</div>
     <div style="font-size:14.5px">Teraz: ${zi.M ? `<b class="cyn">cykl #${zi.M.gry.length + 1}</b> · ` : ''}${teraz}${gd ? ` <span class="mu">(${gd})</span>` : ''}</div>
@@ -2451,6 +2476,7 @@ document.addEventListener('click', e => {
   if ((b = q('[data-rpseen]'))) { let o = {}; try { o = JSON.parse(lsGet(RPSEEN, '{}')) || {}; } catch (er) {} o[b.dataset.rpseen] = Date.now(); lsSet(RPSEEN, JSON.stringify(o)); return render(); }
   if ((b = q('[data-rpclr]'))) { if (confirm(`Wyczyścić cały raport ${TABS[b.dataset.rpclr].name}?`)) { lsSet(RPK, JSON.stringify(rpList().filter(x => x.t !== b.dataset.rpclr))); render(); } return; }
   if ((b = q('[data-rpu]'))) { const A = rpList().filter(y => y.uid === b.dataset.rpu && y.t === only), sn = rpSeen(only), Z = A.filter(y => y.ts > sn).length ? A.filter(y => y.ts > sn) : A, x = [...Z].reverse().find(y => y.ci != null) || Z[Z.length - 1]; if (!x) return;   // statystyki: podświetl ostatni WIN / LOST z nowych
+    if (x.uid.startsWith('Z~')) { const [, t, mid] = x.uid.split('~'); if (zitems.some(z => z.uid === x.uid)) { RPF = x; rpGo = 1; return go('zzm', x.uid); } location.href = `/zeszyt/${t === 't60' ? 't60.html' : ''}?m=${encodeURIComponent(mid)}`; return; }   // model ZESZYTU: ekran MOJE (gdy ma zakłady) albo ZESZYT z tym modelem
     const inM = items.some(y => y.uid === x.uid), inB = bitems.some(y => y.uid === x.uid); if (!inM && !inB) return toast('Tego modelu nie ma już w MOJE ani w BANK');
     RPF = x; rpGo = 1; mWid = 's'; return go(inM && !(x.bank && inB) ? 'model' : 'bankm', x.uid); }
   if ((b = q('[data-untr]'))) { e.stopPropagation(); const it = items.find(x => x.uid === b.dataset.untr) || vitems.find(x => x.uid === b.dataset.untr); if (it) untrack(it, 1); return; }
