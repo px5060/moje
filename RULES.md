@@ -283,3 +283,14 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 ## Historia zakładów: numer cyklu (1.49.0)
 - Okienko cyklu zaczyna się od **cykl #N** — numer cyklu modelu od początku tabeli (zakończone cykle po kolei, bieżący = następny).
   Ten sam numer przy dwóch zakładach = ten sam cykl.
+
+## 📰 RAPORT w TERAZ (1.50.0)
+- Na samym dole TERAZ (pod ZAKOŃCZONE), osobno T50 / T60: co się zmieniło w modelach po nowych kodach (wpisanych tu albo w innej appce —
+  zmiany wpadają przy najbliższym otwarciu MOJE). MOJE pamięta stan każdego modelu (`moje_v1_raport_snap`: Nr, krok, za ile gra, banki) i porównuje.
+- Wpisy (`moje_v1_raport`, max 400), pogrupowane po Nr kodu, najnowszy na górze, kolor z lewej:
+  **✔ WIN kN · cykl #N → nowy cykl od k1** (zielony) · **✖ LOST k8 · cykl #N → zakładka LOST** (czerwony) · **✗ przegrana kN → dalej kN+1** ·
+  **🟦 CZEKAJĄ → 🟨 ZA CHWILĘ** (żółty) · **→ 🟧 GRAJ TERAZ · Nr · kN · zł** (pomarańczowy) · banki: **🏦 BANK +3 / +5** WIN / przegrana / GRAJ TERAZ.
+- Modele: moje z MOJE (SZUKAJ, S+, LOST, RAZEM — RAZEM z kart i cykli tabeli RAZEM), PO LOST, BANK. Pierwsze uruchomienie i nowy model — tylko zapamiętanie stanu.
+- Cofnięcie kodu (↶) usuwa wpisy z dalszych Nr. ✕ zamyka wpis, „🧹 Wyczyść raport T50 / T60” — wszystkie.
+- Dotknięcie wpisu → statystyki modelu: pasek „📰 Z raportu · Nr …”, kwadracik tego cyklu (WIN / LOST) powiększony z żółtą obwódką;
+  historia zakładów jak zawsze (cykl #N, postawione / nie postawione kroki). Model z BANK → ekran BANK.
