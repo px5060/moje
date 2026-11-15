@@ -298,3 +298,9 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
   grupa z modelem się rozwija, ekran przewija do jego kafelka, kafelek miga żółtą ramką. Dotknięcie — jak dotąd statystyki.
 - Przytrzymanie (test 1.50.0): TERAZ, LOST (właściwa podzakładka: 💥 MOJE MODELE albo 🔻 SZUKAJ LOST), BANK (wiersz `data-bkm`), tabela T50 / T60 wpisu,
   model usunięty → komunikat. Mignięcie trzyma się ~3,5 s także po odświeżeniu ekranu (np. gdy doczyta się RAZEM / ZESZYT).
+- **Kilka kodów naraz** (1.50.0): raport liczy każdy model **kod po kodzie** (stan po każdym Nr) — nic po drodze nie ginie (GRAJ TERAZ, przegrana, WIN…).
+  Import ponad 40 kodów — tylko zamknięte cykle i stan na koniec. RAZEM: zamknięte cykle z tabeli RAZEM (`__relG`, ten sam cykl# co w RAZEM) + stan na koniec.
+- **Jedna karta na model**: droga zmian po kolei („Nr kod → zdarzenie → …”, ostatnie 14), na końcu **teraz:** stan modelu.
+  Kolejność: karty z NOWYMI na górze, w nich LOST, WIN, GRAJ TERAZ, ZA CHWILĘ, reszta. ✕ usuwa kartę modelu.
+- **NOWE**: zdarzenia od ostatniego „✓ Przejrzane” (`moje_v1_raport_seen` per tabela) — żółta obwódka, znaczek NOWE, liczba NOWYCH w nagłówku.
+  Dotknięcie karty — statystyki z podświetlonym ostatnim WIN / LOST z nowych; przytrzymanie — zakładka modelu.
