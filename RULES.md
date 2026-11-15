@@ -308,3 +308,7 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 ## RAPORT zawsze widoczny (1.50.1)
 - Ramka 📰 RAPORT jest na TERAZ zawsze (także bez wpisów): „Śledzę zmiany od Nr … (data). Ostatni sprawdzony kod: Nr … — bez zmian w modelach /
   jeszcze nie było nowych kodów”. Start śledzenia per tabela: `moje_v1_raport_od`. Wpis powstaje tylko, gdy kod coś zmienił w modelu.
+
+## Numer cyklu wszędzie (1.50.2)
+- Linijka „Teraz:” na ekranie każdego modelu (MOJE / RAZEM / BANK / ZESZYT) zaczyna się od **cykl #N** — numer bieżącego cyklu (zakończone + 1).
+- Historia zakładów modelu ZESZYTU: okienko gry też z **cykl #N** (gra modelu w ZESZYCIE = cykl), jak przy modelach MOJE / RAZEM.
