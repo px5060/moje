@@ -1191,11 +1191,17 @@ function rpTam(id) {
   const it = items.find(y => y.uid === x.uid), bk = bitems.find(y => y.uid === x.uid);
   if (!it && !bk) return toast('Tego modelu nie ma już w MOJE ani w BANK');
   const v = !it || it.hid || x.bank ? 'bank' : it.inBust ? 'bust' : 'teraz', gdzie = { bank: '🏦 BANK', bust: '🟥 LOST', teraz: 'TERAZ' }[v];
-  only = x.t; go(v);
-  setTimeout(() => { const el = [...document.querySelectorAll(`[data-u="${CSS.escape(x.uid)}"]`)][0];
-    if (!el) return toast(`${esc(x.lab)} — w zakładce ${gdzie} (zwinięty na liście)`);
-    for (let d = el.closest('details'); d; d = d.parentElement && d.parentElement.closest('details')) d.open = true;
-    el.scrollIntoView({ block: 'center' }); el.classList.add('rpfl'); setTimeout(() => el.classList.remove('rpfl'), 3200); }, 60);
+  only = x.t; if (v === 'bust') bsrc = it.s.a === 'L' ? 'B' : 'M';   // LOST: podzakładka MOJE MODELE albo SZUKAJ LOST
+  go(v);
+  RPFL = { uid: x.uid, until: Date.now() + 3500 };
+  setTimeout(() => { const el = rpFlash(); if (!el) return toast(`${esc(x.lab)} — w zakładce ${gdzie} (zwinięty na liście)`); el.scrollIntoView({ block: 'center' }); }, 60);
+}
+let RPFL = null;   // kafelek do mignięcia po przytrzymaniu wpisu — miga dalej także po odświeżeniu ekranu (np. gdy doczyta się RAZEM / ZESZYT)
+function rpFlash() {
+  if (!RPFL || Date.now() > RPFL.until) { RPFL = null; return null; }
+  const q = CSS.escape(RPFL.uid), el = document.querySelector(`#main [data-u="${q}"],#main [data-bkm="${q}"]`); if (!el) return null;   // kafelek TERAZ / LOST albo wiersz BANK
+  for (let d = el.closest('details'); d; d = d.parentElement && d.parentElement.closest('details')) d.open = true;
+  el.classList.add('rpfl'); return el;
 }
 function rpBar(it) { return RPF && RPF.uid === it.uid ? `<div class="rpb ${({ w: 'rw-w', l: 'rw-l', k: 'rw-k', n: 'rw-n', s: 'rw-s' })[RPF.c] || ''}">📰 Z raportu · Nr ${fmtN(RPF.nr)}: <b>${esc(RPF.txt)}</b></div>` : ''; }
 function teraz() {
@@ -2310,6 +2316,7 @@ function render() {
   const ae = document.activeElement, keep = ae && ae.id && /^(in|pa|bq)_/.test(ae.id) ? [ae.id, ae.value] : null;
   $('main').innerHTML = view === 'teraz' ? teraz() : view === 'zak' ? zaklady() : view === 'bust' ? busty() : view === 'bank' ? bankView() : view === 'bankm' ? bankModel() : view === 'model' ? model() : view === 'dane' ? dane() : view === 'ocen' ? oceny() : view === 'ocm' ? ocModel() : view === 'zakm' ? zakModel() : view === 'zzm' ? zzModelView() : pomoc();
   try { cyApply(); } catch (e) {}
+  try { rpFlash(); } catch (e) {}
   if (keep && $(keep[0])) { $(keep[0]).value = keep[1]; $(keep[0]).focus(); }
 }
 let back = 'teraz', mWid = 's';   // ekran modelu: 's' statystyki, 'z' zeszyt (bieżąca gra)

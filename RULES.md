@@ -296,3 +296,5 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
   historia zakładów jak zawsze (cykl #N, postawione / nie postawione kroki). Model z BANK → ekran BANK.
 - **Przytrzymanie** wpisu raportu → zakładka, w której model jest teraz (TERAZ / 🟥 LOST / 🏦 BANK, tabela T50 / T60 wpisu);
   grupa z modelem się rozwija, ekran przewija do jego kafelka, kafelek miga żółtą ramką. Dotknięcie — jak dotąd statystyki.
+- Przytrzymanie (test 1.50.0): TERAZ, LOST (właściwa podzakładka: 💥 MOJE MODELE albo 🔻 SZUKAJ LOST), BANK (wiersz `data-bkm`), tabela T50 / T60 wpisu,
+  model usunięty → komunikat. Mignięcie trzyma się ~3,5 s także po odświeżeniu ekranu (np. gdy doczyta się RAZEM / ZESZYT).
