@@ -135,6 +135,7 @@ details{margin-top:10px}summary{cursor:pointer;font-weight:700;color:var(--mu);p
 .rpb{border-left:5px solid #4a6a8a;background:var(--card);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:13.5px}
 .cyc b.rp{box-shadow:0 0 0 3px #FFD700!important;animation:rpb 1s ease-in-out 3}@keyframes rpb{50%{transform:scale(1.55)}}
 .jak>summary{font-weight:800;font-size:14px;cursor:pointer}.jak[open]>summary{margin-bottom:6px}
+.cyn{background:#2a3140;border-radius:5px;padding:0 5px}
 .cyk{margin-top:4px;font-size:12px;border-radius:6px;padding:3px 6px;line-height:1.35}.cyk.cw{background:rgba(46,125,79,.22);color:#7fdc9f}.cyk.cl{background:rgba(179,38,30,.22);color:#ff8a80}.cyk.ct{background:rgba(201,122,69,.18);color:var(--or2)}
 .bars{display:flex;gap:4px;align-items:flex-end;height:70px;margin-top:6px}
 .bars div{flex:1;background:#2e75b6;border-radius:3px 3px 0 0;position:relative;min-height:2px}
@@ -208,7 +209,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.50.1';
+const APP_VER = '1.50.2';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1654,10 +1655,10 @@ function zzCyk(zi, x, B) {   // jak betCyk: w której grze modelu był zakład, 
   const st = do_ => { const om = Array.from({ length: Math.max(0, do_) }, (_, i) => i + 1).filter(v => !P.includes(v)); return `<br>postawione: <b>${kr(P)}</b>${om.length ? ` · <b>nie postawione ${ile(om.length)}</b>: ${kr(om)}` : ''}`; };
   if (!a) return `<div class="cyk">model nie grał w tym wierszu</div>`;
   const wz = a[1] !== x.z.krok ? ` · w ZESZYCIE to <b>k${a[1]}</b>` : '', g = M.gry[gi];
-  if (g) { const win = g.s <= M.limit; return `<div class="cyk ${win ? 'cw' : 'cl'}">cykl zakończony: <b>${win ? `✔ WIN k${g.s}` : `✖ LOST k${M.limit}`}</b> · Nr ${fmtN(win ? g.end : g.lim || g.end)}${wz}${st(win ? g.s : M.limit)}</div>`; }
+  if (g) { const win = g.s <= M.limit; return `<div class="cyk ${win ? 'cw' : 'cl'}"><b>cykl #${gi + 1}</b> zakończony: <b>${win ? `✔ WIN k${g.s}` : `✖ LOST k${M.limit}`}</b> · Nr ${fmtN(win ? g.end : g.lim || g.end)}${wz}${st(win ? g.s : M.limit)}</div>`; }
   const T = M.teraz;
-  if (T && T.s > M.limit) return `<div class="cyk cl">cykl: <b>✖ LOST k${M.limit}</b>${M.otw && M.otw.lim ? ' · Nr ' + fmtN(M.otw.lim) : ''} — gra trwa za limitem, nie gramy${wz}${st(M.limit)}</div>`;
-  return `<div class="cyk ct">cykl trwa: <b>teraz k${T.s}</b>${zi.nr === T.nr && zi.krok === T.s ? ` (${fmtN(zi.zl)} zł)` : ''}${wz}${st(T.s - 1)}</div>`;
+  if (T && T.s > M.limit) return `<div class="cyk cl"><b>cykl #${gi + 1}</b>: <b>✖ LOST k${M.limit}</b>${M.otw && M.otw.lim ? ' · Nr ' + fmtN(M.otw.lim) : ''} — gra trwa za limitem, nie gramy${wz}${st(M.limit)}</div>`;
+  return `<div class="cyk ct"><b>cykl #${gi + 1}</b> trwa: <b>teraz k${T.s}</b>${zi.nr === T.nr && zi.krok === T.s ? ` (${fmtN(zi.zl)} zł)` : ''}${wz}${st(T.s - 1)}</div>`;
 }
 function zzHist(zi) {
   const B = zi.L.slice().sort((a, b) => b.z.nr - a.z.nr || b.z.t - a.z.t), done = B.filter(x => x.res !== 'pend'), pend = B.filter(x => x.res === 'pend');
@@ -1695,7 +1696,7 @@ function zzModelView() {
   return `<button class="btn back" data-go="${back === 'zzm' ? 'zak' : back}">← wróć</button>
     <div class="box" style="border-color:#b8902e"><div style="display:flex;justify-content:space-between;gap:6px"><b style="font-size:17px"><span class="bdg Z">${ZZ[t].g}</span>${esc(zi.nazwa)}</b><span class="mu">ZESZYT ${TABS[t].name}</span></div>
     <div class="mu" style="font-size:12px;margin:3px 0 6px">${esc(zzOpis(t, zi.m))}</div>
-    <div style="font-size:14.5px">Teraz: ${teraz}${gd ? ` <span class="mu">(${gd})</span>` : ''}</div>
+    <div style="font-size:14.5px">Teraz: ${zi.M ? `<b class="cyn">cykl #${zi.M.gry.length + 1}</b> · ` : ''}${teraz}${gd ? ` <span class="mu">(${gd})</span>` : ''}</div>
     ${can ? `<div class="hint" style="margin-top:6px">Zapisz zakład, który naprawdę zagrałeś (trafi też do ZESZYTU → 💰 Zakłady):</div>${zzBetForm(zi)}` : zi.set ? '<div class="hint" style="margin-top:6px">✓ Zakład na ten krok jest zapisany — czeka na wynik.</div>' : ''}
     <div class="hint" style="margin-top:6px"><a class="zzln" href="${ZZ[t].url}">📓 Otwórz ZESZYT ›</a></div></div>
     ${zzHist(zi)}
@@ -1859,7 +1860,7 @@ function rzModel(it) {
   return `<button class="btn back" data-go="${back}">← wróć</button>${rpBar(it)}
     <div class="box" style="border-color:var(--or)"><div style="display:flex;justify-content:space-between"><b style="font-size:17px"><span class="bdg R">R${it.t.slice(1)}</span>${esc(it.g.id)}</b><span class="mu">RAZEM ${TABS[it.t].name} · <span>${esc(it.lab)}</span></span></div>
     ${c ? `<div class="mu" style="font-size:12px;margin:3px 0 6px">${esc(c.rule || '')}</div>` : '<div class="neg">Nie ma karty tego modelu w RAZEM.</div>'}
-    <div style="font-size:14.5px">Teraz: ${shortPh(it)}</div>
+    <div style="font-size:14.5px">Teraz: ${G && G.length && G[0].K != null ? `<b class="cyn">cykl #${G.length + 1}</b> · ` : ''}${shortPh(it)}</div>
     ${it.res ? `<div style="margin-top:4px">Od dodania: ${it.res.win ? '✔ WIN' : '✖ BUST / LOSS'} w Nr ${fmtN(it.res.i + 1)}${it.after ? ` · potem WIN w Nr ${fmtN(it.after.i + 1)}` : ''}</div>` : ''}
     <div class="hint">Śledzę od Nr ${fmtN((it.g.start || 0) + 1)}${it.g.t ? ` · dodany ${ago(it.g.t)}` : ''}</div>
     <div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (wynik zobaczysz w ZAKŁADY):</div>${betForm(it, 1)}</div>
@@ -1900,7 +1901,7 @@ function modelPelne(it, oc) {
   const m = it.m, r = it.r, C = D[it.t], lab = labOf(it), n = C.n, cyc = r.nw + r.nbu;
   let h = `${oc ? '' : `<button class="btn back" data-go="${back}">← wróć</button>`}
     <div class="box" style="border-color:var(--or)"><div class="h" style="display:flex;justify-content:space-between"><b style="font-size:17px">${srcBdg(it)}${esc(it.g.id)}${it.rz ? '' : `<span class="tgt">${it.tg}</span>`}</b><span class="mu">${esc(it.s.name)} ${TABS[it.t].name} · cel ${it.tg}</span></div>
-    <div class="rule mu" style="font-size:12px;margin:3px 0 6px">${esc(ruleTxt(m))}</div><div style="font-size:14.5px">Teraz: ${phaseTxt(it)}</div>
+    <div class="rule mu" style="font-size:12px;margin:3px 0 6px">${esc(ruleTxt(m))}</div><div style="font-size:14.5px">Teraz: <b class="cyn">cykl #${(r.ev || []).length + 1}</b> · ${phaseTxt(it)}</div>
     ${it.inBust ? `<div class="neg" style="margin-top:4px">BUST w Nr ${fmtN(r.lbr + 1)} — od niego jeszcze bez WIN</div>` : ''}
     ${it.res ? `<div style="margin-top:4px">Moja gra: ${it.res.win ? `✔ WIN k${it.res.k}` : '✖ BUST'} w Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}</div>` : ''}
     ${it.gone || oc ? '' : `<div class="hint">Śledzę od Nr ${fmtN((it.g.start || 0) + 1)} (wejście na k${it.g.s0 || 1})${it.g.t ? ` · dodany ${ago(it.g.t)}` : ''}</div>`}
@@ -2158,7 +2159,7 @@ function bqFind(t, q) {   // „P1037”, „1037”, „S+1037” (tylko SZUKAJ
 function bqDet(it, bezPrzen) {   // bezPrzen: bez przycisków Przenieś (ekran z OCEN — decyzja na karcie oceny)
   const r = it.r;
   return `<div class="box${r.sinceB === 0 ? ' abust' : ''}" style="border-color:var(--or);margin-top:6px"><div style="display:flex;justify-content:space-between;gap:6px"><b style="font-size:16px">${srcBdg(it)}${esc(it.g.id)}<span class="tgt">${it.tg}</span></b><span class="mu">${esc(it.s.name)} ${TABS[it.t].name}</span></div>
-    <div class="rule mu" style="font-size:12px;margin:3px 0 6px">${esc(ruleTxt(it.m))}</div><div style="font-size:14px">Teraz: ${phaseTxt(it)}</div>${r.sinceB === 0 ? `<div class="neg" style="margin-top:4px">LOST w Nr ${fmtN(r.lbr + 1)} — od niego jeszcze bez WIN</div>` : ''}
+    <div class="rule mu" style="font-size:12px;margin:3px 0 6px">${esc(ruleTxt(it.m))}</div><div style="font-size:14px">Teraz: <b class="cyn">cykl #${(r.ev || []).length + 1}</b> · ${phaseTxt(it)}</div>${r.sinceB === 0 ? `<div class="neg" style="margin-top:4px">LOST w Nr ${fmtN(r.lbr + 1)} — od niego jeszcze bez WIN</div>` : ''}
     <div class="kv" style="margin-top:6px"><div><b>${r.nw + r.nbu}</b>cykli</div><div><b class="pos">${r.nw}</b>WIN</div><div><b class="neg">${r.nbu}</b>LOST</div><div><b>${zl(r.pnl)}</b>bilans</div></div>
     <div class="hint" style="margin-top:6px">Ostatnie cykle modelu (najnowszy z prawej):</div>${cycHtml(it, 16, 'LOST')}${bezPrzen ? '' : `<div style="margin-top:8px">${moveBtn(it)}</div>`}</div>` + bankBox(it);
 }
