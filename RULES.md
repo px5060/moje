@@ -279,3 +279,7 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Poprawka liczenia: gra w toku obejmuje też wiersze bieżącej połowy karty (`teraz.rs`) — wcześniej zakład w tej połowie (np. 4·9·22 k7 na Nr 15 520)
   był opisany „model nie grał w tym wierszu”.
 
+
+## Historia zakładów: numer cyklu (1.49.0)
+- Okienko cyklu zaczyna się od **cykl #N** — numer cyklu modelu od początku tabeli (zakończone cykle po kolei, bieżący = następny).
+  Ten sam numer przy dwóch zakładach = ten sam cykl.
