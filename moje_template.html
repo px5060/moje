@@ -128,6 +128,7 @@ details{margin-top:10px}summary{cursor:pointer;font-weight:700;color:var(--mu);p
 .sec.srap{border-color:#4a6a8a}.rph{font-size:12px;color:var(--mu);margin:8px 0 3px;font-weight:700}
 .rpe{display:flex;justify-content:space-between;align-items:center;gap:8px;border-left:5px solid #4a6a8a;background:var(--card);border-radius:7px;padding:6px 8px;margin:3px 0;font-size:13px;cursor:pointer}
 .rw-w{border-left-color:#2e9d5f!important}.rw-w b{color:#7fdc9f}.rw-l{border-left-color:#c0392b!important}.rw-l b{color:#ff8a80}.rw-k{border-left-color:#a8423a!important}.rw-n{border-left-color:var(--or)!important}.rw-s{border-left-color:#c9a800!important}
+.rpe{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.rpfl{animation:rpfl .8s ease-in-out 4;box-shadow:0 0 0 3px #FFD700!important}@keyframes rpfl{50%{box-shadow:0 0 0 6px #FFD700}}
 .rpb{border-left:5px solid #4a6a8a;background:var(--card);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:13.5px}
 .cyc b.rp{box-shadow:0 0 0 3px #FFD700!important;animation:rpb 1s ease-in-out 3}@keyframes rpb{50%{transform:scale(1.55)}}
 .jak>summary{font-weight:800;font-size:14px;cursor:pointer}.jak[open]>summary{margin-bottom:6px}
@@ -1181,8 +1182,20 @@ function rpSec(t) {
   const grp = r => { const A = L.filter(x => x.nr === r); return `<div class="rph">Nr ${fmtN(r)}${r <= D[t].n ? ` · kod <b>${code(t, r - 1)}</b>` : ''} · ${ago(Math.max(...A.map(x => x.ts)))}</div>` +
     A.map(x => `<div class="rpe ${C[x.c] || ''}" data-rpo="${esc(x.id)}"><div><b>${esc(x.lab)}</b><br>${esc(x.txt)}</div><button class="ub" data-rpx="${esc(x.id)}">✕</button></div>`).join(''); };
   return `<details class="sec srap" ${foldAt('T-rap', 1)}><summary class="sh"><span>📰 RAPORT · ${L.length}</span><span class="m">co się zmieniło po kodach</span></summary>
-    <div class="hint" style="margin:0 0 6px">Najnowszy Nr na górze. Dotknij wpisu — statystyki modelu (podświetlony kwadracik tego cyklu, zakłady postawione i nie). ✕ — zamknij wpis.</div>
+    <div class="hint" style="margin:0 0 6px">Najnowszy Nr na górze. <b>Dotknij</b> wpisu — statystyki modelu (podświetlony kwadracik tego cyklu, zakłady postawione i nie). <b>Przytrzymaj</b> — model w zakładce, w której jest teraz (TERAZ / LOST / BANK). ✕ — zamknij wpis.</div>
     ${nr.map(grp).join('')}<button class="btn wide" data-rpclr="${t}" style="margin-top:8px">🧹 Wyczyść raport ${TABS[t].name}</button></details>`;
+}
+// przytrzymanie wpisu raportu → zakładka, w której model jest teraz (TERAZ / LOST / BANK), kafelek modelu mignie
+function rpTam(id) {
+  const x = rpList().find(y => y.id === id); if (!x) return;
+  const it = items.find(y => y.uid === x.uid), bk = bitems.find(y => y.uid === x.uid);
+  if (!it && !bk) return toast('Tego modelu nie ma już w MOJE ani w BANK');
+  const v = !it || it.hid || x.bank ? 'bank' : it.inBust ? 'bust' : 'teraz', gdzie = { bank: '🏦 BANK', bust: '🟥 LOST', teraz: 'TERAZ' }[v];
+  only = x.t; go(v);
+  setTimeout(() => { const el = [...document.querySelectorAll(`[data-u="${CSS.escape(x.uid)}"]`)][0];
+    if (!el) return toast(`${esc(x.lab)} — w zakładce ${gdzie} (zwinięty na liście)`);
+    for (let d = el.closest('details'); d; d = d.parentElement && d.parentElement.closest('details')) d.open = true;
+    el.scrollIntoView({ block: 'center' }); el.classList.add('rpfl'); setTimeout(() => el.classList.remove('rpfl'), 3200); }, 60);
 }
 function rpBar(it) { return RPF && RPF.uid === it.uid ? `<div class="rpb ${({ w: 'rw-w', l: 'rw-l', k: 'rw-k', n: 'rw-n', s: 'rw-s' })[RPF.c] || ''}">📰 Z raportu · Nr ${fmtN(RPF.nr)}: <b>${esc(RPF.txt)}</b></div>` : ''; }
 function teraz() {
@@ -2421,13 +2434,13 @@ document.addEventListener('change', e => {
 // kafelek modelu: dotknięcie → ekran modelu (statystyki u góry), przytrzymanie → ten sam ekran od razu na tabeli wierszy
 let lpT = null, lpOn = false, lpUp = 0, lpXY = null;   // lpOn = przytrzymanie zadziałało, palec jeszcze na ekranie
 const lpStop = () => { clearTimeout(lpT); lpT = null; };
-document.addEventListener('pointerdown', e => { const c = e.target.closest ? x => e.target.closest(x) : () => null, s = c('[data-lp]'), u = !s && !c('button,input,select,a,label') && c('.mc[data-u],.rw[data-u]'); if (!s && !u) return; lpXY = [e.clientX, e.clientY]; lpStop();
-  lpT = setTimeout(() => { lpT = null; lpOn = true; try { navigator.vibrate && navigator.vibrate(30); } catch (x) {} if (s) return go(s.dataset.lp);
+document.addEventListener('pointerdown', e => { const c = e.target.closest ? x => e.target.closest(x) : () => null, s = c('[data-lp]'), rp = !s && !c('button') && c('.rpe[data-rpo]'), u = !s && !rp && !c('button,input,select,a,label') && c('.mc[data-u],.rw[data-u]'); if (!s && !u && !rp) return; lpXY = [e.clientX, e.clientY]; lpStop();
+  lpT = setTimeout(() => { lpT = null; lpOn = true; try { navigator.vibrate && navigator.vibrate(30); } catch (x) {} if (s) return go(s.dataset.lp); if (rp) return rpTam(rp.dataset.rpo);
     go('model', u.dataset.u); setTimeout(() => { const t = $('mtab'); if (t) t.scrollIntoView({ block: 'start' }); }, 30); }, 550); });
 document.addEventListener('pointerup', () => { lpStop(); if (lpOn) { lpOn = false; lpUp = Date.now(); } }); document.addEventListener('pointercancel', () => { lpStop(); lpOn = false; });
 document.addEventListener('pointermove', e => { if (lpT && lpXY && Math.hypot(e.clientX - lpXY[0], e.clientY - lpXY[1]) > 12) lpStop(); });
 document.addEventListener('click', e => { if (lpOn || Date.now() - lpUp < 350) { e.preventDefault(); e.stopPropagation(); lpUp = 0; } }, true);   // „klik” z puszczenia palca po przytrzymaniu — nie zwijaj i nie klikaj w nowym ekranie
-document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('[data-lp],.mc[data-u],.rw[data-u]')) e.preventDefault(); });
+document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('[data-lp],.mc[data-u],.rw[data-u],.rpe')) e.preventDefault(); });
 window.addEventListener('storage', () => reload());
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { reload(); ghSchedule(2000); } else ghFlush(); });   // otwarte → szybko sprawdź zmiany z innych urządzeń
 setInterval(() => { if (!document.hidden && !ghT && !ghBusy) ghSchedule(1000); }, 180000);   // co 3 min, gdy MOJE jest na ekranie

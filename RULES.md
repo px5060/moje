@@ -294,3 +294,5 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Cofnięcie kodu (↶) usuwa wpisy z dalszych Nr. ✕ zamyka wpis, „🧹 Wyczyść raport T50 / T60” — wszystkie.
 - Dotknięcie wpisu → statystyki modelu: pasek „📰 Z raportu · Nr …”, kwadracik tego cyklu (WIN / LOST) powiększony z żółtą obwódką;
   historia zakładów jak zawsze (cykl #N, postawione / nie postawione kroki). Model z BANK → ekran BANK.
+- **Przytrzymanie** wpisu raportu → zakładka, w której model jest teraz (TERAZ / 🟥 LOST / 🏦 BANK, tabela T50 / T60 wpisu);
+  grupa z modelem się rozwija, ekran przewija do jego kafelka, kafelek miga żółtą ramką. Dotknięcie — jak dotąd statystyki.
