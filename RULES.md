@@ -283,3 +283,24 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 ## Historia zakładów: numer cyklu (1.49.0)
 - Okienko cyklu zaczyna się od **cykl #N** — numer cyklu modelu od początku tabeli (zakończone cykle po kolei, bieżący = następny).
   Ten sam numer przy dwóch zakładach = ten sam cykl.
+
+## 📰 RAPORT w TERAZ (1.50.0)
+- Na samym dole TERAZ (pod ZAKOŃCZONE), osobno T50 / T60: co się zmieniło w modelach po nowych kodach (wpisanych tu albo w innej appce —
+  zmiany wpadają przy najbliższym otwarciu MOJE). MOJE pamięta stan każdego modelu (`moje_v1_raport_snap`: Nr, krok, za ile gra, banki) i porównuje.
+- Wpisy (`moje_v1_raport`, max 400), pogrupowane po Nr kodu, najnowszy na górze, kolor z lewej:
+  **✔ WIN kN · cykl #N → nowy cykl od k1** (zielony) · **✖ LOST k8 · cykl #N → zakładka LOST** (czerwony) · **✗ przegrana kN → dalej kN+1** ·
+  **🟦 CZEKAJĄ → 🟨 ZA CHWILĘ** (żółty) · **→ 🟧 GRAJ TERAZ · Nr · kN · zł** (pomarańczowy) · banki: **🏦 BANK +3 / +5** WIN / przegrana / GRAJ TERAZ.
+- Modele: moje z MOJE (SZUKAJ, S+, LOST, RAZEM — RAZEM z kart i cykli tabeli RAZEM), PO LOST, BANK. Pierwsze uruchomienie i nowy model — tylko zapamiętanie stanu.
+- Cofnięcie kodu (↶) usuwa wpisy z dalszych Nr. ✕ zamyka wpis, „🧹 Wyczyść raport T50 / T60” — wszystkie.
+- Dotknięcie wpisu → statystyki modelu: pasek „📰 Z raportu · Nr …”, kwadracik tego cyklu (WIN / LOST) powiększony z żółtą obwódką;
+  historia zakładów jak zawsze (cykl #N, postawione / nie postawione kroki). Model z BANK → ekran BANK.
+- **Przytrzymanie** wpisu raportu → zakładka, w której model jest teraz (TERAZ / 🟥 LOST / 🏦 BANK, tabela T50 / T60 wpisu);
+  grupa z modelem się rozwija, ekran przewija do jego kafelka, kafelek miga żółtą ramką. Dotknięcie — jak dotąd statystyki.
+- Przytrzymanie (test 1.50.0): TERAZ, LOST (właściwa podzakładka: 💥 MOJE MODELE albo 🔻 SZUKAJ LOST), BANK (wiersz `data-bkm`), tabela T50 / T60 wpisu,
+  model usunięty → komunikat. Mignięcie trzyma się ~3,5 s także po odświeżeniu ekranu (np. gdy doczyta się RAZEM / ZESZYT).
+- **Kilka kodów naraz** (1.50.0): raport liczy każdy model **kod po kodzie** (stan po każdym Nr) — nic po drodze nie ginie (GRAJ TERAZ, przegrana, WIN…).
+  Import ponad 40 kodów — tylko zamknięte cykle i stan na koniec. RAZEM: zamknięte cykle z tabeli RAZEM (`__relG`, ten sam cykl# co w RAZEM) + stan na koniec.
+- **Jedna karta na model**: droga zmian po kolei („Nr kod → zdarzenie → …”, ostatnie 14), na końcu **teraz:** stan modelu.
+  Kolejność: karty z NOWYMI na górze, w nich LOST, WIN, GRAJ TERAZ, ZA CHWILĘ, reszta. ✕ usuwa kartę modelu.
+- **NOWE**: zdarzenia od ostatniego „✓ Przejrzane” (`moje_v1_raport_seen` per tabela) — żółta obwódka, znaczek NOWE, liczba NOWYCH w nagłówku.
+  Dotknięcie karty — statystyki z podświetlonym ostatnim WIN / LOST z nowych; przytrzymanie — zakładka modelu.

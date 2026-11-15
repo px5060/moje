@@ -125,6 +125,15 @@ details{margin-top:10px}summary{cursor:pointer;font-weight:700;color:var(--mu);p
 .kv{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
 .kv div{background:var(--card);border-radius:7px;padding:5px;text-align:center;font-size:11px;color:var(--mu)}
 .kv b{display:block;font-size:15px;color:var(--tx)}
+.sec.srap{border-color:#4a6a8a}.rph{font-size:12px;color:var(--mu);margin:8px 0 3px;font-weight:700}
+.rpe{display:flex;justify-content:space-between;align-items:center;gap:8px;border-left:5px solid #4a6a8a;background:var(--card);border-radius:7px;padding:6px 8px;margin:3px 0;font-size:13px;cursor:pointer}
+.rw-w{border-left-color:#2e9d5f!important}.rw-w b{color:#7fdc9f}.rw-l{border-left-color:#c0392b!important}.rw-l b{color:#ff8a80}.rw-k{border-left-color:#a8423a!important}.rw-n{border-left-color:var(--or)!important}.rw-s{border-left-color:#c9a800!important}
+.rpe{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.rpfl{animation:rpfl .8s ease-in-out 4;box-shadow:0 0 0 3px #FFD700!important}@keyframes rpfl{50%{box-shadow:0 0 0 6px #FFD700}}
+.rpd{font-size:12.5px;line-height:1.9;margin-top:2px}.rpn{color:var(--mu);font-size:11.5px;white-space:nowrap}.rpn i{font-style:normal;font-weight:700;color:var(--tx)}
+.rpz{display:inline-block;border-radius:5px;padding:0 5px;background:#2a3140;white-space:nowrap;border-left:3px solid #4a6a8a}.rpz.nw{outline:1px solid #FFD700}
+.rpt{font-size:12.5px;margin-top:3px}.rpnew{background:#FFD700;color:#000;border-radius:5px;padding:0 5px;font-size:11px;font-weight:800}
+.rpb{border-left:5px solid #4a6a8a;background:var(--card);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:13.5px}
+.cyc b.rp{box-shadow:0 0 0 3px #FFD700!important;animation:rpb 1s ease-in-out 3}@keyframes rpb{50%{transform:scale(1.55)}}
 .jak>summary{font-weight:800;font-size:14px;cursor:pointer}.jak[open]>summary{margin-bottom:6px}
 .cyk{margin-top:4px;font-size:12px;border-radius:6px;padding:3px 6px;line-height:1.35}.cyk.cw{background:rgba(46,125,79,.22);color:#7fdc9f}.cyk.cl{background:rgba(179,38,30,.22);color:#ff8a80}.cyk.ct{background:rgba(201,122,69,.18);color:var(--or2)}
 .bars{display:flex;gap:4px;align-items:flex-end;height:70px;margin-top:6px}
@@ -199,7 +208,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.49.0';
+const APP_VER = '1.50.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -839,6 +848,7 @@ function gather() {
   bitems = bankItems(); BKMAP = new Map(bitems.map(b => [b.uid, b]));
   items.forEach(it => { it.hid = !it.rz && !it.gone && BKMAP.has(it.uid); }); vitems = items.filter(it => !it.hid);   // model w BANK nie jest na TERAZ / LOST
   zzGather();   // 📓 zakłady ZESZYTU (1.45.0)
+  try { rpScan(); } catch (e) {}   // 📰 RAPORT (1.50.0)
 }
 // ===== RAZEM (etap 2): MOJE GRY i MOJE ZAKŁADY z T50 / T60 RAZEM =====
 // Stan modeli RAZEM liczy sama appka RAZEM — MOJE otwiera ją w ukrytej ramce (ten sam adres i pamięć) i czyta jej MOJE GRY, karty i zakłady.
@@ -1083,7 +1093,7 @@ const CYEV = new Map(); let cyS = null;   // cyS = { u, i, open } — wybrany ka
 const cyLab = v => v === 99 ? 'LOST' : 'W' + v;   // 99 = LOST (ZESZYT ma też W9, W10…)
 function cycHtml(it, nLast, bLab) {
   const ev = it.r.ev || [], L = ev.slice(-nLast), o = ev.length - L.length; CYEV.set(it.uid, ev);
-  return `<div class="cyc cyx" data-cx="${esc(it.uid)}">${L.map((e, j) => e[1] === 1 ? `<b data-ci="${o + j}">W${e[2]}</b>` : `<b class="x" data-ci="${o + j}">${bLab}</b>`).join('')}</div><div class="cyp" hidden></div>`;
+  return `<div class="cyc cyx" data-cx="${esc(it.uid)}">${L.map((e, j) => { const rp = RPF && RPF.uid === it.uid && RPF.ci === o + j ? ' big rp' : ''; return e[1] === 1 ? `<b class="${rp}" data-ci="${o + j}">W${e[2]}</b>` : `<b class="x${rp}" data-ci="${o + j}">${bLab}</b>`; }).join('')}</div><div class="cyp" hidden></div>`;
 }
 function cyPanel(u, i) {
   const ev = CYEV.get(u); if (!ev || !ev[i]) return '';
@@ -1133,6 +1143,100 @@ function sec(title, sub, L, opt) {
 const byApp = (a, b) => SRC.indexOf(a.s) - SRC.indexOf(b.s) || b.r.bs - a.r.bs || (a.g.id > b.g.id ? 1 : -1);
 // znacznik na karcie w paskach TERAZ: pomarańczowy „TERAZ” = gra na następnym wierszu, żółty „za 2 / za 3” = gra za tyle wierszy
 const ddTag = (html, d) => !(d >= 1) || html.includes('class="dd') ? html : html.replace('<span class="sp"></span>', `<span class="sp"></span><span class="dd${d === 1 ? ' n' : ''}">${d === 1 ? 'TERAZ' : 'za ' + d}</span>`);
+// ===== 📰 RAPORT (1.50.0, prośba użytkownika) — co się zmieniło w modelach po nowych kodach =====
+// MOJE pamięta stan każdego modelu (Nr, krok, za ile gra, banki). Gdy kodów przybędzie (tu albo w innej appce), porównuje i dopisuje wpisy:
+// WIN kN → nowy cykl (zielony) · LOST k8 → zakładka LOST (czerwony) · przegrana kN → dalej kN+1 · CZEKAJĄ → ZA CHWILĘ · → GRAJ TERAZ · banki +3 / +5.
+// Cofnięcie kodu usuwa wpisy z dalszych Nr. Wpisy ✕ / „Wyczyść raport”. Dotknięcie → statystyki modelu z podświetlonym kwadracikiem tego cyklu.
+const RPK = 'moje_v1_raport', RPS = 'moje_v1_raport_snap';
+let RPF = null, rpGo = 0;   // RPF = wpis, z którego otwarto model (pasek i podświetlony kwadracik)
+const rpList = () => jget(RPK);
+function rpG(it) { try { window.__relG = null; it.c && it.c.stats && it.c.stats(); const G = window.__relG; return G && G.length && G[0].K != null ? Array.from(G).sort((a, b) => a.er - b.er) : null; } catch (e) { return null; } }
+function rpEv(it) { if (!it.rz) return it.r.ev || []; const G = rpG(it); return G ? G.map(g => [g.er, g.K >= 9 ? 2 : 1, Math.min(8, g.K)]) : null; }
+// stan modelu po k kodach (do liczenia kod po kodzie, gdy przybyło kilka kodów naraz) — SZUKAJ / S+ / LOST / BANK; RAZEM liczy tylko RAZEM (stan na koniec)
+function rpStan(it, k) {
+  const r = k === D[it.t].n ? it.r : sim(Object.assign({}, D[it.t], { n: k }), it.m, it.tg), d = r.ph === 2 ? r.wz + 1 - k : 0, o = { n: k, bs: r.bs, d, ev: r.ev };
+  if (it.bk) BKW.forEach(w => { const B = k === D[it.t].n ? it.bk[w] : bankOf({ r }, w); o['b' + w] = { r: B.res.length, nx: B.next, now: B.inWin && r.ph === 2 && d === 1 ? 1 : 0, res: B.res }; });
+  return o;
+}
+const rpZl = (it, bs) => fmtN(it.rz ? it.r.stake : ST[bs]);
+// porównanie dwóch stanów modelu (a → c) → wpisy; ev = zakończone cykle [wiersz, 1 WIN / 2 LOST, krok]
+function rpDiff(it, a, c, ev, e0, add) {
+  const nowe = (ev || []).map((e, i) => [e, i]).filter(([e]) => e[0] >= a.n && e[0] < c.n);
+  nowe.forEach(([e, i]) => add.push(Object.assign({}, e0, e[1] === 1
+    ? { nr: e[0] + 1, c: 'w', ci: i, s: `✔ WIN k${e[2]}`, txt: `✔ WIN k${e[2]} · cykl #${i + 1} → nowy cykl od k1` }
+    : { nr: e[0] + 1, c: 'l', ci: i, s: '✖ LOST k8', txt: `✖ LOST k8 · cykl #${i + 1} → zakładka LOST` })));
+  if (!nowe.length && c.bs > a.bs) add.push(Object.assign({}, e0, { nr: c.n, c: 'k', s: `✗ k${a.bs + 1} → k${c.bs + 1}`, txt: `✗ przegrana k${a.bs + 1}${c.bs > a.bs + 1 ? '–k' + c.bs : ''} → dalej k${c.bs + 1} (${rpZl(it, c.bs)} zł)` }));
+  if (c.d === 1 && a.d !== 1) add.push(Object.assign({}, e0, { nr: c.n, c: 'n', s: `🟧 GRAJ k${c.bs + 1}`, txt: `→ 🟧 GRAJ TERAZ · Nr ${fmtN(c.n + 1)} · k${c.bs + 1} · ${rpZl(it, c.bs)} zł` }));
+  else if (c.d >= 2 && !(a.d >= 1)) add.push(Object.assign({}, e0, { nr: c.n, c: 's', s: `🟨 za ${c.d} w.`, txt: `🟦 CZEKAJĄ → 🟨 ZA CHWILĘ · za ${c.d} w. · k${c.bs + 1}` }));
+  BKW.forEach(w => { const x = a['b' + w], y = c['b' + w]; if (!x || !y) return;
+    if (y.r > x.r) (y.res || []).slice(x.r).forEach(q => add.push(Object.assign({}, e0, { nr: q.row + 1, c: 'w', s: `🏦+${w} ✔ k${q.k}`, txt: `🏦 BANK +${w}: ✔ WIN na k${q.k} → od k1` })));
+    else if (y.nx > x.nx) add.push(Object.assign({}, e0, { nr: c.n, c: 'k', s: `🏦+${w} ✗ → k${y.nx}`, txt: `🏦 BANK +${w}: ✗ przegrana → dalej k${y.nx} (${fmtN(bStake(y.nx))} zł)` }));
+    if (y.now && !x.now) add.push(Object.assign({}, e0, { nr: c.n, c: 'n', s: `🏦+${w} 🟧 k${y.nx}`, txt: `🏦 BANK +${w} → 🟧 GRAJ TERAZ · k${y.nx} · ${fmtN(bStake(y.nx))} zł` })); });
+}
+function rpScan() {
+  let S = {}; try { S = JSON.parse(lsGet(RPS, '{}')) || {}; } catch (e) {}
+  const first = !Object.keys(S).length, L0 = rpList(), add = [], now = Date.now();
+  let L = L0; for (const t in TABS) { const n = D[t].n; L = L.filter(x => !(x.t === t && x.nr > n)); }   // cofnięty kod — bez wpisów z dalszych Nr
+  const seen = new Set(), all = [...items.filter(it => !it.gone || it.inBust), ...bitems.filter(b => !items.some(x => x.uid === b.uid))];
+  for (const it0 of all) {
+    if (seen.has(it0.uid)) continue; seen.add(it0.uid);
+    const it = it0.bk ? it0 : Object.assign(Object.create(it0), { bk: BKMAP.get(it0.uid) && BKMAP.get(it0.uid).bk });   // model z MOJE, który jest też w BANK — z bankami
+    const n = D[it.t].n, cur = it.rz ? { n, bs: it.r.bs, d: it.d || 0 } : rpStan(it, n), o = S[it.uid];
+    const zap = x => { const y = Object.assign({}, x); delete y.ev; BKW.forEach(w => { if (y['b' + w]) y['b' + w] = Object.assign({}, y['b' + w], { res: undefined }); }); return y; };
+    S[it.uid] = zap(cur);
+    if (first || !o || o.n >= n) continue;   // nowy model / bez nowych kodów — tylko zapamiętaj
+    const e0 = { t: it.t, uid: it.uid, lab: it.label || it.g.id, ts: now, bank: it0.bk && !items.some(x => x.uid === it.uid) ? 1 : 0 };
+    if (it.rz) { const ev = (it.r.bs < o.bs || o.d === 1 || n - o.n > 1) ? rpEv(it) : []; rpDiff(it, o, cur, ev, e0, add); continue; }
+    if (n - o.n > 40) { rpDiff(it, o, cur, cur.ev, e0, add); continue; }   // duży import — tylko zamknięte cykle i stan na koniec
+    let a = o; for (let k = o.n + 1; k <= n; k++) { const c = k === n ? cur : rpStan(it, k); rpDiff(it, a, c, cur.ev, e0, add); a = c; }   // kod po kodzie
+  }
+  const ks = Object.keys(S); if (ks.length > 600) ks.slice(0, ks.length - 600).forEach(k => delete S[k]);
+  lsSet(RPS, JSON.stringify(S));
+  if (add.length || L.length !== L0.length) { add.forEach((x, i) => { x.id = now.toString(36) + i; }); lsSet(RPK, JSON.stringify([...L, ...add].slice(-600))); }
+}
+const RPSEEN = 'moje_v1_raport_seen', rpSeen = t => { try { return (JSON.parse(lsGet(RPSEEN, '{}')) || {})[t] || 0; } catch (e) { return 0; } };
+const RPC = { w: 'rw-w', l: 'rw-l', k: 'rw-k', n: 'rw-n', s: 'rw-s' };
+function rpTeraz(uid) {   // stan modelu teraz (koniec karty raportu)
+  const it = items.find(y => y.uid === uid), b = bitems.find(y => y.uid === uid), x = it || b; if (!x) return '<span class="mu">usunięty z MOJE</span>';
+  if (it && it.inBust) return `🟥 LOST · czeka na WIN (k${x.r.bs + 1})`;
+  return x.d === 1 ? `🟧 GRAJ TERAZ k${x.r.bs + 1} · ${rpZl(x, x.r.bs)} zł` : x.d >= 2 ? `🟨 ZA CHWILĘ · za ${x.d} w. · k${x.r.bs + 1}` : `🟦 czeka · k${x.r.bs + 1}`;
+}
+// RAPORT: jedna karta na model — droga zmian po kolei (Nr → zdarzenia), na końcu stan teraz; karty z WIN / LOST na górze, potem GRAJ TERAZ, ZA CHWILĘ, reszta
+function rpSec(t) {
+  const L = rpList().filter(x => x.t === t); if (!L.length) return '';
+  const sn = rpSeen(t), U = [...new Set(L.map(x => x.uid))].map(uid => { const A = L.filter(x => x.uid === uid).sort((a, b) => a.nr - b.nr || (a.id < b.id ? -1 : 1)), it = items.find(y => y.uid === uid) || bitems.find(y => y.uid === uid);
+    const nowe = A.filter(x => x.ts > sn), Z = nowe.length ? nowe : A, ost = Z[Z.length - 1];
+    const waga = Z.some(x => x.c === 'l') ? 0 : Z.some(x => x.c === 'w') ? 1 : it && it.d === 1 ? 2 : it && it.d >= 2 ? 3 : 4;
+    return { uid, A, nowe: nowe.length, waga, ost, it, lab: ost.lab }; }).sort((a, b) => (b.nowe > 0) - (a.nowe > 0) || a.waga - b.waga || b.ost.nr - a.ost.nr);
+  const ileN = U.filter(u => u.nowe).length;
+  const karta = u => { const A = u.A.slice(-14), nr = [...new Set(A.map(x => x.nr))];
+    const droga = nr.map(r => `<span class="rpn">Nr ${fmtN(r)}${r <= D[t].n ? ` <i>${code(t, r - 1)}</i>` : ''}</span> ` + A.filter(x => x.nr === r).map(x => `<span class="rpz ${RPC[x.c] || ''}${x.ts > sn ? ' nw' : ''}" title="${esc(x.txt)}">${esc(x.s || x.txt)}</span>`).join(' ')).join(' <span class="mu">→</span> ');
+    const kol = u.waga === 0 ? 'rw-l' : u.waga === 1 ? 'rw-w' : u.waga === 2 ? 'rw-n' : u.waga === 3 ? 'rw-s' : '';
+    return `<div class="rpe ${kol}" data-rpu="${esc(u.uid)}"><div style="flex:1;min-width:0"><b>${esc(u.lab)}</b>${u.nowe ? ' <span class="rpnew">NOWE</span>' : ''}<div class="rpd">${u.A.length > A.length ? `<span class="mu">+${u.A.length - A.length} wcześniej · </span>` : ''}${droga}</div><div class="rpt">teraz: <b>${rpTeraz(u.uid)}</b></div></div><button class="ub" data-rpx="${esc(u.uid)}">✕</button></div>`; };
+  return `<details class="sec srap" ${foldAt('T-rap', 1)}><summary class="sh"><span>📰 RAPORT · ${U.length}${ileN ? ` <b class="rpnew">${ileN} NOWE</b>` : ''}</span><span class="m">zmiany po kodach</span></summary>
+    <div class="hint" style="margin:0 0 6px">Jedna karta = jeden model: zmiany po kolei (Nr kodu → co się stało), na końcu stan teraz. Na górze WIN / LOST, potem GRAJ TERAZ i ZA CHWILĘ. <b>Dotknij</b> — statystyki (podświetlony kwadracik cyklu, zakłady postawione i nie). <b>Przytrzymaj</b> — model w jego zakładce. ✕ — usuń kartę.</div>
+    ${U.map(karta).join('')}
+    <div style="display:flex;gap:8px;margin-top:8px">${ileN ? `<button class="btn" style="flex:1" data-rpseen="${t}">✓ Przejrzane</button>` : ''}<button class="btn" style="flex:1" data-rpclr="${t}">🧹 Wyczyść raport ${TABS[t].name}</button></div></details>`;
+}
+// przytrzymanie wpisu raportu → zakładka, w której model jest teraz (TERAZ / LOST / BANK), kafelek modelu mignie
+function rpTam(id) {
+  const x = rpList().filter(y => y.uid === id || y.id === id).pop(); if (!x) return;
+  const it = items.find(y => y.uid === x.uid), bk = bitems.find(y => y.uid === x.uid);
+  if (!it && !bk) return toast('Tego modelu nie ma już w MOJE ani w BANK');
+  const v = !it || it.hid || x.bank ? 'bank' : it.inBust ? 'bust' : 'teraz', gdzie = { bank: '🏦 BANK', bust: '🟥 LOST', teraz: 'TERAZ' }[v];
+  only = x.t; if (v === 'bust') bsrc = it.s.a === 'L' ? 'B' : 'M';   // LOST: podzakładka MOJE MODELE albo SZUKAJ LOST
+  go(v);
+  RPFL = { uid: x.uid, until: Date.now() + 3500 };
+  setTimeout(() => { const el = rpFlash(); if (!el) return toast(`${esc(x.lab)} — w zakładce ${gdzie} (zwinięty na liście)`); el.scrollIntoView({ block: 'center' }); }, 60);
+}
+let RPFL = null;   // kafelek do mignięcia po przytrzymaniu wpisu — miga dalej także po odświeżeniu ekranu (np. gdy doczyta się RAZEM / ZESZYT)
+function rpFlash() {
+  if (!RPFL || Date.now() > RPFL.until) { RPFL = null; return null; }
+  const q = CSS.escape(RPFL.uid), el = document.querySelector(`#main [data-u="${q}"],#main [data-bkm="${q}"]`); if (!el) return null;   // kafelek TERAZ / LOST albo wiersz BANK
+  for (let d = el.closest('details'); d; d = d.parentElement && d.parentElement.closest('details')) d.open = true;
+  el.classList.add('rpfl'); return el;
+}
+function rpBar(it) { return RPF && RPF.uid === it.uid ? `<div class="rpb ${({ w: 'rw-w', l: 'rw-l', k: 'rw-k', n: 'rw-n', s: 'rw-s' })[RPF.c] || ''}">📰 Z raportu · Nr ${fmtN(RPF.nr)}: <b>${esc(RPF.txt)}</b></div>` : ''; }
 function teraz() {
   const t = only, n = D[t].n;
   let h = tabSwitch(null, 1) + ocBanner() + kodBox(t);
@@ -1176,7 +1280,9 @@ function teraz() {
     ${zNear.length || zzN.length ? zNear.filter(it => it.d === 1).map(it => ddTag(row(it, zakLb(ZS.M.get(it.uid)), 0, 1), it.d)).join('') + zzN.filter(zi => zi.d === 1).map(zi => zzRow(zi)).join('')
       + zNear.filter(it => it.d !== 1).map(it => ddTag(row(it, zakLb(ZS.M.get(it.uid)), 0, 1), it.d)).join('') + zzN.filter(zi => zi.d !== 1).map(zi => zzRow(zi)).join('') : none('żaden model po zakładzie')}</details>`;
   const Z = L.filter(it => it.grp === 'done' && !it.inBust);   // po LOST-cie → zakładka LOST (tam gra od k1 jako pierwszy cykl po LOST-cie)
+  const rpH = () => rpSec(t);
   if (Z.length) h += sec('✅ ZAKOŃCZONE', 'WIN albo BUST (krok 8)', Z, { key: 'T-done', cls: 'sdone', after: rsBtn, extra: it => (it.rz ? `${it.res.win ? '✔ WIN' : '<span class="neg">✖ BUST / LOSS</span>'} · Nr ${fmtN(it.res.i + 1)}` : `${it.res.win ? `✔ WIN k${it.res.k}` : '<span class="neg">✖ BUST k8</span>'} · Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}`) + (it.res.win ? '' : it.inBust ? ' · <b>w zakładce BUST</b>' : ' · potem WIN') + (it.rz ? '' : `<br><span class="sertx">▶ start: Nr ${fmtN((it.g.start || 0) + 1)}${it.g.t ? ' · ' + ago(it.g.t) + ' (' + when(it.g.t) + ')' : ''} · <b>k${it.g.s0 || 1} → k${it.res.win ? it.res.k : 8}</b></span>`) });
+  h += rpH();   // 📰 RAPORT — na samym dole, pod ZAKOŃCZONE
   return h;
 }
 // ===== BUST: BUST-y moich modeli (od dodania do MOJE, bez WIN po nich) — filtr po kroku, na którym model gra teraz =====
@@ -1744,7 +1850,7 @@ function rzCyc(it, G) {
 function rzModel(it) {
   let rows = [], G = null; try { window.__relG = null; rows = it.c && it.c.stats ? it.c.stats() || [] : []; G = window.__relG; } catch (e) {}   // statystyki modelu z RAZEM (te same co po przytrzymaniu karty w RAZEM) + cykle do słupków i kwadracików
   const c = it.c, r = it.r;
-  return `<button class="btn back" data-go="${back}">← wróć</button>
+  return `<button class="btn back" data-go="${back}">← wróć</button>${rpBar(it)}
     <div class="box" style="border-color:var(--or)"><div style="display:flex;justify-content:space-between"><b style="font-size:17px"><span class="bdg R">R${it.t.slice(1)}</span>${esc(it.g.id)}</b><span class="mu">RAZEM ${TABS[it.t].name} · <span>${esc(it.lab)}</span></span></div>
     ${c ? `<div class="mu" style="font-size:12px;margin:3px 0 6px">${esc(c.rule || '')}</div>` : '<div class="neg">Nie ma karty tego modelu w RAZEM.</div>'}
     <div style="font-size:14.5px">Teraz: ${shortPh(it)}</div>
@@ -1793,7 +1899,7 @@ function modelPelne(it, oc) {
     ${it.res ? `<div style="margin-top:4px">Moja gra: ${it.res.win ? `✔ WIN k${it.res.k}` : '✖ BUST'} w Nr ${fmtN(it.res.row + 1)} · ${zl(it.res.pnl)}</div>` : ''}
     ${it.gone || oc ? '' : `<div class="hint">Śledzę od Nr ${fmtN((it.g.start || 0) + 1)} (wejście na k${it.g.s0 || 1})${it.g.t ? ` · dodany ${ago(it.g.t)}` : ''}</div>`}
     ${oc ? '' : `<div class="hint" style="margin-top:8px">Zapisz zakład, który naprawdę zagrałeś (możesz zmienić Nr, krok i kwotę):</div>${betForm(it, 1)}<div style="margin-top:8px">${moveBtn(it)}</div>`}</div>`;
-  if (!oc) { h += betHist(it); famOf(it.uid).forEach(([F, fi]) => { h += famCard(F, fi, 1); }); }
+  if (!oc) { h = h.replace('<div class="box" style="border-color:var(--or)">', rpBar(it) + '<div class="box" style="border-color:var(--or)">'); h += betHist(it); famOf(it.uid).forEach(([F, fi]) => { h += famCard(F, fi, 1); }); }
   const zBank = !oc && back === 'bank';
   if (zBank) h += bankBox(it);   // z zakładki BANK: bank na górze
   h += `<details class="box jak" ${foldAt('jak', 0)}><summary>Jak gra ten model</summary><ol>
@@ -2111,7 +2217,7 @@ function zakModel() {   // 1.44.0: dotknięcie zakładu modelu usuniętego z MOJ
 }
 function bankModel() {   // model z listy BANK
   const it = bitems.find(x => x.uid === sel); if (!it) { view = 'bank'; return bankView(); }
-  return '<button class="btn back" data-go="bank">← wróć</button>' + bqDet(it) + rows20(it, 1);
+  return '<button class="btn back" data-go="bank">← wróć</button>' + rpBar(it) + bqDet(it) + rows20(it, 1);
 }
 function bankDet(it, B) {
   const r = it.r, w = B.w;
@@ -2243,6 +2349,7 @@ function render() {
   const ae = document.activeElement, keep = ae && ae.id && /^(in|pa|bq)_/.test(ae.id) ? [ae.id, ae.value] : null;
   $('main').innerHTML = view === 'teraz' ? teraz() : view === 'zak' ? zaklady() : view === 'bust' ? busty() : view === 'bank' ? bankView() : view === 'bankm' ? bankModel() : view === 'model' ? model() : view === 'dane' ? dane() : view === 'ocen' ? oceny() : view === 'ocm' ? ocModel() : view === 'zakm' ? zakModel() : view === 'zzm' ? zzModelView() : pomoc();
   try { cyApply(); } catch (e) {}
+  try { rpFlash(); } catch (e) {}
   if (keep && $(keep[0])) { $(keep[0]).value = keep[1]; $(keep[0]).focus(); }
 }
 let back = 'teraz', mWid = 's';   // ekran modelu: 's' statystyki, 'z' zeszyt (bieżąca gra)
@@ -2264,7 +2371,7 @@ function znaczZeszyt(lab, n) {   // bieżąca gra modelu → ?znacz= dla ZESZYTU
   return z.slice(-80).join(',');
 }
 window.addEventListener('message', e => { const h = e.data && e.data.zeszytH; if (h) document.querySelectorAll('iframe.pgz').forEach(f => { if (f.contentWindow === e.source) f.style.height = Math.max(200, h) + 'px'; }); });
-function go(v, u) { if ((v === 'model' || v === 'zzm') && view !== 'model' && view !== 'zzm') back = view; view = v; sel = u || null; render(); window.scrollTo(0, 0); }
+function go(v, u) { if (!rpGo) RPF = null; rpGo = 0; if ((v === 'model' || v === 'zzm') && view !== 'model' && view !== 'zzm') back = view; view = v; sel = u || null; render(); window.scrollTo(0, 0); }
 document.addEventListener('click', e => {
   const q = s => e.target.closest(s);
   let b;
@@ -2333,6 +2440,12 @@ document.addEventListener('click', e => {
   if ((b = q('[data-bkm]'))) return go('bankm', b.dataset.bkm);
   if ((b = q('[data-go]'))) return go(b.dataset.go);
   if ((b = q('[data-bq]'))) { bqSel = b.dataset.bq; return bqUpd(); }
+  if ((b = q('[data-rpx]'))) { e.stopPropagation(); lsSet(RPK, JSON.stringify(rpList().filter(x => !(x.uid === b.dataset.rpx && x.t === only)))); return render(); }
+  if ((b = q('[data-rpseen]'))) { let o = {}; try { o = JSON.parse(lsGet(RPSEEN, '{}')) || {}; } catch (er) {} o[b.dataset.rpseen] = Date.now(); lsSet(RPSEEN, JSON.stringify(o)); return render(); }
+  if ((b = q('[data-rpclr]'))) { if (confirm(`Wyczyścić cały raport ${TABS[b.dataset.rpclr].name}?`)) { lsSet(RPK, JSON.stringify(rpList().filter(x => x.t !== b.dataset.rpclr))); render(); } return; }
+  if ((b = q('[data-rpu]'))) { const A = rpList().filter(y => y.uid === b.dataset.rpu && y.t === only), sn = rpSeen(only), Z = A.filter(y => y.ts > sn).length ? A.filter(y => y.ts > sn) : A, x = [...Z].reverse().find(y => y.ci != null) || Z[Z.length - 1]; if (!x) return;   // statystyki: podświetl ostatni WIN / LOST z nowych
+    const inM = items.some(y => y.uid === x.uid), inB = bitems.some(y => y.uid === x.uid); if (!inM && !inB) return toast('Tego modelu nie ma już w MOJE ani w BANK');
+    RPF = x; rpGo = 1; mWid = 's'; return go(inM && !(x.bank && inB) ? 'model' : 'bankm', x.uid); }
   if ((b = q('[data-untr]'))) { e.stopPropagation(); const it = items.find(x => x.uid === b.dataset.untr) || vitems.find(x => x.uid === b.dataset.untr); if (it) untrack(it, 1); return; }
   if ((b = q('[data-restart]'))) { e.stopPropagation(); return restartMy(b.dataset.restart); }
   if ((b = q('.rw[data-zz],[data-zzm]')) && !q('a,button')) return go('zzm', b.dataset.zz || b.dataset.zzm);   // 1.48.0: model ZESZYTU → statystyki i historia zakładów
@@ -2362,13 +2475,13 @@ document.addEventListener('change', e => {
 // kafelek modelu: dotknięcie → ekran modelu (statystyki u góry), przytrzymanie → ten sam ekran od razu na tabeli wierszy
 let lpT = null, lpOn = false, lpUp = 0, lpXY = null;   // lpOn = przytrzymanie zadziałało, palec jeszcze na ekranie
 const lpStop = () => { clearTimeout(lpT); lpT = null; };
-document.addEventListener('pointerdown', e => { const c = e.target.closest ? x => e.target.closest(x) : () => null, s = c('[data-lp]'), u = !s && !c('button,input,select,a,label') && c('.mc[data-u],.rw[data-u]'); if (!s && !u) return; lpXY = [e.clientX, e.clientY]; lpStop();
-  lpT = setTimeout(() => { lpT = null; lpOn = true; try { navigator.vibrate && navigator.vibrate(30); } catch (x) {} if (s) return go(s.dataset.lp);
+document.addEventListener('pointerdown', e => { const c = e.target.closest ? x => e.target.closest(x) : () => null, s = c('[data-lp]'), rp = !s && !c('button') && c('.rpe[data-rpu]'), u = !s && !rp && !c('button,input,select,a,label') && c('.mc[data-u],.rw[data-u]'); if (!s && !u && !rp) return; lpXY = [e.clientX, e.clientY]; lpStop();
+  lpT = setTimeout(() => { lpT = null; lpOn = true; try { navigator.vibrate && navigator.vibrate(30); } catch (x) {} if (s) return go(s.dataset.lp); if (rp) return rpTam(rp.dataset.rpu);
     go('model', u.dataset.u); setTimeout(() => { const t = $('mtab'); if (t) t.scrollIntoView({ block: 'start' }); }, 30); }, 550); });
 document.addEventListener('pointerup', () => { lpStop(); if (lpOn) { lpOn = false; lpUp = Date.now(); } }); document.addEventListener('pointercancel', () => { lpStop(); lpOn = false; });
 document.addEventListener('pointermove', e => { if (lpT && lpXY && Math.hypot(e.clientX - lpXY[0], e.clientY - lpXY[1]) > 12) lpStop(); });
 document.addEventListener('click', e => { if (lpOn || Date.now() - lpUp < 350) { e.preventDefault(); e.stopPropagation(); lpUp = 0; } }, true);   // „klik” z puszczenia palca po przytrzymaniu — nie zwijaj i nie klikaj w nowym ekranie
-document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('[data-lp],.mc[data-u],.rw[data-u]')) e.preventDefault(); });
+document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('[data-lp],.mc[data-u],.rw[data-u],.rpe')) e.preventDefault(); });
 window.addEventListener('storage', () => reload());
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { reload(); ghSchedule(2000); } else ghFlush(); });   // otwarte → szybko sprawdź zmiany z innych urządzeń
 setInterval(() => { if (!document.hidden && !ghT && !ghBusy) ghSchedule(1000); }, 180000);   // co 3 min, gdy MOJE jest na ekranie
