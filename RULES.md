@@ -304,3 +304,7 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
   Kolejność: karty z NOWYMI na górze, w nich LOST, WIN, GRAJ TERAZ, ZA CHWILĘ, reszta. ✕ usuwa kartę modelu.
 - **NOWE**: zdarzenia od ostatniego „✓ Przejrzane” (`moje_v1_raport_seen` per tabela) — żółta obwódka, znaczek NOWE, liczba NOWYCH w nagłówku.
   Dotknięcie karty — statystyki z podświetlonym ostatnim WIN / LOST z nowych; przytrzymanie — zakładka modelu.
+
+## RAPORT zawsze widoczny (1.50.1)
+- Ramka 📰 RAPORT jest na TERAZ zawsze (także bez wpisów): „Śledzę zmiany od Nr … (data). Ostatni sprawdzony kod: Nr … — bez zmian w modelach /
+  jeszcze nie było nowych kodów”. Start śledzenia per tabela: `moje_v1_raport_od`. Wpis powstaje tylko, gdy kod coś zmienił w modelu.

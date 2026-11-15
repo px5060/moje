@@ -208,7 +208,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.50.0';
+const APP_VER = '1.50.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1192,9 +1192,12 @@ function rpScan() {
   }
   const ks = Object.keys(S); if (ks.length > 600) ks.slice(0, ks.length - 600).forEach(k => delete S[k]);
   lsSet(RPS, JSON.stringify(S));
+  { let od = {}; try { od = JSON.parse(lsGet(RPOD, '{}')) || {}; } catch (e) {} let ch = 0;   // od kiedy raport śledzi tabelę (1.50.1)
+    for (const t in TABS) { if (!od[t] && all.some(it => it.t === t)) { od[t] = { n: D[t].n, ts: now }; ch = 1; } if (od[t] && od[t].last !== D[t].n) { od[t].last = D[t].n; od[t].lts = now; ch = 1; } }
+    if (ch) lsSet(RPOD, JSON.stringify(od)); }
   if (add.length || L.length !== L0.length) { add.forEach((x, i) => { x.id = now.toString(36) + i; }); lsSet(RPK, JSON.stringify([...L, ...add].slice(-600))); }
 }
-const RPSEEN = 'moje_v1_raport_seen', rpSeen = t => { try { return (JSON.parse(lsGet(RPSEEN, '{}')) || {})[t] || 0; } catch (e) { return 0; } };
+const RPOD = 'moje_v1_raport_od', RPSEEN = 'moje_v1_raport_seen', rpSeen = t => { try { return (JSON.parse(lsGet(RPSEEN, '{}')) || {})[t] || 0; } catch (e) { return 0; } };
 const RPC = { w: 'rw-w', l: 'rw-l', k: 'rw-k', n: 'rw-n', s: 'rw-s' };
 function rpTeraz(uid) {   // stan modelu teraz (koniec karty raportu)
   const it = items.find(y => y.uid === uid), b = bitems.find(y => y.uid === uid), x = it || b; if (!x) return '<span class="mu">usunięty z MOJE</span>';
@@ -1203,7 +1206,10 @@ function rpTeraz(uid) {   // stan modelu teraz (koniec karty raportu)
 }
 // RAPORT: jedna karta na model — droga zmian po kolei (Nr → zdarzenia), na końcu stan teraz; karty z WIN / LOST na górze, potem GRAJ TERAZ, ZA CHWILĘ, reszta
 function rpSec(t) {
-  const L = rpList().filter(x => x.t === t); if (!L.length) return '';
+  const L = rpList().filter(x => x.t === t);
+  if (!L.length) { let od = null; try { od = (JSON.parse(lsGet(RPOD, '{}')) || {})[t]; } catch (e) {}   // 1.50.1: ramka zawsze widoczna — także bez wpisów
+    return `<details class="sec srap" ${foldAt('T-rap', 1)}><summary class="sh"><span>📰 RAPORT · 0</span><span class="m">zmiany po kodach</span></summary>
+      <div class="none">${od ? `Śledzę zmiany od Nr ${fmtN(od.n + 1)} (${when(od.ts)}). Ostatni sprawdzony kod: Nr ${fmtN(D[t].n)}${D[t].n > od.n ? ' — bez zmian w modelach (żaden model nie przeszedł do innego etapu, nie przegrał kroku ani nie skończył cyklu).' : ' — jeszcze nie było nowych kodów.'}` : 'Raport zacznie działać, gdy w MOJE będą modele tej tabeli.'}</div></details>`; }
   const sn = rpSeen(t), U = [...new Set(L.map(x => x.uid))].map(uid => { const A = L.filter(x => x.uid === uid).sort((a, b) => a.nr - b.nr || (a.id < b.id ? -1 : 1)), it = items.find(y => y.uid === uid) || bitems.find(y => y.uid === uid);
     const nowe = A.filter(x => x.ts > sn), Z = nowe.length ? nowe : A, ost = Z[Z.length - 1];
     const waga = Z.some(x => x.c === 'l') ? 0 : Z.some(x => x.c === 'w') ? 1 : it && it.d === 1 ? 2 : it && it.d >= 2 ? 3 : 4;
