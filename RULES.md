@@ -312,3 +312,11 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 ## Numer cyklu wszędzie (1.50.2)
 - Linijka „Teraz:” na ekranie każdego modelu (MOJE / RAZEM / BANK / ZESZYT) zaczyna się od **cykl #N** — numer bieżącego cyklu (zakończone + 1).
 - Historia zakładów modelu ZESZYTU: okienko gry też z **cykl #N** (gra modelu w ZESZYCIE = cykl), jak przy modelach MOJE / RAZEM.
+
+## RAPORT: modele ZESZYTU (1.50.3)
+- Raport liczy też modele ZESZYTU T50 / T60: z list ZESZYTU (`zeszyt_v1_modele` / `zeszyt_v1_modele60` — Modele i Modele LOST) i z zakładów ZESZYTU.
+  Silnik ZESZYTU wczytuje się także wtedy, gdy są tylko modele na listach. Wpisy: ✔ WIN kN · cykl #N (gra = cykl), ✖ LOST k-limit
+  (Nr przegranego kroku limitu), ✗ przegrana kN → kN+1, 🟣 pusta trójka → gra od k1, → 🟧 GRAJ TERAZ. Zamknięcia gier z dokładnym Nr; kroki — stan na koniec.
+- Dotknięcie karty ZESZYTU → ekran modelu ZESZYTU w MOJE (gdy ma zakłady) z podświetlonym kwadracikiem, inaczej ZESZYT z tym modelem (`?m=`).
+  Przytrzymanie → ZAKŁADY → 📓 ZESZYT (kafelek miga) albo ZESZYT z modelem.
+- TERAZ bez modeli MOJE / BANK też pokazuje RAPORT.
