@@ -327,3 +327,6 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Znaczków jest za dużo na adres strony → MOJE kładzie je w `window.__ZNACZ`, ramka ZESZYTU `?znacz=@` (ZESZYT ≥ 1.33.0) czyta je od rodzica.
 - SZUKAJ / S+ / LOST / BANK: z oznaczeń wierszy (K) całej tabeli. RAZEM: z opisów wierszy tabeli RAZEM (`A.cell`: STEP, TRIGGER, WIN / LOSS / BUST)
   + bieżąca gra z RAZEM (`U.znacz`, zakład do gry).
+- RAZEM — rozpoznanie z kolumny GRA każdej tabeli (1T, 200, 2T, TRÓJKA, 2-SLOT, PIKOFF, TOP5, TOP7, BUST, TRÓJKA T60, MIX3): WIN (✓ WIN / → WIN / WIN K…,
+  nie „(+3 WIN)” z opisu triggera), ✗ LOSS / pudło / przegrana, ○ bez rozstrzygnięcia, TRIGGER / START; LOST dokładnie z cykli RAZEM (`__relG`).
+  STEP z kolumny stanu tylko, gdy to STEP modelu (≈ tyle co TRIGGERÓW). Test: liczba WIN i LOST na zeszycie = cykle RAZEM we wszystkich 11 tabelach.

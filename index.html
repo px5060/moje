@@ -2396,16 +2396,28 @@ function znaczWsz(lab, n) {   // SZUKAJ / S+ / LOST / BANK: z oznaczeń wierszy 
   if (n && (K[n - 1] === 4 || K[n - 1] === 5)) z.push(`${B[n - 1] + 1}:n:${A[n - 1]}`);
   return z.join(',');
 }
-function rzZnaczWsz(it) {   // RAZEM: z opisów wierszy tabeli RAZEM (STEP, TRIGGER, WIN / LOSS / BUST) + bieżąca gra z RAZEM (zakład do gry)
+function rzZnaczWsz(it) {   // RAZEM: z kolumny GRA tabeli RAZEM (każda tabela opisuje po swojemu) + bieżąca gra z RAZEM (zakład do gry)
   const X = rzA(it); if (!X) return '';
-  const n = D[it.t].n, by = new Map(), kk = t => { const m = /\b[kK](\d+)\b/.exec(t); return m ? 'K' + m[1] : ''; };
+  const n = D[it.t].n, by = new Map(), S = [];
+  const kk = t => { const m = /K=?(\d+)\b|\bk(\d+)\b|krok (?:gry )?(\d+)/.exec(t); return m ? 'K' + (m[1] || m[2] || m[3]) : ''; };
+  const ocen = g => { let best = null; const pr = { b: 6, w: 5, k: 4, o: 3, t: 2 };   // jeden znaczek na wiersz — najważniejszy
+    g.split(' | ').forEach(x => { let v = null;
+      if (/bez zakładu|przygotow|przyg |start gry za|NASTĘPNY WIERSZ|NASTĘPNYM WIERSZU|przed grą|w grze ·/.test(x) && !/WIN|LOSS|✗/.test(x)) return;
+      if (/BUST|LOST|\bbust\b/.test(x)) v = ['b', 'BUST'];
+      else if (/✓ WIN|WIN ✓|→ WIN|WIN K|WIN \+|zł WIN/.test(x)) v = ['w', `WIN ${kk(x)}`.trim()];   // nie „(+3 WIN)” / „WIN-ach bazy” w opisie triggera
+      else if (/bez rozstrzygnięcia/.test(x)) v = ['o', `○ ${kk(x)}`.trim()];
+      else if (/LOSS|✗|przegrana|pudło/.test(x)) v = ['k', `✗ ${kk(x)}`.trim()];
+      else if (/TRIGGER|TRIG\d|trig\d|★ START|START GRY|→ START|^\s*cykl#\d+ · k\d+ →/.test(x)) v = ['t', ''];
+      if (v && (!best || pr[v[0]] > pr[best[0]])) best = v; });
+    return best; };
   for (let i = 0; i < n; i++) { let c = {}; try { c = X.A.cell(X.mi, i) || {}; } catch (e) {}
-    const g = c.gra ? String(c.gra.t) : '', st = c.stan ? String(c.stan.t) : '';
-    if (/WIN/.test(g) || /WIN/.test(st) && /zł/.test(st)) by.set(i + 1, `w:WIN ${kk(g) || kk(st)}`.trim());
-    else if (/BUST|LOST/.test(g + st) && /zł|K\d/.test(g + st)) by.set(i + 1, 'b:BUST');
-    else if (/LOSS|przegrana/.test(g + st)) by.set(i + 1, `k:✗ ${kk(g) || kk(st)}`.trim());
-    else if (/TRIGGER → START|^\s*cykl#\d+ · k\d+ →/.test(g)) by.set(i + 1, 't');
-    else if (/^\s*STEP( ✓)?\s*$/.test(st)) by.set(i + 1, 's'); }
+    const g = c.gra ? (c.gra.full && c.gra.full.length ? c.gra.full.join(' | ') : String(c.gra.t)) : '', st = c.stan ? String(c.stan.t) : '';
+    const v = g ? ocen(g) : null; if (v) by.set(i + 1, v[1] ? `${v[0]}:${v[1]}` : v[0]);
+    else if (/^\s*STEP( ✓)?\s*$/.test(st)) S.push(i + 1); }
+  const nt = [...by.values()].filter(v => v === 't').length;
+  if (S.length && S.length <= 2 * Math.max(1, nt)) S.forEach(r => { if (!by.has(r)) by.set(r, 's'); });   // STEP z kolumny stanu tylko, gdy to STEP modelu (tyle co TRIGGERÓW), a nie stan tabeli bazowej
+  { const ev = rpEv(it); if (ev) { const LR = new Set(ev.filter(e => e[1] === 2).map(e => e[0] + 1));   // LOST dokładnie z cykli RAZEM (ten sam wiersz co w statystykach)
+    for (const [r, v] of by) if (String(v)[0] === 'b' && !LR.has(r)) by.set(r, 'k:✗'); LR.forEach(r => by.set(r, 'b:LOST')); } }
   let cur = ''; try { cur = X.U && X.U.znacz ? X.U.znacz(X.mi) : ''; } catch (e) {}
   cur.split(',').filter(Boolean).forEach(x => { const [nr, ...r] = x.split(':'); let v = r.join(':'); try { v = decodeURIComponent(v); } catch (e) {} by.set(+nr, v); });   // bieżąca gra z RAZEM ma pierwszeństwo
   return [...by].sort((a, b) => a[0] - b[0]).map(([nr, v]) => `${nr}:${String(v).replace(/,/g, ' ')}`).join(',');
