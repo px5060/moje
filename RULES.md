@@ -345,4 +345,9 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
   „🔎 Najlepsze z ostatniego szukania (N)” — osobno **k1–k3** (wygrana do k3) i **k4–k6** (wygrana do k6), z grupami bez GRAĆ w nagłówku zakresu.
   Linijka na model: grupa · model · krok i stawka (SZUKAJ: teraz, na bieżących kodach; ZESZYT: z oceny) · Nr · wygrana do k3 / k6 (% i w/r) · werdykt;
   dotknięcie → pełna karta oceny z przyciskami. Na głównej liście „📥 Propozycje Claude” ich nie ma. Stan rozwinięcia zapamiętany
-  (`moje_v1_fold`: `ocnaj`, `ocnaj:<id>`); po nadejściu wyniku szukania lista sama się rozwija.
+  (`moje_v1_fold`: `ocnaj`, `ocw:<id>`); po nadejściu wyniku szukania lista sama się rozwija.
+- **Wszystkie listy OCEN zwijane (1.53.0)**: 📥 Propozycje Claude (szukania Claude na Twoją prośbę w rozmowie), 🔍 Oceny Twoich modeli i Załatwione —
+  tak samo: linijka na model (historia do k8 / limitu), dotknięcie → pełna karta; domyślnie zwinięte, stan zapamiętany (`ocprop`, `ocmoj`, `oczal`).
+- **Znaczki gry przy ocenach (1.53.0)**: jak w MOJE — pomarańczowy **TERAZ** = model z oceny gra na następnym wierszu, żółty **za 2 / za 3** = gra
+  za chwilę; takie linijki na górze listy, a w nagłówku listy liczba („1 TERAZ”, „2 za chwilę”). Stan liczy MOJE na bieżących kodach (SZUKAJ: silnik
+  modelu; ZESZYT: silnik ZESZYTU, wczytywany też dla propozycji ZESZYTU). Załatwione bez znaczków.
