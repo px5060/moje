@@ -106,7 +106,7 @@ details.sec>summary{list-style:none}[data-lp]{-webkit-user-select:none;user-sele
 .clt{font-size:11px;font-weight:800;padding:1px 5px;border-radius:7px;border:1px solid currentColor;white-space:nowrap;margin-left:3px}
 .ocg{font-size:12px;font-weight:800;padding:1px 6px;border-radius:7px;background:var(--pan);border:1px solid var(--bd);white-space:nowrap;color:var(--mu)}.ocg i{font-style:normal}.ocg .g{color:var(--gr)}.ocg .o{color:var(--ye)}.ocg .x{color:var(--rd)}
 .empty{background:var(--pan);border:1px dashed var(--bd);border-radius:10px;padding:14px;color:var(--mu);text-align:center}
-details{margin-top:10px}summary{cursor:pointer;font-weight:700;color:var(--mu);padding:6px 0}
+details{margin-top:10px}summary{cursor:pointer;font-weight:700;color:var(--mu);padding:6px 0}details.szl{margin-top:12px}details.szl .dd{display:inline-block;white-space:nowrap;font-size:11px;font-weight:800;border-radius:5px;padding:2px 5px;margin-right:4px;background:#FFD700;color:#000}details.szl .dd.n{background:var(--or);color:#fff}details.szl>summary{color:var(--tx);font-weight:800}details.szw{margin:4px 0;border:1px solid var(--bd);border-radius:10px;padding:0 8px}details.szw>summary{font-weight:400;color:var(--tx);font-size:13px;line-height:1.35}details.szw[open]{padding-bottom:6px}
 /* zakłady */
 .sum{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
 .sum div{background:var(--pan);border:1px solid var(--bd);border-radius:9px;padding:7px;text-align:center;font-size:11.5px;color:var(--mu)}
@@ -209,7 +209,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.52.0';
+const APP_VER = '1.53.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -551,7 +551,7 @@ async function inFetch(force, cicho) {   // co najmniej 2 min między sprawdzeni
     const zm = JSON.stringify(O) !== JSON.stringify(x.O || []) || JSON.stringify(N) !== JSON.stringify(x.N || null); lsSet(OCK, JSON.stringify({ t: Date.now(), O, N, err: '' })); if (zm) _ocC = null;
     const s = jobj(SZK) || {};
     if (s.t && !s.ok && N && N.zlecono >= s.t) {   // odpowiedź na prośbę z tego urządzenia
-      lsSet(SZK, JSON.stringify({ ...s, ok: N.zlecono })); render();
+      lsSet(SZK, JSON.stringify({ ...s, ok: N.zlecono })); FOLD.ocnaj = 1; lsSet(FOLDK, JSON.stringify(FOLD)); render();   // wynik → lista najlepszych rozwinięta
       toast(`🔎 Wyszukaj najlepsze: ${N.znaleziono ? `${N.znaleziono} ${pl(N.znaleziono, ['propozycja', 'propozycje', 'propozycji'])} z GRAĆ — OCENY` : 'tym razem nic z GRAĆ'}`, 6000); return;
     }
     if (zm || force) render();
@@ -584,15 +584,51 @@ async function szNaj() {
   } catch (e) { toast('🔎 Nie zlecono: ' + esc(String(e.message || e)), 6000); }
   finally { szBusy = false; render(); }
 }
-function szBox() {   // OCENY: przycisk „Wyszukaj najlepsze” i stan prośby
-  const s = jobj(SZK) || {}, N = (jobj(OCK) || {}).N, czeka = !!(s.t && !s.ok && Date.now() - s.t < 20 * 60000);
+// lista rozwijana najlepszych (1.53.0, prośba użytkownika): pod przyciskiem, osobno k1–k3 i k4–k6; linijka na model (grupa · model · krok i stawka ·
+// Nr · wygrana do k3 / k6 · werdykt), dotknięcie → pełna karta oceny z przyciskami. Stan rozwinięcia zapamiętany (data-fold: ocnaj, ocw:<id>).
+const SZGR = ['SZUKAJ T50', 'SZUKAJ T60', 'ZESZYT T50', 'ZESZYT T60'], SZZAK = [['k1–k3', 3], ['k4–k6', 6]];
+const szGr = o => (o.gdzie === 'ZESZYT' ? 'ZESZYT ' : 'SZUKAJ ') + String(o.tabela || '').toUpperCase();
+function ocTeraz(o) {   // stan modelu z oceny na bieżących kodach: {kr: krok i stawka, nr: Nr zakładu (0 = czeka), d: za ile wierszy (1 = następny)}
+  const op = inOpis(ocP(o)), t = o.tabela; if (op.err || !D[t]) return {};
+  if (op.it) { const r = op.it.r; return r && r.bs >= 0 ? { kr: `k${r.bs + 1} ${ST[r.bs]} zł`, nr: r.ph === 2 ? r.wz + 1 : 0, d: r.ph === 2 ? r.wz + 1 - D[t].n : 0 } : {}; }
+  const M = op.z && zzE[t] ? zzModel(t, op.z) : null, T = M && M.teraz; if (!M) return {};
+  return T && T.gra && T.s <= M.limit ? { kr: `k${T.s} ${zzSt8(T.s)} zł`, nr: T.nr, d: T.nr - zzCodes(t).c.length } : { kr: 'czeka na start', nr: 0, d: 0 };
+}
+const ocPilne = T => T.d === 1 ? 0 : T.d >= 2 && T.d <= 3 ? 1 : 2;   // 🟧 gra na następnym wierszu · 🟨 za 2–3 wiersze · reszta
+const ocDD = T => T.d === 1 ? '<span class="dd n">TERAZ</span>' : T.d >= 2 && T.d <= 3 ? `<span class="dd">za ${T.d}</span>` : '';
+function ocRzedy(L, kol) {   // [{o, T}] — najpierw grające teraz, potem za chwilę (jak w MOJE), dalej w kolejności listy / grup
+  const R = L.map((o, i) => ({ o, T: ocTeraz(o), i }));
+  return R.sort((a, b) => ocPilne(a.T) - ocPilne(b.T) || (kol ? kol(a.o) - kol(b.o) : 0) || a.i - b.i);
+}
+const ocDDsum = R => { const a = R.filter(x => x.T.d === 1).length, b = R.filter(x => ocPilne(x.T) === 1).length;
+  return (a ? ` <span class="dd n">${a} TERAZ</span>` : '') + (b ? ` <span class="dd">${b} za chwilę</span>` : ''); };
+function ocWiersz(o, T, dec) {   // linijka w liście rozwijanej: [🟧 / 🟨] grupa · model · krok i stawka · Nr · historia · werdykt; dotknięcie → pełna karta
+  const s = String((((o.sekcje || [])[0] || {}).wiersze || [])[0] || ''), h = o.auto === 'najlepsze' ? s.match(/wygrana do k(\d+) od tego kroku w historii: (\d+)\/(\d+) \((\d+)%\)/) : null;
+  const kr = T.kr || (o.krok ? `k${o.krok} ${o.stawka} zł` : ''), L = o.liczby || {}, lim = o.gdzie === 'ZESZYT' ? o.limit || 9 : 8;
+  const hist = h ? ` · do k${h[1]} <b>${h[4]}%</b> <span class="hint">(${h[2]}/${h[3]})</span>` : L.r8 ? ` · do k${lim} <b>${Math.round(100 * L.w8 / L.r8)}%</b> <span class="hint">(${L.w8}/${L.r8})</span>` : '';
+  return `<details class="szw" ${foldAt('ocw:' + o.id, 0)}><summary>${dec ? '' : ocDD(T)}<span class="hint">${esc(szGr(o))}</span> <b>${esc(String(o.nazwa).replace(/^ZESZYT T\d0 /, ''))}</b>`
+    + `${kr ? ' · ' + esc(kr) : ''}${T.nr ? ` · Nr ${fmtN(T.nr)}` : ''}${hist} <b style="color:${OCW[o.werdykt] || 'var(--tx)'}">${esc(o.werdykt || '')}</b>`
+    + `${dec ? ` <span class="hint">· ${OCDT[dec.d] || esc(dec.d)}</span>` : ''}</summary>${ocKarta(o, dec)}</details>`;
+}
+function ocLista(key, tytul, L, pusto) {   // zwijana lista ocen (1.53.0, prośba użytkownika) — nagłówek z liczbą i znaczkami 🟧 / 🟨
+  const R = ocRzedy(L);
+  return `<details class="szl" ${foldAt(key, 0)}><summary>${tytul} (${L.length})${ocDDsum(R)}</summary>${R.length ? R.map(x => ocWiersz(x.o, x.T)).join('') : `<div class="hint">${pusto}</div>`}</details>`;
+}
+function szBox(NJ) {   // OCENY: przycisk „Wyszukaj najlepsze”, stan prośby i lista rozwijana najlepszych (czekających na decyzję)
+  NJ = NJ || []; const s = jobj(SZK) || {}, N = (jobj(OCK) || {}).N, czeka = !!(s.t && !s.ok && Date.now() - s.t < 20 * 60000);
   const st = szBusy ? 'wysyłam prośbę…' : czeka ? `⏳ szukam… (prośba ${when(s.t)}; wynik po ok. 3–5 min — sprawdzam sam)`
     : s.t && !s.ok ? `<b style="color:var(--rd)">brak wyniku prośby z ${when(s.t)}</b> — spróbuj jeszcze raz (albo zakładka Actions w repo z kodami)`
     : N && N.zrobiono_t ? `ostatnio ${when(N.zrobiono_t)}: ${N.znaleziono ? `${N.znaleziono} ${pl(N.znaleziono, ['propozycja', 'propozycje', 'propozycji'])} z GRAĆ` : 'nic z GRAĆ'}` : '';
   const G = N && N.grupy ? Object.entries(N.grupy) : [];
+  const zak = SZZAK.map(([z, dk]) => {
+    const L = ocRzedy(NJ.filter(o => o.zakres === z), o => SZGR.indexOf(szGr(o))), brak = G.filter(([k, v]) => k.endsWith(' ' + z) && v === 'brak GRAĆ').map(([k]) => k.slice(0, -z.length - 1));
+    return `<div class="hint" style="margin:8px 0 2px"><b style="color:var(--tx)">${z}</b> — wygrana do k${dk} od kroku, na którym model jest${brak.length ? ` · bez GRAĆ: ${esc(brak.join(', '))}` : ''}</div>`
+      + (L.map(x => ocWiersz(x.o, x.T)).join('') || '<div class="hint">— nic czekającego na decyzję</div>');
+  }).join('');
+  const lista = NJ.length || G.length ? `<details class="szl" ${foldAt('ocnaj', 0)}><summary>🔎 Najlepsze z ostatniego szukania (${NJ.length})${ocDDsum(ocRzedy(NJ))}</summary>${zak}</details>` : '';
   return `<div class="box"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn pri" data-sznaj="1"${szBusy || czeka ? ' disabled' : ''}>🔎 Wyszukaj najlepsze</button><span class="hint">${st}</span></div>
     <div class="hint" style="margin-top:4px">Modele z pul SZUKAJ / S+ / LOST i z ZESZYTU, które grają teraz: na <b>k1–k3</b> — najczęściej wygrywające do k3, na <b>k4–k6</b> — do k6 (k7–k8 pomijam). Każdy z pełną oceną do k8; tu trafiają najlepsze z GRAĆ (najwyżej 1 na grupę w każdym zakresie). Nowe szukanie podmienia propozycje, o których jeszcze nie zdecydowałeś. Liczy się tylko po naciśnięciu.</div>
-    ${G.length && !czeka ? `<details style="margin-top:4px"><summary class="hint">co znalazłem ostatnio</summary><div class="hint">${G.map(([k, v]) => `${esc(k)}: ${esc(String(v))}`).join('<br>')}</div></details>` : ''}</div>`;
+    ${lista}</div>`;
 }
 const inInt = (v, d, a, b) => { const x = v == null ? d : Number(v); return Number.isInteger(x) && x >= a && x <= b ? x : null; };
 function inOpis(p) {   // propozycja → {txt, z (zapis ZESZYTU) | it (model MOJE / BANK)} albo {err}
@@ -722,12 +758,13 @@ function ocKarta(o, dec) {
 }
 function oceny() {
   const L = ocList(), x = jobj(OCK) || {};
-  if (!L.length) return szBox() + `<div class="empty">Brak ocen.<br><br><b>Propozycje Claude</b>: poproś „zaproponuj modele” — Claude wybierze z pul i ZESZYTU, oceni i wyśle tutaj (＋ Dodaj albo Usuń analizę).<br><br><b>Twój model</b>: dodaj go do MOJE i poproś „oceń mój model” — ocena trafi tutaj (Zostaw albo Usuń z MOJE).${x.t ? `<br><br><span class="hint">sprawdzono ${ago(x.t)}</span>` : ''}</div>`;
-  const P = L.filter(o => o.rodzaj !== 'moj' && !ocStan(o)), M = L.filter(o => o.rodzaj === 'moj' && !ocStan(o)), Z = L.filter(o => ocStan(o));
-  return szBox() + `<div class="hint" style="margin:0 0 8px">🔍 Oceny Claude: stan, historia (do k8 / limitu i w 3 krokach), uczciwa szansa, symulacja, nakładanie z MOJE, werdykt. „teraz” liczy MOJE na bieżących kodach.</div>
-    <h4 style="margin:6px 0">📥 Propozycje Claude (${P.length})</h4>${P.length ? P.map(o => ocKarta(o)).join('') : '<div class="hint" style="margin-bottom:8px">brak nowych — poproś Claude „zaproponuj modele”</div>'}
-    <h4 style="margin:10px 0 6px">🔍 Oceny Twoich modeli (${M.length})</h4>${M.length ? M.map(o => ocKarta(o)).join('') : '<div class="hint" style="margin-bottom:8px">brak — dodaj model do MOJE i poproś Claude „oceń mój model”</div>'}
-    ${Z.length ? `<details style="margin-top:10px"><summary><b>Załatwione (${Z.length})</b></summary>${Z.map(o => ocKarta(o, ocStan(o))).join('')}</details>` : ''}`;
+  if (!L.length) return szBox([]) + `<div class="empty">Brak ocen.<br><br><b>Propozycje Claude</b>: poproś „zaproponuj modele” — Claude wybierze z pul i ZESZYTU, oceni i wyśle tutaj (＋ Dodaj albo Usuń analizę).<br><br><b>Twój model</b>: dodaj go do MOJE i poproś „oceń mój model” — ocena trafi tutaj (Zostaw albo Usuń z MOJE).${x.t ? `<br><br><span class="hint">sprawdzono ${ago(x.t)}</span>` : ''}</div>`;
+  const PA = L.filter(o => o.rodzaj !== 'moj' && !ocStan(o)), M = L.filter(o => o.rodzaj === 'moj' && !ocStan(o)), Z = L.filter(o => ocStan(o));
+  const NJ = PA.filter(o => o.auto === 'najlepsze'), P = PA.filter(o => o.auto !== 'najlepsze');   // najlepsze z szukania — w liście rozwijanej pod 🔎
+  return szBox(NJ) + `<div class="hint" style="margin:0 0 8px">🔍 Oceny Claude: stan, historia (do k8 / limitu i w 3 krokach), uczciwa szansa, symulacja, nakładanie z MOJE, werdykt. „teraz” liczy MOJE na bieżących kodach.</div>
+    ${ocLista('ocprop', '📥 Propozycje Claude', P, NJ.length ? 'poza najlepszymi z szukania (wyżej) — brak' : 'brak nowych — poproś Claude „zaproponuj modele” albo 🔎 Wyszukaj najlepsze')}
+    ${ocLista('ocmoj', '🔍 Oceny Twoich modeli', M, 'brak — dodaj model do MOJE i poproś Claude „oceń mój model”')}
+    ${Z.length ? `<details class="szl" ${foldAt('oczal', 0)}><summary>Załatwione (${Z.length})</summary>${Z.map(o => ocWiersz(o, {}, ocStan(o))).join('')}</details>` : ''}`;
 }
 function ocBanner() {   // TERAZ: krótki pasek, gdy coś czeka na Twoją decyzję
   const L = ocPending(); if (!L.length) return '';
@@ -1558,7 +1595,7 @@ const zzCel = (t, m) => t === 't60' ? (d => [d.length ? (d.length === 3 ? '1-3xx
   : ['+XX', 'X+X', 'XX+'][m.poz == null ? 1 : m.poz];
 function zzLoad() {   // silnik ZESZYTU — tylko gdy są zakłady ZESZYTU (pobranie z tego samego adresu; bez internetu z kopii MOJE)
   for (const t in ZZ) {
-    if (zzSt[t] === 'ok' || zzSt[t] === 'wczytuję' || (!zzRaw(t).length && !zzList(t).length)) continue;   // 1.50.3: też gdy są modele na listach ZESZYTU (RAPORT)
+    if (zzSt[t] === 'ok' || zzSt[t] === 'wczytuję' || (!zzRaw(t).length && !zzList(t).length && !ocList().some(o => o.gdzie === 'ZESZYT' && o.tabela === t))) continue;   // 1.53.0: też propozycje ZESZYTU w OCENY   // 1.50.3: też gdy są modele na listach ZESZYTU (RAPORT)
     zzSt[t] = 'wczytuję';
     (async () => {
       try { const r = await fetch(ZZ[t].js, { cache: 'no-cache' }); if (!r.ok) throw new Error(r.status);
