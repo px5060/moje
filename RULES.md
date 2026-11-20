@@ -351,3 +351,6 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - **Znaczki gry przy ocenach (1.53.0)**: jak w MOJE — pomarańczowy **TERAZ** = model z oceny gra na następnym wierszu, żółty **za 2 / za 3** = gra
   za chwilę; takie linijki na górze listy, a w nagłówku listy liczba („1 TERAZ”, „2 za chwilę”). Stan liczy MOJE na bieżących kodach (SZUKAJ: silnik
   modelu; ZESZYT: silnik ZESZYTU, wczytywany też dla propozycji ZESZYTU). Załatwione bez znaczków.
+- **🧹 Wyczyść Załatwione (1.54.0)**: przycisk w nagłówku listy Załatwione (z potwierdzeniem) chowa całą listę — oceny zostają w `oceny.json`
+  (znaczek 🔍 przy modelu, Claude wie, że model jest oceniony). Czas wyczyszczenia `moje_v1_oczal` jedzie w `stan.json` (to samo na każdym urządzeniu);
+  ocena załatwiona później znowu pojawia się w Załatwionych. Oceny modeli, których nie ma w telefonie, usuwa z pliku Claude (`ocena.py wyczysc`).

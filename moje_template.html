@@ -209,7 +209,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.53.0';
+const APP_VER = '1.54.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -594,6 +594,10 @@ function ocTeraz(o) {   // stan modelu z oceny na bieżących kodach: {kr: krok 
   const M = op.z && zzE[t] ? zzModel(t, op.z) : null, T = M && M.teraz; if (!M) return {};
   return T && T.gra && T.s <= M.limit ? { kr: `k${T.s} ${zzSt8(T.s)} zł`, nr: T.nr, d: T.nr - zzCodes(t).c.length } : { kr: 'czeka na start', nr: 0, d: 0 };
 }
+// 🧹 Wyczyść Załatwione (1.54.0, prośba użytkownika): chowa całą listę Załatwionych — oceny zostają (znaczek 🔍 przy modelu, Claude wie, że model
+// jest oceniony). Czas wyczyszczenia moje_v1_oczal jedzie w stan.json (te same Załatwione na każdym urządzeniu); później załatwione — widać znowu.
+const OCZK = 'moje_v1_oczal';
+function ocSchowana(o) { const c = +lsGet(OCZK, '0') || 0; if (!c) return false; const z = ocStan(o), t = z && z.t ? z.t : Date.parse(o.data || '') || 0; return t <= c; }
 const ocPilne = T => T.d === 1 ? 0 : T.d >= 2 && T.d <= 3 ? 1 : 2;   // 🟧 gra na następnym wierszu · 🟨 za 2–3 wiersze · reszta
 const ocDD = T => T.d === 1 ? '<span class="dd n">TERAZ</span>' : T.d >= 2 && T.d <= 3 ? `<span class="dd">za ${T.d}</span>` : '';
 function ocRzedy(L, kol) {   // [{o, T}] — najpierw grające teraz, potem za chwilę (jak w MOJE), dalej w kolejności listy / grup
@@ -759,12 +763,12 @@ function ocKarta(o, dec) {
 function oceny() {
   const L = ocList(), x = jobj(OCK) || {};
   if (!L.length) return szBox([]) + `<div class="empty">Brak ocen.<br><br><b>Propozycje Claude</b>: poproś „zaproponuj modele” — Claude wybierze z pul i ZESZYTU, oceni i wyśle tutaj (＋ Dodaj albo Usuń analizę).<br><br><b>Twój model</b>: dodaj go do MOJE i poproś „oceń mój model” — ocena trafi tutaj (Zostaw albo Usuń z MOJE).${x.t ? `<br><br><span class="hint">sprawdzono ${ago(x.t)}</span>` : ''}</div>`;
-  const PA = L.filter(o => o.rodzaj !== 'moj' && !ocStan(o)), M = L.filter(o => o.rodzaj === 'moj' && !ocStan(o)), Z = L.filter(o => ocStan(o));
+  const PA = L.filter(o => o.rodzaj !== 'moj' && !ocStan(o)), M = L.filter(o => o.rodzaj === 'moj' && !ocStan(o)), Z = L.filter(o => ocStan(o) && !ocSchowana(o));
   const NJ = PA.filter(o => o.auto === 'najlepsze'), P = PA.filter(o => o.auto !== 'najlepsze');   // najlepsze z szukania — w liście rozwijanej pod 🔎
   return szBox(NJ) + `<div class="hint" style="margin:0 0 8px">🔍 Oceny Claude: stan, historia (do k8 / limitu i w 3 krokach), uczciwa szansa, symulacja, nakładanie z MOJE, werdykt. „teraz” liczy MOJE na bieżących kodach.</div>
     ${ocLista('ocprop', '📥 Propozycje Claude', P, NJ.length ? 'poza najlepszymi z szukania (wyżej) — brak' : 'brak nowych — poproś Claude „zaproponuj modele” albo 🔎 Wyszukaj najlepsze')}
     ${ocLista('ocmoj', '🔍 Oceny Twoich modeli', M, 'brak — dodaj model do MOJE i poproś Claude „oceń mój model”')}
-    ${Z.length ? `<details class="szl" ${foldAt('oczal', 0)}><summary>Załatwione (${Z.length})</summary>${Z.map(o => ocWiersz(o, {}, ocStan(o))).join('')}</details>` : ''}`;
+    ${Z.length ? `<details class="szl" ${foldAt('oczal', 0)}><summary>Załatwione (${Z.length}) <button class="btn" data-oczal="1" style="font-size:12px;padding:3px 8px;margin-left:6px">🧹 Wyczyść</button></summary>${Z.map(o => ocWiersz(o, {}, ocStan(o))).join('')}</details>` : ''}`;
 }
 function ocBanner() {   // TERAZ: krótki pasek, gdy coś czeka na Twoją decyzję
   const L = ocPending(); if (!L.length) return '';
@@ -2539,6 +2543,9 @@ document.addEventListener('click', e => {
   if ((b = q('[data-inchk]'))) return inFetch(true);
   if ((b = q('[data-sznaj]'))) return szNaj();
   if ((b = q('[data-ocgo]'))) return go('ocen');
+  if ((b = q('[data-oczal]'))) { e.preventDefault();   // przycisk w nagłówku listy — bez zwijania / rozwijania
+    if (confirm('Wyczyścić Załatwione? Oceny zostają przy modelach (znaczek 🔍) — znikną tylko z tej listy.')) { lsSet(OCZK, String(Date.now())); _ocC = null; ghSchedule(1000); toast('🧹 Załatwione wyczyszczone'); render(); }
+    return; }
   if ((b = q('[data-ocdod]'))) { const o = ocList().find(x => ocKey(x) === b.dataset.ocdod); if (o) { const r = inDodajP(ocP(o)); if (r) { ocSet(o, 'dodane'); reload(); } } return; }
   if ((b = q('[data-ocdob]'))) { const o = ocList().find(x => ocKey(x) === b.dataset.ocdob); if (o) { const r = inDodajP({ ...ocP(o), gdzie: 'BANK' }); if (r) { ocSet(o, r.wyn === 'jest' ? 'dodane' : 'dodane_bank'); reload(); } } return; }
   if ((b = q('[data-ocmv]'))) { const o = ocList().find(x => ocKey(x) === b.dataset.ocmv), op = o && inOpis(ocP(o)); if (op && op.it) { BKI[op.it.uid] = op.it; ocSet(o, b.dataset.w === 'B' ? 'do_banku' : 'do_teraz'); moveTo(op.it.uid, b.dataset.w); } return; }
