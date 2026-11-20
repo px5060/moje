@@ -341,3 +341,8 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
   zakresie. Nowa prośba podmienia propozycje bez decyzji. Karty jak inne propozycje (＋ Dodaj / Usuń analizę), opis zaczyna się od „🔎 Najlepsze k1–k3 / k4–k6”.
 - Stan prośby (`moje_v1_szn`, tylko to urządzenie, nie jedzie w `stan.json`): „⏳ szukam…” (przycisk wyłączony do wyniku, najwyżej 20 min) → MOJE sama
   sprawdza `oceny.json` po 2,5 / 4 / 6 / 9 / 13 min → dymek „🔎 Wyszukaj najlepsze: N propozycji z GRAĆ” i „ostatnio …” + „co znalazłem ostatnio” (grupy).
+- **Lista rozwijana najlepszych (1.53.0)**: propozycje z szukania (czekające na decyzję) są pod przyciskiem w zwijanej liście
+  „🔎 Najlepsze z ostatniego szukania (N)” — osobno **k1–k3** (wygrana do k3) i **k4–k6** (wygrana do k6), z grupami bez GRAĆ w nagłówku zakresu.
+  Linijka na model: grupa · model · krok i stawka (SZUKAJ: teraz, na bieżących kodach; ZESZYT: z oceny) · Nr · wygrana do k3 / k6 (% i w/r) · werdykt;
+  dotknięcie → pełna karta oceny z przyciskami. Na głównej liście „📥 Propozycje Claude” ich nie ma. Stan rozwinięcia zapamiętany
+  (`moje_v1_fold`: `ocnaj`, `ocnaj:<id>`); po nadejściu wyniku szukania lista sama się rozwija.
