@@ -330,3 +330,14 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - RAZEM — rozpoznanie z kolumny GRA każdej tabeli (1T, 200, 2T, TRÓJKA, 2-SLOT, PIKOFF, TOP5, TOP7, BUST, TRÓJKA T60, MIX3): WIN (✓ WIN / → WIN / WIN K…,
   nie „(+3 WIN)” z opisu triggera), ✗ LOSS / pudło / przegrana, ○ bez rozstrzygnięcia, TRIGGER / START; LOST dokładnie z cykli RAZEM (`__relG`).
   STEP z kolumny stanu tylko, gdy to STEP modelu (≈ tyle co TRIGGERÓW). Test: liczba WIN i LOST na zeszycie = cykle RAZEM we wszystkich 11 tabelach.
+
+## 🔎 Wyszukaj najlepsze (1.52.0)
+- Prośba użytkownika: **tylko na prośbę** (nic nie liczy się samo) — przycisk **🔎 Wyszukaj najlepsze** na górze OCENY.
+- Po naciśnięciu MOJE wysyła stan (`stan.json`, jak „Wyślij teraz”) i zapisuje prośbę **`szukaj.json`** (`{t, zlecono, urzadzenie, wersja}`) w tym samym
+  prywatnym repo. Zadanie GitHuba w tym repo (`.github/workflows/najlepsze.yml`, uruchamia się tylko przy zmianie `szukaj.json`) liczy narzędziem
+  `all50/analiza/narzedzia/najlepsze.py` i zapisuje wynik w `oceny.json`: oceny z `auto: "najlepsze"` + `najlepsze: {zlecono, zrobiono_t, znaleziono, grupy}`.
+- Szukanie: modele z pul SZUKAJ / S+ / LOST i z ZESZYTU, które grają teraz — na **k1–k3** wg wygranej do k3, na **k4–k6** wg wygranej do k6
+  (k7–k8 pomija); każdy z pełną oceną do k8 / limitu; do OCENY najlepsze z GRAĆ, najwyżej 1 na grupę (SZUKAJ T50 / T60, ZESZYT T50 / T60) w każdym
+  zakresie. Nowa prośba podmienia propozycje bez decyzji. Karty jak inne propozycje (＋ Dodaj / Usuń analizę), opis zaczyna się od „🔎 Najlepsze k1–k3 / k4–k6”.
+- Stan prośby (`moje_v1_szn`, tylko to urządzenie, nie jedzie w `stan.json`): „⏳ szukam…” (przycisk wyłączony do wyniku, najwyżej 20 min) → MOJE sama
+  sprawdza `oceny.json` po 2,5 / 4 / 6 / 9 / 13 min → dymek „🔎 Wyszukaj najlepsze: N propozycji z GRAĆ” i „ostatnio …” + „co znalazłem ostatnio” (grupy).

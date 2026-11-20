@@ -209,7 +209,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.51.0';
+const APP_VER = '1.52.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -358,7 +358,7 @@ function autoBackup(t) {
 // dziennik moje_v1_kodzm i opis zapisu w GitHub. Urządzenie ze starszymi kodami nie nadpisze samo poprawki z innego urządzenia.
 const GHK = 'moje_v1_gh', GH_FILE = 'stan.json', GHZK = 'moje_v1_kodzm', GH_TAIL = 600;   // GHZK: dziennik poprawek kodów (jedzie w stan.json)
 const GH_SKIP = k => /^moje_v1_gh/.test(k) || /^oc_v1\//.test(k) ||   // oc_v1/…: zapamiętane oceny SZUKAJ (appka sama je przelicza) — ok. 1/4 pliku
-   /token|haslo|password/i.test(k) || /^moje_v1_(octag|fold|only|bkw|bsrc|bsub|zsrc|famshut|autobk)$/.test(k) || k === 'px_theme';
+   /token|haslo|password/i.test(k) || /^moje_v1_(octag|fold|only|bkw|bsrc|bsub|zsrc|famshut|autobk|szn)$/.test(k) || k === 'px_theme';
 const GH_ZP = t => 'zeszyt_v1_poprawki_' + t;   // poprawki kodów z bazy zrobione w ZESZYCIE (MOJE i RAZEM liczą starym kodem)
 const ghCfg = () => jobj(GHK) || {}, ghPut = c => lsSet(GHK, JSON.stringify(c));
 const ghOn = () => { const c = ghCfg(); return !!(c.repo && c.tok && c.auto !== false); };
@@ -541,16 +541,58 @@ async function ghRestore() {   // ręcznie: stan z GitHub zastępuje kody i list
 const GH_OC = 'oceny.json', OCK = 'moje_v1_ghoc', OCD = 'moje_v1_ocdec';   // OCK: ostatnio pobrany plik (nie jedzie w stan.json)
 const Z60C = ['2,3', '1', '1,2,3', 'x1x', 'xx1'];   // cele ZESZYTU T60 (jak w kodzie modelu)
 let inBusy = false;
-async function inFetch(force) {   // co najmniej 2 min między sprawdzeniami (przy reload / otwarciu), „🔍 Sprawdź” — od razu
+async function inFetch(force, cicho) {   // co najmniej 2 min między sprawdzeniami (przy reload / otwarciu), „🔍 Sprawdź” — od razu; cicho: bez dymka
   const c = ghCfg(), x = jobj(OCK) || {}; if (!c.repo || !c.tok || inBusy || (!force && x.t && Date.now() - x.t < 120000)) return;
   inBusy = true;
   try {
     const g = await ghGet(c, GH_OC), O = g.d && Array.isArray(g.d.oceny) ? g.d.oceny.filter(o => o && typeof o.id === 'string' && o.id.length <= 120 && typeof o.nazwa === 'string' && Array.isArray(o.sekcje)).slice(-100) : [];
-    const zm = JSON.stringify(O) !== JSON.stringify(x.O || []); lsSet(OCK, JSON.stringify({ t: Date.now(), O, err: '' })); if (zm) _ocC = null;
+    const n0 = g.d && g.d.najlepsze, N = n0 && typeof n0 === 'object' ? { zlecono: +n0.zlecono || 0, zrobiono_t: +n0.zrobiono_t || 0, znaleziono: +n0.znaleziono || 0,
+      grupy: n0.grupy && typeof n0.grupy === 'object' ? n0.grupy : {} } : null;   // 🔎 Wyszukaj najlepsze: wynik ostatniej prośby
+    const zm = JSON.stringify(O) !== JSON.stringify(x.O || []) || JSON.stringify(N) !== JSON.stringify(x.N || null); lsSet(OCK, JSON.stringify({ t: Date.now(), O, N, err: '' })); if (zm) _ocC = null;
+    const s = jobj(SZK) || {};
+    if (s.t && !s.ok && N && N.zlecono >= s.t) {   // odpowiedź na prośbę z tego urządzenia
+      lsSet(SZK, JSON.stringify({ ...s, ok: N.zlecono })); render();
+      toast(`🔎 Wyszukaj najlepsze: ${N.znaleziono ? `${N.znaleziono} ${pl(N.znaleziono, ['propozycja', 'propozycje', 'propozycji'])} z GRAĆ — OCENY` : 'tym razem nic z GRAĆ'}`, 6000); return;
+    }
     if (zm || force) render();
-    if (force) { const n = ocPending().length; toast(n ? `🔍 Od Claude: ${n} czeka na Twoją decyzję (OCENY)` : '🔍 Od Claude: nic nowego'); }
+    if (force && !cicho) { const n = ocPending().length; toast(n ? `🔍 Od Claude: ${n} czeka na Twoją decyzję (OCENY)` : '🔍 Od Claude: nic nowego'); }
   } catch (e) { lsSet(OCK, JSON.stringify({ ...x, t: Date.now(), err: String(e.message || e).slice(0, 120) })); if (force) toast('🔍 Nie sprawdzono: ' + esc(String(e.message || e))); }
   finally { inBusy = false; }
+}
+// ===== 🔎 Wyszukaj najlepsze (1.52.0, prośba użytkownika): tylko na prośbę — nic nie liczy się samo. Przycisk w OCENY: MOJE wysyła stan (ghSend)
+// i zapisuje prośbę szukaj.json w tym samym repo; zadanie GitHuba „Wyszukaj najlepsze” (repo z kodami; all50 analiza/narzedzia/najlepsze.py)
+// szuka w pulach SZUKAJ / S+ / LOST i w ZESZYCIE modeli, które grają teraz: k1–k3 wg wygranej do k3, k4–k6 wg wygranej do k6 (k7–k8 pomija);
+// każdy z pełną oceną do k8 / limitu; najlepsze z GRAĆ (najwyżej 1 na grupę w każdym zakresie) → oceny.json → Propozycje Claude (tu).
+// Nowa prośba podmienia propozycje, o których jeszcze nie zdecydowano. MOJE sama sprawdza wynik po kilku minutach.
+const GH_SZ = 'szukaj.json', SZK = 'moje_v1_szn';   // SZK: ostatnia prośba z tego urządzenia {t, ok} (nie jedzie w stan.json)
+let szBusy = false;
+async function szNaj() {
+  const c = ghCfg(); if (!c.repo || !c.tok) { toast('Najpierw ☁ Kopia w GitHub (KODY): repo i klucz'); return; }
+  if (szBusy) return; szBusy = true; render();
+  try {
+    for (let i = 0; ghBusy && i < 60; i++) await new Promise(r => setTimeout(r, 500));
+    const t0 = Date.now(); await ghSend(false);   // najpierw bieżący stan (kody, modele, decyzje) — szukanie liczy na nim
+    const cg = ghCfg(); if (cg.err && cg.errT >= t0) throw new Error('stan nie wysłany: ' + cg.err);
+    const url = `https://api.github.com/repos/${c.repo}/contents/${GH_SZ}`, H = ghH(c), g = await fetch(url, { headers: H, cache: 'no-store' });
+    if (!g.ok && g.status !== 404) throw new Error(`${g.status}`);
+    const sha = g.ok ? (await g.json()).sha : undefined, t = Date.now();
+    const r = await fetch(url, { method: 'PUT', headers: H, body: JSON.stringify({ message: `MOJE ${APP_VER}: 🔎 Wyszukaj najlepsze`,
+      content: ghB64(JSON.stringify({ t, zlecono: new Date(t).toISOString(), urzadzenie: ghDev().nazwa, wersja: APP_VER }, null, 1)), ...(sha ? { sha } : {}) }) });
+    if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 120)}`);
+    lsSet(SZK, JSON.stringify({ t })); toast('🔎 Szukam najlepszych modeli — wynik tutaj za ok. 3–5 min', 5000);
+    [150, 240, 360, 540, 780].forEach(sek => setTimeout(() => { const z = jobj(SZK) || {}; if (z.t === t && !z.ok) inFetch(true, true); }, sek * 1000));
+  } catch (e) { toast('🔎 Nie zlecono: ' + esc(String(e.message || e)), 6000); }
+  finally { szBusy = false; render(); }
+}
+function szBox() {   // OCENY: przycisk „Wyszukaj najlepsze” i stan prośby
+  const s = jobj(SZK) || {}, N = (jobj(OCK) || {}).N, czeka = !!(s.t && !s.ok && Date.now() - s.t < 20 * 60000);
+  const st = szBusy ? 'wysyłam prośbę…' : czeka ? `⏳ szukam… (prośba ${when(s.t)}; wynik po ok. 3–5 min — sprawdzam sam)`
+    : s.t && !s.ok ? `<b style="color:var(--rd)">brak wyniku prośby z ${when(s.t)}</b> — spróbuj jeszcze raz (albo zakładka Actions w repo z kodami)`
+    : N && N.zrobiono_t ? `ostatnio ${when(N.zrobiono_t)}: ${N.znaleziono ? `${N.znaleziono} ${pl(N.znaleziono, ['propozycja', 'propozycje', 'propozycji'])} z GRAĆ` : 'nic z GRAĆ'}` : '';
+  const G = N && N.grupy ? Object.entries(N.grupy) : [];
+  return `<div class="box"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn pri" data-sznaj="1"${szBusy || czeka ? ' disabled' : ''}>🔎 Wyszukaj najlepsze</button><span class="hint">${st}</span></div>
+    <div class="hint" style="margin-top:4px">Modele z pul SZUKAJ / S+ / LOST i z ZESZYTU, które grają teraz: na <b>k1–k3</b> — najczęściej wygrywające do k3, na <b>k4–k6</b> — do k6 (k7–k8 pomijam). Każdy z pełną oceną do k8; tu trafiają najlepsze z GRAĆ (najwyżej 1 na grupę w każdym zakresie). Nowe szukanie podmienia propozycje, o których jeszcze nie zdecydowałeś. Liczy się tylko po naciśnięciu.</div>
+    ${G.length && !czeka ? `<details style="margin-top:4px"><summary class="hint">co znalazłem ostatnio</summary><div class="hint">${G.map(([k, v]) => `${esc(k)}: ${esc(String(v))}`).join('<br>')}</div></details>` : ''}</div>`;
 }
 const inInt = (v, d, a, b) => { const x = v == null ? d : Number(v); return Number.isInteger(x) && x >= a && x <= b ? x : null; };
 function inOpis(p) {   // propozycja → {txt, z (zapis ZESZYTU) | it (model MOJE / BANK)} albo {err}
@@ -680,9 +722,9 @@ function ocKarta(o, dec) {
 }
 function oceny() {
   const L = ocList(), x = jobj(OCK) || {};
-  if (!L.length) return `<div class="empty">Brak ocen.<br><br><b>Propozycje Claude</b>: poproś „zaproponuj modele” — Claude wybierze z pul i ZESZYTU, oceni i wyśle tutaj (＋ Dodaj albo Usuń analizę).<br><br><b>Twój model</b>: dodaj go do MOJE i poproś „oceń mój model” — ocena trafi tutaj (Zostaw albo Usuń z MOJE).${x.t ? `<br><br><span class="hint">sprawdzono ${ago(x.t)}</span>` : ''}</div>`;
+  if (!L.length) return szBox() + `<div class="empty">Brak ocen.<br><br><b>Propozycje Claude</b>: poproś „zaproponuj modele” — Claude wybierze z pul i ZESZYTU, oceni i wyśle tutaj (＋ Dodaj albo Usuń analizę).<br><br><b>Twój model</b>: dodaj go do MOJE i poproś „oceń mój model” — ocena trafi tutaj (Zostaw albo Usuń z MOJE).${x.t ? `<br><br><span class="hint">sprawdzono ${ago(x.t)}</span>` : ''}</div>`;
   const P = L.filter(o => o.rodzaj !== 'moj' && !ocStan(o)), M = L.filter(o => o.rodzaj === 'moj' && !ocStan(o)), Z = L.filter(o => ocStan(o));
-  return `<div class="hint" style="margin:0 0 8px">🔍 Oceny Claude: stan, historia (do k8 / limitu i w 3 krokach), uczciwa szansa, symulacja, nakładanie z MOJE, werdykt. „teraz” liczy MOJE na bieżących kodach.</div>
+  return szBox() + `<div class="hint" style="margin:0 0 8px">🔍 Oceny Claude: stan, historia (do k8 / limitu i w 3 krokach), uczciwa szansa, symulacja, nakładanie z MOJE, werdykt. „teraz” liczy MOJE na bieżących kodach.</div>
     <h4 style="margin:6px 0">📥 Propozycje Claude (${P.length})</h4>${P.length ? P.map(o => ocKarta(o)).join('') : '<div class="hint" style="margin-bottom:8px">brak nowych — poproś Claude „zaproponuj modele”</div>'}
     <h4 style="margin:10px 0 6px">🔍 Oceny Twoich modeli (${M.length})</h4>${M.length ? M.map(o => ocKarta(o)).join('') : '<div class="hint" style="margin-bottom:8px">brak — dodaj model do MOJE i poproś Claude „oceń mój model”</div>'}
     ${Z.length ? `<details style="margin-top:10px"><summary><b>Załatwione (${Z.length})</b></summary>${Z.map(o => ocKarta(o, ocStan(o))).join('')}</details>` : ''}`;
@@ -2458,6 +2500,7 @@ document.addEventListener('click', e => {
     ghPut({ repo, tok, auto: true }); render(); return ghSend(true); }
   if ((b = q('[data-ghsend]'))) return ghSend(true);
   if ((b = q('[data-inchk]'))) return inFetch(true);
+  if ((b = q('[data-sznaj]'))) return szNaj();
   if ((b = q('[data-ocgo]'))) return go('ocen');
   if ((b = q('[data-ocdod]'))) { const o = ocList().find(x => ocKey(x) === b.dataset.ocdod); if (o) { const r = inDodajP(ocP(o)); if (r) { ocSet(o, 'dodane'); reload(); } } return; }
   if ((b = q('[data-ocdob]'))) { const o = ocList().find(x => ocKey(x) === b.dataset.ocdob); if (o) { const r = inDodajP({ ...ocP(o), gdzie: 'BANK' }); if (r) { ocSet(o, r.wyn === 'jest' ? 'dodane' : 'dodane_bank'); reload(); } } return; }
