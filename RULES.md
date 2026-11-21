@@ -351,3 +351,18 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - **Znaczki gry przy ocenach (1.53.0)**: jak w MOJE — pomarańczowy **TERAZ** = model z oceny gra na następnym wierszu, żółty **za 2 / za 3** = gra
   za chwilę; takie linijki na górze listy, a w nagłówku listy liczba („1 TERAZ”, „2 za chwilę”). Stan liczy MOJE na bieżących kodach (SZUKAJ: silnik
   modelu; ZESZYT: silnik ZESZYTU, wczytywany też dla propozycji ZESZYTU). Załatwione bez znaczków.
+- **🗑 Usuwanie i ↶ przywracanie w OCENACH (1.54.0)** — prośby użytkownika:
+  - **Załatwione**: przy każdej linijce **🗑 Usuń** (ocena znika z listy) i — gdy coś to zmienia — **↶ Przywróć do decyzji** (cofa decyzję: ocena
+    wraca do 📥 Propozycji / 🔍 Ocen Twoich modeli / 🔎 Najlepszych i znowu czeka; propozycja, której modelu nie ma w telefonie, albo Twój model,
+    który jest w telefonie). W nagłówku **🧹 Wyczyść** (z potwierdzeniem) — usuwa wszystkie naraz.
+  - **🗑 Usunięte** (zwijana lista na dole): przy każdej **↶ Przywróć** (wraca do Załatwionych), w nagłówku **↶ Przywróć wszystkie**.
+  - Usuwanie tylko chowa: oceny zostają w `oceny.json` (znaczek 🔍 przy modelu, Claude wie, że model jest oceniony). Schowane: `moje_v1_ocschow`
+    {klucz oceny: czas}, jedzie w `stan.json` (te same listy na każdym urządzeniu). Oceny modeli, których nie ma w telefonie, usuwa z pliku Claude (`ocena.py wyczysc`).
+
+## RAPORT: wiersz zakładu zamiast samego „za N w.” (1.55.0)
+- Prośba użytkownika: kierować się **numerem wiersza**, a odległość ma się zmieniać po kolejnych kodach.
+- Wpisy 🟨 ZA CHWILĘ / 🟧 GRAJ (też BANK i ZESZYT: pusta trójka, GRAJ) pokazują **Nr wiersza zakładu** wyraźnie (pogrubiony, większy) i ile wierszy
+  zostało **teraz**, liczone na bieżących kodach: wpis z Nr 15 548 „za 4 w.” po dwóch kodach pokazuje „Nr 15 552 · za 2 w.”, na następnym wierszu „TERAZ”,
+  po zagranym wierszu sam Nr. Wpis pamięta wiersz zakładu (`zn`); starsze wpisy — Nr z opisu albo Nr wpisu + „za N w.”.
+- Linijka „teraz:” też z Nr: „🟥 LOST · czeka na WIN (k7) · zakład **Nr 15 552** · za 2 w.”, „🟨 ZA CHWILĘ **Nr …** · za N w. · kX”, „🟧 GRAJ TERAZ **Nr …** · kX · stawka”,
+  ZESZYT „🟨 gra **Nr …** · za N w. · kX”.

@@ -106,7 +106,7 @@ details.sec>summary{list-style:none}[data-lp]{-webkit-user-select:none;user-sele
 .clt{font-size:11px;font-weight:800;padding:1px 5px;border-radius:7px;border:1px solid currentColor;white-space:nowrap;margin-left:3px}
 .ocg{font-size:12px;font-weight:800;padding:1px 6px;border-radius:7px;background:var(--pan);border:1px solid var(--bd);white-space:nowrap;color:var(--mu)}.ocg i{font-style:normal}.ocg .g{color:var(--gr)}.ocg .o{color:var(--ye)}.ocg .x{color:var(--rd)}
 .empty{background:var(--pan);border:1px dashed var(--bd);border-radius:10px;padding:14px;color:var(--mu);text-align:center}
-details{margin-top:10px}summary{cursor:pointer;font-weight:700;color:var(--mu);padding:6px 0}details.szl{margin-top:12px}details.szl .dd{display:inline-block;white-space:nowrap;font-size:11px;font-weight:800;border-radius:5px;padding:2px 5px;margin-right:4px;background:#FFD700;color:#000}details.szl .dd.n{background:var(--or);color:#fff}details.szl>summary{color:var(--tx);font-weight:800}details.szw{margin:4px 0;border:1px solid var(--bd);border-radius:10px;padding:0 8px}details.szw>summary{font-weight:400;color:var(--tx);font-size:13px;line-height:1.35}details.szw[open]{padding-bottom:6px}
+details{margin-top:10px}summary{cursor:pointer;font-weight:700;color:var(--mu);padding:6px 0}details.szl{margin-top:12px}.btn.mini{font-size:12px;padding:3px 8px;margin:4px 4px 0 0}details.szl .dd{display:inline-block;white-space:nowrap;font-size:11px;font-weight:800;border-radius:5px;padding:2px 5px;margin-right:4px;background:#FFD700;color:#000}details.szl .dd.n{background:var(--or);color:#fff}details.szl>summary{color:var(--tx);font-weight:800}details.szw{margin:4px 0;border:1px solid var(--bd);border-radius:10px;padding:0 8px}details.szw>summary{font-weight:400;color:var(--tx);font-size:13px;line-height:1.35}details.szw[open]{padding-bottom:6px}
 /* zakłady */
 .sum{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
 .sum div{background:var(--pan);border:1px solid var(--bd);border-radius:9px;padding:7px;text-align:center;font-size:11.5px;color:var(--mu)}
@@ -130,7 +130,7 @@ details{margin-top:10px}summary{cursor:pointer;font-weight:700;color:var(--mu);p
 .rw-w{border-left-color:#2e9d5f!important}.rw-w b{color:#7fdc9f}.rw-l{border-left-color:#c0392b!important}.rw-l b{color:#ff8a80}.rw-k{border-left-color:#a8423a!important}.rw-n{border-left-color:var(--or)!important}.rw-s{border-left-color:#c9a800!important}
 .rpe{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.rpfl{animation:rpfl .8s ease-in-out 4;box-shadow:0 0 0 3px #FFD700!important}@keyframes rpfl{50%{box-shadow:0 0 0 6px #FFD700}}
 .rpd{font-size:12.5px;line-height:1.9;margin-top:2px}.rpn{color:var(--mu);font-size:11.5px;white-space:nowrap}.rpn i{font-style:normal;font-weight:700;color:var(--tx)}
-.rpz{display:inline-block;border-radius:5px;padding:0 5px;background:#2a3140;white-space:nowrap;border-left:3px solid #4a6a8a}.rpz.nw{outline:1px solid #FFD700}
+.rpz{display:inline-block;border-radius:5px;padding:0 5px;background:#2a3140;white-space:nowrap;border-left:3px solid #4a6a8a}.rpz.nw{outline:1px solid #FFD700}.rpnr{color:var(--tx);font-size:1.08em;font-weight:800;white-space:nowrap}
 .rpt{font-size:12.5px;margin-top:3px}.rpnew{background:#FFD700;color:#000;border-radius:5px;padding:0 5px;font-size:11px;font-weight:800}
 .rpb{border-left:5px solid #4a6a8a;background:var(--card);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:13.5px}
 .cyc b.rp{box-shadow:0 0 0 3px #FFD700!important;animation:rpb 1s ease-in-out 3}@keyframes rpb{50%{transform:scale(1.55)}}
@@ -209,7 +209,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.53.0';
+const APP_VER = '1.55.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -594,6 +594,18 @@ function ocTeraz(o) {   // stan modelu z oceny na bieżących kodach: {kr: krok 
   const M = op.z && zzE[t] ? zzModel(t, op.z) : null, T = M && M.teraz; if (!M) return {};
   return T && T.gra && T.s <= M.limit ? { kr: `k${T.s} ${zzSt8(T.s)} zł`, nr: T.nr, d: T.nr - zzCodes(t).c.length } : { kr: 'czeka na start', nr: 0, d: 0 };
 }
+// 🗑 Usuwanie i ↶ przywracanie w Załatwionych (1.54.0, prośby użytkownika): „🗑 Usuń” chowa ocenę z Załatwionych (lista 🗑 Usunięte na dole,
+// tam „↶ Przywróć” / „↶ Przywróć wszystkie”), „🧹 Wyczyść” chowa wszystkie naraz; oceny zostają (znaczek 🔍, Claude wie, że model jest oceniony).
+// „↶ Przywróć do decyzji” cofa decyzję: ocena wraca do Propozycji / Ocen Twoich modeli i znowu czeka (tylko gdy coś to zmienia: propozycja,
+// której modelu nie ma w telefonie; Twój model, który jest w telefonie). moje_v1_ocschow {klucz oceny: czas} jedzie w stan.json.
+const OCSK = 'moje_v1_ocschow', ocSchow = () => jobj(OCSK) || {}, ocSchowana = o => !!ocSchow()[ocKey(o)];
+function ocSchowaj(L, tak) {
+  const S = ocSchow(), ks = new Set(ocList().map(ocKey)); L.forEach(o => { if (tak) S[ocKey(o)] = Date.now(); else delete S[ocKey(o)]; });
+  for (const k in S) if (!ks.has(k)) delete S[k];   // oceny, których nie ma już w pliku
+  lsSet(OCSK, JSON.stringify(S)); _ocC = null; ghSchedule(1000);
+}
+function ocCofnij(o) { const d = ocDec(); delete d[ocKey(o)]; lsSet(OCD, JSON.stringify(d)); _ocC = null; ghSchedule(1000); }
+const ocMoznaCofnac = (o, z) => !!(z && !z.auto && (o.rodzaj === 'moj' ? ocJest(o) : !ocJest(o)));
 const ocPilne = T => T.d === 1 ? 0 : T.d >= 2 && T.d <= 3 ? 1 : 2;   // 🟧 gra na następnym wierszu · 🟨 za 2–3 wiersze · reszta
 const ocDD = T => T.d === 1 ? '<span class="dd n">TERAZ</span>' : T.d >= 2 && T.d <= 3 ? `<span class="dd">za ${T.d}</span>` : '';
 function ocRzedy(L, kol) {   // [{o, T}] — najpierw grające teraz, potem za chwilę (jak w MOJE), dalej w kolejności listy / grup
@@ -602,13 +614,13 @@ function ocRzedy(L, kol) {   // [{o, T}] — najpierw grające teraz, potem za c
 }
 const ocDDsum = R => { const a = R.filter(x => x.T.d === 1).length, b = R.filter(x => ocPilne(x.T) === 1).length;
   return (a ? ` <span class="dd n">${a} TERAZ</span>` : '') + (b ? ` <span class="dd">${b} za chwilę</span>` : ''); };
-function ocWiersz(o, T, dec) {   // linijka w liście rozwijanej: [🟧 / 🟨] grupa · model · krok i stawka · Nr · historia · werdykt; dotknięcie → pełna karta
+function ocWiersz(o, T, dec, akcje) {   // akcje: przyciski w linijce (Załatwione / Usunięte) — bez rozwijania   // linijka w liście rozwijanej: [🟧 / 🟨] grupa · model · krok i stawka · Nr · historia · werdykt; dotknięcie → pełna karta
   const s = String((((o.sekcje || [])[0] || {}).wiersze || [])[0] || ''), h = o.auto === 'najlepsze' ? s.match(/wygrana do k(\d+) od tego kroku w historii: (\d+)\/(\d+) \((\d+)%\)/) : null;
   const kr = T.kr || (o.krok ? `k${o.krok} ${o.stawka} zł` : ''), L = o.liczby || {}, lim = o.gdzie === 'ZESZYT' ? o.limit || 9 : 8;
   const hist = h ? ` · do k${h[1]} <b>${h[4]}%</b> <span class="hint">(${h[2]}/${h[3]})</span>` : L.r8 ? ` · do k${lim} <b>${Math.round(100 * L.w8 / L.r8)}%</b> <span class="hint">(${L.w8}/${L.r8})</span>` : '';
   return `<details class="szw" ${foldAt('ocw:' + o.id, 0)}><summary>${dec ? '' : ocDD(T)}<span class="hint">${esc(szGr(o))}</span> <b>${esc(String(o.nazwa).replace(/^ZESZYT T\d0 /, ''))}</b>`
     + `${kr ? ' · ' + esc(kr) : ''}${T.nr ? ` · Nr ${fmtN(T.nr)}` : ''}${hist} <b style="color:${OCW[o.werdykt] || 'var(--tx)'}">${esc(o.werdykt || '')}</b>`
-    + `${dec ? ` <span class="hint">· ${OCDT[dec.d] || esc(dec.d)}</span>` : ''}</summary>${ocKarta(o, dec)}</details>`;
+    + `${dec ? ` <span class="hint">· ${OCDT[dec.d] || esc(dec.d)}</span>` : ''}${akcje ? `<div>${akcje}</div>` : ''}</summary>${ocKarta(o, dec)}</details>`;
 }
 function ocLista(key, tytul, L, pusto) {   // zwijana lista ocen (1.53.0, prośba użytkownika) — nagłówek z liczbą i znaczkami 🟧 / 🟨
   const R = ocRzedy(L);
@@ -759,12 +771,14 @@ function ocKarta(o, dec) {
 function oceny() {
   const L = ocList(), x = jobj(OCK) || {};
   if (!L.length) return szBox([]) + `<div class="empty">Brak ocen.<br><br><b>Propozycje Claude</b>: poproś „zaproponuj modele” — Claude wybierze z pul i ZESZYTU, oceni i wyśle tutaj (＋ Dodaj albo Usuń analizę).<br><br><b>Twój model</b>: dodaj go do MOJE i poproś „oceń mój model” — ocena trafi tutaj (Zostaw albo Usuń z MOJE).${x.t ? `<br><br><span class="hint">sprawdzono ${ago(x.t)}</span>` : ''}</div>`;
-  const PA = L.filter(o => o.rodzaj !== 'moj' && !ocStan(o)), M = L.filter(o => o.rodzaj === 'moj' && !ocStan(o)), Z = L.filter(o => ocStan(o));
+  const PA = L.filter(o => o.rodzaj !== 'moj' && !ocStan(o)), M = L.filter(o => o.rodzaj === 'moj' && !ocStan(o)), Z = L.filter(o => ocStan(o) && !ocSchowana(o)), U = L.filter(o => ocStan(o) && ocSchowana(o));
   const NJ = PA.filter(o => o.auto === 'najlepsze'), P = PA.filter(o => o.auto !== 'najlepsze');   // najlepsze z szukania — w liście rozwijanej pod 🔎
   return szBox(NJ) + `<div class="hint" style="margin:0 0 8px">🔍 Oceny Claude: stan, historia (do k8 / limitu i w 3 krokach), uczciwa szansa, symulacja, nakładanie z MOJE, werdykt. „teraz” liczy MOJE na bieżących kodach.</div>
     ${ocLista('ocprop', '📥 Propozycje Claude', P, NJ.length ? 'poza najlepszymi z szukania (wyżej) — brak' : 'brak nowych — poproś Claude „zaproponuj modele” albo 🔎 Wyszukaj najlepsze')}
     ${ocLista('ocmoj', '🔍 Oceny Twoich modeli', M, 'brak — dodaj model do MOJE i poproś Claude „oceń mój model”')}
-    ${Z.length ? `<details class="szl" ${foldAt('oczal', 0)}><summary>Załatwione (${Z.length})</summary>${Z.map(o => ocWiersz(o, {}, ocStan(o))).join('')}</details>` : ''}`;
+    ${Z.length ? `<details class="szl" ${foldAt('oczal', 0)}><summary>Załatwione (${Z.length}) <button class="btn mini" data-oczal="1">🧹 Wyczyść</button></summary>${Z.map(o => { const z = ocStan(o), k = esc(ocKey(o));
+      return ocWiersz(o, {}, z, (ocMoznaCofnac(o, z) ? `<button class="btn mini" data-occof="${k}">↶ Przywróć do decyzji</button>` : '') + `<button class="btn mini" data-ocusun="${k}">🗑 Usuń</button>`); }).join('')}</details>` : ''}
+    ${U.length ? `<details class="szl" ${foldAt('ocusun', 0)}><summary>🗑 Usunięte (${U.length}) <button class="btn mini" data-ocprzw="1">↶ Przywróć wszystkie</button></summary>${U.map(o => ocWiersz(o, {}, ocStan(o), `<button class="btn mini" data-ocprz="${esc(ocKey(o))}">↶ Przywróć</button>`)).join('')}</details>` : ''}`;
 }
 function ocBanner() {   // TERAZ: krótki pasek, gdy coś czeka na Twoją decyzję
   const L = ocPending(); if (!L.length) return '';
@@ -1246,12 +1260,12 @@ function rpDiff(it, a, c, ev, e0, add) {
     ? { nr: e[0] + 1, c: 'w', ci: i, s: `✔ WIN k${e[2]}`, txt: `✔ WIN k${e[2]} · cykl #${i + 1} → nowy cykl od k1` }
     : { nr: e[0] + 1, c: 'l', ci: i, s: '✖ LOST k8', txt: `✖ LOST k8 · cykl #${i + 1} → zakładka LOST` })));
   if (!nowe.length && c.bs > a.bs) add.push(Object.assign({}, e0, { nr: c.n, c: 'k', s: `✗ k${a.bs + 1} → k${c.bs + 1}`, txt: `✗ przegrana k${a.bs + 1}${c.bs > a.bs + 1 ? '–k' + c.bs : ''} → dalej k${c.bs + 1} (${rpZl(it, c.bs)} zł)` }));
-  if (c.d === 1 && a.d !== 1) add.push(Object.assign({}, e0, { nr: c.n, c: 'n', s: `🟧 GRAJ k${c.bs + 1}`, txt: `→ 🟧 GRAJ TERAZ · Nr ${fmtN(c.n + 1)} · k${c.bs + 1} · ${rpZl(it, c.bs)} zł` }));
-  else if (c.d >= 2 && !(a.d >= 1)) add.push(Object.assign({}, e0, { nr: c.n, c: 's', s: `🟨 za ${c.d} w.`, txt: `🟦 CZEKAJĄ → 🟨 ZA CHWILĘ · za ${c.d} w. · k${c.bs + 1}` }));
+  if (c.d === 1 && a.d !== 1) add.push(Object.assign({}, e0, { nr: c.n, zn: c.n + 1, c: 'n', s: `🟧 GRAJ k${c.bs + 1}`, txt: `→ 🟧 GRAJ TERAZ · Nr ${fmtN(c.n + 1)} · k${c.bs + 1} · ${rpZl(it, c.bs)} zł` }));
+  else if (c.d >= 2 && !(a.d >= 1)) add.push(Object.assign({}, e0, { nr: c.n, zn: c.n + c.d, c: 's', s: `🟨 za ${c.d} w.`, txt: `🟦 CZEKAJĄ → 🟨 ZA CHWILĘ · za ${c.d} w. · k${c.bs + 1}` }));
   BKW.forEach(w => { const x = a['b' + w], y = c['b' + w]; if (!x || !y) return;
     if (y.r > x.r) (y.res || []).slice(x.r).forEach(q => add.push(Object.assign({}, e0, { nr: q.row + 1, c: 'w', s: `🏦+${w} ✔ k${q.k}`, txt: `🏦 BANK +${w}: ✔ WIN na k${q.k} → od k1` })));
     else if (y.nx > x.nx) add.push(Object.assign({}, e0, { nr: c.n, c: 'k', s: `🏦+${w} ✗ → k${y.nx}`, txt: `🏦 BANK +${w}: ✗ przegrana → dalej k${y.nx} (${fmtN(bStake(y.nx))} zł)` }));
-    if (y.now && !x.now) add.push(Object.assign({}, e0, { nr: c.n, c: 'n', s: `🏦+${w} 🟧 k${y.nx}`, txt: `🏦 BANK +${w} → 🟧 GRAJ TERAZ · k${y.nx} · ${fmtN(bStake(y.nx))} zł` })); });
+    if (y.now && !x.now) add.push(Object.assign({}, e0, { nr: c.n, zn: c.n + 1, c: 'n', s: `🏦+${w} 🟧 k${y.nx}`, txt: `🏦 BANK +${w} → 🟧 GRAJ TERAZ · k${y.nx} · ${fmtN(bStake(y.nx))} zł` })); });
 }
 function rpScan() {
   let S = {}; try { S = JSON.parse(lsGet(RPS, '{}')) || {}; } catch (e) {}
@@ -1284,8 +1298,8 @@ function rpScan() {
       if (M.otw && M.otw.lim > o.n && M.otw.lim <= n) nowe.push(Object.assign({}, e0, { nr: M.otw.lim, c: 'l', ci: M.gry.length, s: `✖ LOST k${L}`, txt: `✖ LOST k${L} · cykl #${M.gry.length + 1} (gra trwa za limitem) → Modele LOST` }));
       add.push(...nowe.sort((a, b) => a.nr - b.nr));
       if (!nowe.length && ga && o.ga && cur.s > o.s && o.s) add.push(Object.assign({}, e0, { nr: n, c: 'k', s: `✗ k${o.s} → k${cur.s}`, txt: `✗ przegrana k${o.s}${cur.s > o.s + 1 ? '–k' + (cur.s - 1) : ''} → dalej k${cur.s}${cur.s > L ? ' (za limitem)' : ''}` }));
-      if (ga && (!o.ga || nowe.length) && cur.s === 1) add.push(Object.assign({}, e0, { nr: n, c: 's', s: `🟣 pusta trójka → k1`, txt: `🟣 pusta trójka (trigger) → gra od k1 na Nr ${fmtN(T.nr)}` }));
-      if (ga && cur.d === 1 && o.d !== 1 && cur.s <= L) add.push(Object.assign({}, e0, { nr: n, c: 'n', s: `🟧 GRAJ k${cur.s}`, txt: `→ 🟧 GRAJ TERAZ · Nr ${fmtN(T.nr)} · k${cur.s}` }));
+      if (ga && (!o.ga || nowe.length) && cur.s === 1) add.push(Object.assign({}, e0, { nr: n, zn: T.nr, c: 's', s: `🟣 pusta trójka → k1`, txt: `🟣 pusta trójka (trigger) → gra od k1 na Nr ${fmtN(T.nr)}` }));
+      if (ga && cur.d === 1 && o.d !== 1 && cur.s <= L) add.push(Object.assign({}, e0, { nr: n, zn: T.nr, c: 'n', s: `🟧 GRAJ k${cur.s}`, txt: `→ 🟧 GRAJ TERAZ · Nr ${fmtN(T.nr)} · k${cur.s}` }));
     }
   }
   const ks = Object.keys(S); if (ks.length > 600) ks.slice(0, ks.length - 600).forEach(k => delete S[k]);
@@ -1297,13 +1311,28 @@ function rpScan() {
 }
 const RPOD = 'moje_v1_raport_od', RPSEEN = 'moje_v1_raport_seen', rpSeen = t => { try { return (JSON.parse(lsGet(RPSEEN, '{}')) || {})[t] || 0; } catch (e) { return 0; } };
 const RPC = { w: 'rw-w', l: 'rw-l', k: 'rw-k', n: 'rw-n', s: 'rw-s' };
+// 1.55.0 (prośba użytkownika): przy „ZA CHWILĘ” / „GRAJ” wiersz zakładu wyraźnie (Nr …) i ile wierszy zostało teraz — po kolejnych kodach
+// „za 4 w.” zmienia się na „za 2 w.”, a po zagranym wierszu zostaje sam Nr. Starsze wpisy bez zn: Nr z opisu albo Nr wpisu + „za N w.”.
+const rpNr = n => `<b class="rpnr">Nr ${fmtN(n)}</b>`;
+const rpZa = (zn, N) => zn > N ? (zn - N === 1 ? ' · <b>TERAZ</b>' : ` · za ${zn - N} w.`) : '';
+function rpZn(x) {
+  if (x.zn) return x.zn; if (x.c !== 's' && x.c !== 'n') return 0;
+  const m = /Nr ([\d\s\u00a0\u202f]+)/.exec(x.txt || ''); if (m) return +m[1].replace(/\D/g, '') || 0;
+  const z = /za (\d+) w\./.exec(x.s || ''); return z ? x.nr + +z[1] : 0;
+}
+function rpEtyk(x, t) {
+  const zn = rpZn(x); if (!zn) return esc(x.s || x.txt);
+  const lab = String(x.s || '').replace(/ ?· ?za \d+ w\.| ?za \d+ w\./, '').trim();
+  return `${esc(lab)} ${rpNr(zn)}${rpZa(zn, D[t].n)}`;
+}
 function rpTeraz(uid) {   // stan modelu teraz (koniec karty raportu)
   if (uid.startsWith('Z~')) { const [, t, mid] = uid.split('~'), zl = zzList(t).find(m => String(m.id) === mid), zi = zitems.find(z => z.uid === uid), m = zl || (zi && zi.m), M = m && zzE[t] && zzModel(t, m), T = M && M.teraz;
     if (!M) return '<span class="mu">model ZESZYTU</span>'; const n = zzCodes(t).c.length;
-    return T && T.gra ? (T.s > M.limit ? `✖ za limitem (k${T.s}) — czeka na koniec gry` : `${T.nr - n === 1 ? '🟧 GRAJ TERAZ' : '🟨 gra'} k${T.s} · Nr ${fmtN(T.nr)}`) : '🟦 czeka na pustą trójkę'; }
+    return T && T.gra ? (T.s > M.limit ? `✖ za limitem (k${T.s}) — czeka na koniec gry` : `${T.nr - n === 1 ? '🟧 GRAJ TERAZ' : '🟨 gra'} ${rpNr(T.nr)}${T.nr - n > 1 ? ` · za ${T.nr - n} w.` : ''} · k${T.s}`) : '🟦 czeka na pustą trójkę'; }
   const it = items.find(y => y.uid === uid), b = bitems.find(y => y.uid === uid), x = it || b; if (!x) return '<span class="mu">usunięty z MOJE</span>';
-  if (it && it.inBust) return `🟥 LOST · czeka na WIN (k${x.r.bs + 1})`;
-  return x.d === 1 ? `🟧 GRAJ TERAZ k${x.r.bs + 1} · ${rpZl(x, x.r.bs)} zł` : x.d >= 2 ? `🟨 ZA CHWILĘ · za ${x.d} w. · k${x.r.bs + 1}` : `🟦 czeka · k${x.r.bs + 1}`;
+  const zn = x.r.ph === 2 ? x.r.wz + 1 : 0, gdzie = zn ? ` · zakład ${rpNr(zn)}${x.d === 1 ? ' · <b>TERAZ</b>' : ` · za ${x.d} w.`}` : '';
+  if (it && it.inBust) return `🟥 LOST · czeka na WIN (k${x.r.bs + 1})${gdzie}`;
+  return x.d === 1 ? `🟧 GRAJ TERAZ ${rpNr(zn)} · k${x.r.bs + 1} · ${rpZl(x, x.r.bs)} zł` : x.d >= 2 ? `🟨 ZA CHWILĘ ${rpNr(zn)} · za ${x.d} w. · k${x.r.bs + 1}` : `🟦 czeka · k${x.r.bs + 1}`;
 }
 // RAPORT: jedna karta na model — droga zmian po kolei (Nr → zdarzenia), na końcu stan teraz; karty z WIN / LOST na górze, potem GRAJ TERAZ, ZA CHWILĘ, reszta
 function rpSec(t) {
@@ -1317,7 +1346,7 @@ function rpSec(t) {
     return { uid, A, nowe: nowe.length, waga, ost, it, lab: ost.lab }; }).sort((a, b) => (b.nowe > 0) - (a.nowe > 0) || a.waga - b.waga || b.ost.nr - a.ost.nr);
   const ileN = U.filter(u => u.nowe).length;
   const karta = u => { const A = u.A.slice(-14), nr = [...new Set(A.map(x => x.nr))];
-    const droga = nr.map(r => `<span class="rpn">Nr ${fmtN(r)}${r <= D[t].n ? ` <i>${code(t, r - 1)}</i>` : ''}</span> ` + A.filter(x => x.nr === r).map(x => `<span class="rpz ${RPC[x.c] || ''}${x.ts > sn ? ' nw' : ''}" title="${esc(x.txt)}">${esc(x.s || x.txt)}</span>`).join(' ')).join(' <span class="mu">→</span> ');
+    const droga = nr.map(r => `<span class="rpn">Nr ${fmtN(r)}${r <= D[t].n ? ` <i>${code(t, r - 1)}</i>` : ''}</span> ` + A.filter(x => x.nr === r).map(x => `<span class="rpz ${RPC[x.c] || ''}${x.ts > sn ? ' nw' : ''}" title="${esc(x.txt)}">${rpEtyk(x, t)}</span>`).join(' ')).join(' <span class="mu">→</span> ');
     const kol = u.waga === 0 ? 'rw-l' : u.waga === 1 ? 'rw-w' : u.waga === 2 ? 'rw-n' : u.waga === 3 ? 'rw-s' : '';
     return `<div class="rpe ${kol}" data-rpu="${esc(u.uid)}"><div style="flex:1;min-width:0"><b>${esc(u.lab)}</b>${u.nowe ? ' <span class="rpnew">NOWE</span>' : ''}<div class="rpd">${u.A.length > A.length ? `<span class="mu">+${u.A.length - A.length} wcześniej · </span>` : ''}${droga}</div><div class="rpt">teraz: <b>${rpTeraz(u.uid)}</b></div></div><button class="ub" data-rpx="${esc(u.uid)}">✕</button></div>`; };
   return `<details class="sec srap" ${foldAt('T-rap', 1)}><summary class="sh"><span>📰 RAPORT · ${U.length}${ileN ? ` <b class="rpnew">${ileN} NOWE</b>` : ''}</span><span class="m">zmiany po kodach</span></summary>
@@ -2539,6 +2568,14 @@ document.addEventListener('click', e => {
   if ((b = q('[data-inchk]'))) return inFetch(true);
   if ((b = q('[data-sznaj]'))) return szNaj();
   if ((b = q('[data-ocgo]'))) return go('ocen');
+  if ((b = q('[data-oczal]'))) { e.preventDefault(); const Z = ocList().filter(o => ocStan(o) && !ocSchowana(o));   // przyciski w nagłówku / linijce — bez rozwijania
+    if (Z.length && confirm(`Wyczyścić Załatwione (${Z.length})? Trafią do 🗑 Usunięte — można je przywrócić. Oceny zostają przy modelach (znaczek 🔍).`)) { ocSchowaj(Z, 1); toast('🧹 Wyczyszczone — są w 🗑 Usunięte'); render(); }
+    return; }
+  if ((b = q('[data-ocusun]'))) { e.preventDefault(); const o = ocList().find(x => ocKey(x) === b.dataset.ocusun); if (o) { ocSchowaj([o], 1); toast(`🗑 ${esc(o.nazwa)} — w Usuniętych`); render(); } return; }
+  if ((b = q('[data-ocprz]'))) { e.preventDefault(); const o = ocList().find(x => ocKey(x) === b.dataset.ocprz); if (o) { ocSchowaj([o], 0); toast(`↶ ${esc(o.nazwa)} — znowu w Załatwionych`); render(); } return; }
+  if ((b = q('[data-ocprzw]'))) { e.preventDefault(); const U = ocList().filter(ocSchowana); ocSchowaj(U, 0); toast(`↶ Przywrócono ${U.length} do Załatwionych`); render(); return; }
+  if ((b = q('[data-occof]'))) { e.preventDefault(); const o = ocList().find(x => ocKey(x) === b.dataset.occof);
+    if (o) { ocCofnij(o); toast(`↶ ${esc(o.nazwa)} — znowu czeka na Twoją decyzję (${o.rodzaj === 'moj' ? 'Oceny Twoich modeli' : o.auto === 'najlepsze' ? '🔎 Najlepsze' : 'Propozycje Claude'})`); render(); } return; }
   if ((b = q('[data-ocdod]'))) { const o = ocList().find(x => ocKey(x) === b.dataset.ocdod); if (o) { const r = inDodajP(ocP(o)); if (r) { ocSet(o, 'dodane'); reload(); } } return; }
   if ((b = q('[data-ocdob]'))) { const o = ocList().find(x => ocKey(x) === b.dataset.ocdob); if (o) { const r = inDodajP({ ...ocP(o), gdzie: 'BANK' }); if (r) { ocSet(o, r.wyn === 'jest' ? 'dodane' : 'dodane_bank'); reload(); } } return; }
   if ((b = q('[data-ocmv]'))) { const o = ocList().find(x => ocKey(x) === b.dataset.ocmv), op = o && inOpis(ocP(o)); if (op && op.it) { BKI[op.it.uid] = op.it; ocSet(o, b.dataset.w === 'B' ? 'do_banku' : 'do_teraz'); moveTo(op.it.uid, b.dataset.w); } return; }
