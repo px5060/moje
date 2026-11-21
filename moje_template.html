@@ -130,7 +130,7 @@ details{margin-top:10px}summary{cursor:pointer;font-weight:700;color:var(--mu);p
 .rw-w{border-left-color:#2e9d5f!important}.rw-w b{color:#7fdc9f}.rw-l{border-left-color:#c0392b!important}.rw-l b{color:#ff8a80}.rw-k{border-left-color:#a8423a!important}.rw-n{border-left-color:var(--or)!important}.rw-s{border-left-color:#c9a800!important}
 .rpe{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.rpfl{animation:rpfl .8s ease-in-out 4;box-shadow:0 0 0 3px #FFD700!important}@keyframes rpfl{50%{box-shadow:0 0 0 6px #FFD700}}
 .rpd{font-size:12.5px;line-height:1.9;margin-top:2px}.rpn{color:var(--mu);font-size:11.5px;white-space:nowrap}.rpn i{font-style:normal;font-weight:700;color:var(--tx)}
-.rpz{display:inline-block;border-radius:5px;padding:0 5px;background:#2a3140;white-space:nowrap;border-left:3px solid #4a6a8a}.rpz.nw{outline:1px solid #FFD700}
+.rpz{display:inline-block;border-radius:5px;padding:0 5px;background:#2a3140;white-space:nowrap;border-left:3px solid #4a6a8a}.rpz.nw{outline:1px solid #FFD700}.rpnr{color:var(--tx);font-size:1.08em;font-weight:800;white-space:nowrap}
 .rpt{font-size:12.5px;margin-top:3px}.rpnew{background:#FFD700;color:#000;border-radius:5px;padding:0 5px;font-size:11px;font-weight:800}
 .rpb{border-left:5px solid #4a6a8a;background:var(--card);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:13.5px}
 .cyc b.rp{box-shadow:0 0 0 3px #FFD700!important;animation:rpb 1s ease-in-out 3}@keyframes rpb{50%{transform:scale(1.55)}}
@@ -209,7 +209,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.54.0';
+const APP_VER = '1.55.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -1260,12 +1260,12 @@ function rpDiff(it, a, c, ev, e0, add) {
     ? { nr: e[0] + 1, c: 'w', ci: i, s: `✔ WIN k${e[2]}`, txt: `✔ WIN k${e[2]} · cykl #${i + 1} → nowy cykl od k1` }
     : { nr: e[0] + 1, c: 'l', ci: i, s: '✖ LOST k8', txt: `✖ LOST k8 · cykl #${i + 1} → zakładka LOST` })));
   if (!nowe.length && c.bs > a.bs) add.push(Object.assign({}, e0, { nr: c.n, c: 'k', s: `✗ k${a.bs + 1} → k${c.bs + 1}`, txt: `✗ przegrana k${a.bs + 1}${c.bs > a.bs + 1 ? '–k' + c.bs : ''} → dalej k${c.bs + 1} (${rpZl(it, c.bs)} zł)` }));
-  if (c.d === 1 && a.d !== 1) add.push(Object.assign({}, e0, { nr: c.n, c: 'n', s: `🟧 GRAJ k${c.bs + 1}`, txt: `→ 🟧 GRAJ TERAZ · Nr ${fmtN(c.n + 1)} · k${c.bs + 1} · ${rpZl(it, c.bs)} zł` }));
-  else if (c.d >= 2 && !(a.d >= 1)) add.push(Object.assign({}, e0, { nr: c.n, c: 's', s: `🟨 za ${c.d} w.`, txt: `🟦 CZEKAJĄ → 🟨 ZA CHWILĘ · za ${c.d} w. · k${c.bs + 1}` }));
+  if (c.d === 1 && a.d !== 1) add.push(Object.assign({}, e0, { nr: c.n, zn: c.n + 1, c: 'n', s: `🟧 GRAJ k${c.bs + 1}`, txt: `→ 🟧 GRAJ TERAZ · Nr ${fmtN(c.n + 1)} · k${c.bs + 1} · ${rpZl(it, c.bs)} zł` }));
+  else if (c.d >= 2 && !(a.d >= 1)) add.push(Object.assign({}, e0, { nr: c.n, zn: c.n + c.d, c: 's', s: `🟨 za ${c.d} w.`, txt: `🟦 CZEKAJĄ → 🟨 ZA CHWILĘ · za ${c.d} w. · k${c.bs + 1}` }));
   BKW.forEach(w => { const x = a['b' + w], y = c['b' + w]; if (!x || !y) return;
     if (y.r > x.r) (y.res || []).slice(x.r).forEach(q => add.push(Object.assign({}, e0, { nr: q.row + 1, c: 'w', s: `🏦+${w} ✔ k${q.k}`, txt: `🏦 BANK +${w}: ✔ WIN na k${q.k} → od k1` })));
     else if (y.nx > x.nx) add.push(Object.assign({}, e0, { nr: c.n, c: 'k', s: `🏦+${w} ✗ → k${y.nx}`, txt: `🏦 BANK +${w}: ✗ przegrana → dalej k${y.nx} (${fmtN(bStake(y.nx))} zł)` }));
-    if (y.now && !x.now) add.push(Object.assign({}, e0, { nr: c.n, c: 'n', s: `🏦+${w} 🟧 k${y.nx}`, txt: `🏦 BANK +${w} → 🟧 GRAJ TERAZ · k${y.nx} · ${fmtN(bStake(y.nx))} zł` })); });
+    if (y.now && !x.now) add.push(Object.assign({}, e0, { nr: c.n, zn: c.n + 1, c: 'n', s: `🏦+${w} 🟧 k${y.nx}`, txt: `🏦 BANK +${w} → 🟧 GRAJ TERAZ · k${y.nx} · ${fmtN(bStake(y.nx))} zł` })); });
 }
 function rpScan() {
   let S = {}; try { S = JSON.parse(lsGet(RPS, '{}')) || {}; } catch (e) {}
@@ -1298,8 +1298,8 @@ function rpScan() {
       if (M.otw && M.otw.lim > o.n && M.otw.lim <= n) nowe.push(Object.assign({}, e0, { nr: M.otw.lim, c: 'l', ci: M.gry.length, s: `✖ LOST k${L}`, txt: `✖ LOST k${L} · cykl #${M.gry.length + 1} (gra trwa za limitem) → Modele LOST` }));
       add.push(...nowe.sort((a, b) => a.nr - b.nr));
       if (!nowe.length && ga && o.ga && cur.s > o.s && o.s) add.push(Object.assign({}, e0, { nr: n, c: 'k', s: `✗ k${o.s} → k${cur.s}`, txt: `✗ przegrana k${o.s}${cur.s > o.s + 1 ? '–k' + (cur.s - 1) : ''} → dalej k${cur.s}${cur.s > L ? ' (za limitem)' : ''}` }));
-      if (ga && (!o.ga || nowe.length) && cur.s === 1) add.push(Object.assign({}, e0, { nr: n, c: 's', s: `🟣 pusta trójka → k1`, txt: `🟣 pusta trójka (trigger) → gra od k1 na Nr ${fmtN(T.nr)}` }));
-      if (ga && cur.d === 1 && o.d !== 1 && cur.s <= L) add.push(Object.assign({}, e0, { nr: n, c: 'n', s: `🟧 GRAJ k${cur.s}`, txt: `→ 🟧 GRAJ TERAZ · Nr ${fmtN(T.nr)} · k${cur.s}` }));
+      if (ga && (!o.ga || nowe.length) && cur.s === 1) add.push(Object.assign({}, e0, { nr: n, zn: T.nr, c: 's', s: `🟣 pusta trójka → k1`, txt: `🟣 pusta trójka (trigger) → gra od k1 na Nr ${fmtN(T.nr)}` }));
+      if (ga && cur.d === 1 && o.d !== 1 && cur.s <= L) add.push(Object.assign({}, e0, { nr: n, zn: T.nr, c: 'n', s: `🟧 GRAJ k${cur.s}`, txt: `→ 🟧 GRAJ TERAZ · Nr ${fmtN(T.nr)} · k${cur.s}` }));
     }
   }
   const ks = Object.keys(S); if (ks.length > 600) ks.slice(0, ks.length - 600).forEach(k => delete S[k]);
@@ -1311,13 +1311,28 @@ function rpScan() {
 }
 const RPOD = 'moje_v1_raport_od', RPSEEN = 'moje_v1_raport_seen', rpSeen = t => { try { return (JSON.parse(lsGet(RPSEEN, '{}')) || {})[t] || 0; } catch (e) { return 0; } };
 const RPC = { w: 'rw-w', l: 'rw-l', k: 'rw-k', n: 'rw-n', s: 'rw-s' };
+// 1.55.0 (prośba użytkownika): przy „ZA CHWILĘ” / „GRAJ” wiersz zakładu wyraźnie (Nr …) i ile wierszy zostało teraz — po kolejnych kodach
+// „za 4 w.” zmienia się na „za 2 w.”, a po zagranym wierszu zostaje sam Nr. Starsze wpisy bez zn: Nr z opisu albo Nr wpisu + „za N w.”.
+const rpNr = n => `<b class="rpnr">Nr ${fmtN(n)}</b>`;
+const rpZa = (zn, N) => zn > N ? (zn - N === 1 ? ' · <b>TERAZ</b>' : ` · za ${zn - N} w.`) : '';
+function rpZn(x) {
+  if (x.zn) return x.zn; if (x.c !== 's' && x.c !== 'n') return 0;
+  const m = /Nr ([\d\s\u00a0\u202f]+)/.exec(x.txt || ''); if (m) return +m[1].replace(/\D/g, '') || 0;
+  const z = /za (\d+) w\./.exec(x.s || ''); return z ? x.nr + +z[1] : 0;
+}
+function rpEtyk(x, t) {
+  const zn = rpZn(x); if (!zn) return esc(x.s || x.txt);
+  const lab = String(x.s || '').replace(/ ?· ?za \d+ w\.| ?za \d+ w\./, '').trim();
+  return `${esc(lab)} ${rpNr(zn)}${rpZa(zn, D[t].n)}`;
+}
 function rpTeraz(uid) {   // stan modelu teraz (koniec karty raportu)
   if (uid.startsWith('Z~')) { const [, t, mid] = uid.split('~'), zl = zzList(t).find(m => String(m.id) === mid), zi = zitems.find(z => z.uid === uid), m = zl || (zi && zi.m), M = m && zzE[t] && zzModel(t, m), T = M && M.teraz;
     if (!M) return '<span class="mu">model ZESZYTU</span>'; const n = zzCodes(t).c.length;
-    return T && T.gra ? (T.s > M.limit ? `✖ za limitem (k${T.s}) — czeka na koniec gry` : `${T.nr - n === 1 ? '🟧 GRAJ TERAZ' : '🟨 gra'} k${T.s} · Nr ${fmtN(T.nr)}`) : '🟦 czeka na pustą trójkę'; }
+    return T && T.gra ? (T.s > M.limit ? `✖ za limitem (k${T.s}) — czeka na koniec gry` : `${T.nr - n === 1 ? '🟧 GRAJ TERAZ' : '🟨 gra'} ${rpNr(T.nr)}${T.nr - n > 1 ? ` · za ${T.nr - n} w.` : ''} · k${T.s}`) : '🟦 czeka na pustą trójkę'; }
   const it = items.find(y => y.uid === uid), b = bitems.find(y => y.uid === uid), x = it || b; if (!x) return '<span class="mu">usunięty z MOJE</span>';
-  if (it && it.inBust) return `🟥 LOST · czeka na WIN (k${x.r.bs + 1})`;
-  return x.d === 1 ? `🟧 GRAJ TERAZ k${x.r.bs + 1} · ${rpZl(x, x.r.bs)} zł` : x.d >= 2 ? `🟨 ZA CHWILĘ · za ${x.d} w. · k${x.r.bs + 1}` : `🟦 czeka · k${x.r.bs + 1}`;
+  const zn = x.r.ph === 2 ? x.r.wz + 1 : 0, gdzie = zn ? ` · zakład ${rpNr(zn)}${x.d === 1 ? ' · <b>TERAZ</b>' : ` · za ${x.d} w.`}` : '';
+  if (it && it.inBust) return `🟥 LOST · czeka na WIN (k${x.r.bs + 1})${gdzie}`;
+  return x.d === 1 ? `🟧 GRAJ TERAZ ${rpNr(zn)} · k${x.r.bs + 1} · ${rpZl(x, x.r.bs)} zł` : x.d >= 2 ? `🟨 ZA CHWILĘ ${rpNr(zn)} · za ${x.d} w. · k${x.r.bs + 1}` : `🟦 czeka · k${x.r.bs + 1}`;
 }
 // RAPORT: jedna karta na model — droga zmian po kolei (Nr → zdarzenia), na końcu stan teraz; karty z WIN / LOST na górze, potem GRAJ TERAZ, ZA CHWILĘ, reszta
 function rpSec(t) {
@@ -1331,7 +1346,7 @@ function rpSec(t) {
     return { uid, A, nowe: nowe.length, waga, ost, it, lab: ost.lab }; }).sort((a, b) => (b.nowe > 0) - (a.nowe > 0) || a.waga - b.waga || b.ost.nr - a.ost.nr);
   const ileN = U.filter(u => u.nowe).length;
   const karta = u => { const A = u.A.slice(-14), nr = [...new Set(A.map(x => x.nr))];
-    const droga = nr.map(r => `<span class="rpn">Nr ${fmtN(r)}${r <= D[t].n ? ` <i>${code(t, r - 1)}</i>` : ''}</span> ` + A.filter(x => x.nr === r).map(x => `<span class="rpz ${RPC[x.c] || ''}${x.ts > sn ? ' nw' : ''}" title="${esc(x.txt)}">${esc(x.s || x.txt)}</span>`).join(' ')).join(' <span class="mu">→</span> ');
+    const droga = nr.map(r => `<span class="rpn">Nr ${fmtN(r)}${r <= D[t].n ? ` <i>${code(t, r - 1)}</i>` : ''}</span> ` + A.filter(x => x.nr === r).map(x => `<span class="rpz ${RPC[x.c] || ''}${x.ts > sn ? ' nw' : ''}" title="${esc(x.txt)}">${rpEtyk(x, t)}</span>`).join(' ')).join(' <span class="mu">→</span> ');
     const kol = u.waga === 0 ? 'rw-l' : u.waga === 1 ? 'rw-w' : u.waga === 2 ? 'rw-n' : u.waga === 3 ? 'rw-s' : '';
     return `<div class="rpe ${kol}" data-rpu="${esc(u.uid)}"><div style="flex:1;min-width:0"><b>${esc(u.lab)}</b>${u.nowe ? ' <span class="rpnew">NOWE</span>' : ''}<div class="rpd">${u.A.length > A.length ? `<span class="mu">+${u.A.length - A.length} wcześniej · </span>` : ''}${droga}</div><div class="rpt">teraz: <b>${rpTeraz(u.uid)}</b></div></div><button class="ub" data-rpx="${esc(u.uid)}">✕</button></div>`; };
   return `<details class="sec srap" ${foldAt('T-rap', 1)}><summary class="sh"><span>📰 RAPORT · ${U.length}${ileN ? ` <b class="rpnew">${ileN} NOWE</b>` : ''}</span><span class="m">zmiany po kodach</span></summary>
