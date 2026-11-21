@@ -106,7 +106,7 @@ details.sec>summary{list-style:none}[data-lp]{-webkit-user-select:none;user-sele
 .clt{font-size:11px;font-weight:800;padding:1px 5px;border-radius:7px;border:1px solid currentColor;white-space:nowrap;margin-left:3px}
 .ocg{font-size:12px;font-weight:800;padding:1px 6px;border-radius:7px;background:var(--pan);border:1px solid var(--bd);white-space:nowrap;color:var(--mu)}.ocg i{font-style:normal}.ocg .g{color:var(--gr)}.ocg .o{color:var(--ye)}.ocg .x{color:var(--rd)}
 .empty{background:var(--pan);border:1px dashed var(--bd);border-radius:10px;padding:14px;color:var(--mu);text-align:center}
-details{margin-top:10px}summary{cursor:pointer;font-weight:700;color:var(--mu);padding:6px 0}details.szl{margin-top:12px}.btn.mini{font-size:12px;padding:3px 8px;margin:4px 4px 0 0}details.szl .dd{display:inline-block;white-space:nowrap;font-size:11px;font-weight:800;border-radius:5px;padding:2px 5px;margin-right:4px;background:#FFD700;color:#000}details.szl .dd.n{background:var(--or);color:#fff}details.szl>summary{color:var(--tx);font-weight:800}details.szw{margin:4px 0;border:1px solid var(--bd);border-radius:10px;padding:0 8px}details.szw>summary{font-weight:400;color:var(--tx);font-size:13px;line-height:1.35}details.szw[open]{padding-bottom:6px}
+details{margin-top:10px}summary{cursor:pointer;font-weight:700;color:var(--mu);padding:6px 0}details.szl{margin-top:12px}.btn.mini{font-size:12px;padding:3px 8px;margin:4px 4px 0 0}details.szl .dd{display:inline-block;white-space:nowrap;font-size:11px;font-weight:800;border-radius:5px;padding:2px 5px;margin-right:4px;background:#FFD700;color:#000}details.szl .dd.n{background:var(--or);color:#fff}details.szl>summary{color:var(--tx);font-weight:800}details.szw{margin:4px 0;border:1px solid var(--bd);border-radius:10px;padding:0 8px;position:relative}details.szw.zx>summary{padding-right:40px}.ocx{position:absolute;right:6px;top:6px;width:30px;height:30px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--mu);font-size:15px;line-height:1;cursor:pointer}details.szw>summary{font-weight:400;color:var(--tx);font-size:13px;line-height:1.35}details.szw[open]{padding-bottom:6px}
 /* zakłady */
 .sum{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
 .sum div{background:var(--pan);border:1px solid var(--bd);border-radius:9px;padding:7px;text-align:center;font-size:11.5px;color:var(--mu)}
@@ -209,7 +209,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.55.0';
+const APP_VER = '1.56.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -618,7 +618,8 @@ function ocWiersz(o, T, dec, akcje) {   // akcje: przyciski w linijce (Załatwio
   const s = String((((o.sekcje || [])[0] || {}).wiersze || [])[0] || ''), h = o.auto === 'najlepsze' ? s.match(/wygrana do k(\d+) od tego kroku w historii: (\d+)\/(\d+) \((\d+)%\)/) : null;
   const kr = T.kr || (o.krok ? `k${o.krok} ${o.stawka} zł` : ''), L = o.liczby || {}, lim = o.gdzie === 'ZESZYT' ? o.limit || 9 : 8;
   const hist = h ? ` · do k${h[1]} <b>${h[4]}%</b> <span class="hint">(${h[2]}/${h[3]})</span>` : L.r8 ? ` · do k${lim} <b>${Math.round(100 * L.w8 / L.r8)}%</b> <span class="hint">(${L.w8}/${L.r8})</span>` : '';
-  return `<details class="szw" ${foldAt('ocw:' + o.id, 0)}><summary>${dec ? '' : ocDD(T)}<span class="hint">${esc(szGr(o))}</span> <b>${esc(String(o.nazwa).replace(/^ZESZYT T\d0 /, ''))}</b>`
+  const rez = !dec && o.rodzaj !== 'moj' ? `<button class="ocx" data-ocrez="${esc(ocKey(o))}" title="Rezygnuję — do Załatwionych">✕</button>` : '';   // 1.56.0
+  return `<details class="szw${rez ? ' zx' : ''}" ${foldAt('ocw:' + o.id, 0)}><summary>${rez}${dec ? '' : ocDD(T)}<span class="hint">${esc(szGr(o))}</span> <b>${esc(String(o.nazwa).replace(/^ZESZYT T\d0 /, ''))}</b>`
     + `${kr ? ' · ' + esc(kr) : ''}${T.nr ? ` · Nr ${fmtN(T.nr)}` : ''}${hist} <b style="color:${OCW[o.werdykt] || 'var(--tx)'}">${esc(o.werdykt || '')}</b>`
     + `${dec ? ` <span class="hint">· ${OCDT[dec.d] || esc(dec.d)}</span>` : ''}${akcje ? `<div>${akcje}</div>` : ''}</summary>${ocKarta(o, dec)}</details>`;
 }
@@ -2571,6 +2572,8 @@ document.addEventListener('click', e => {
   if ((b = q('[data-oczal]'))) { e.preventDefault(); const Z = ocList().filter(o => ocStan(o) && !ocSchowana(o));   // przyciski w nagłówku / linijce — bez rozwijania
     if (Z.length && confirm(`Wyczyścić Załatwione (${Z.length})? Trafią do 🗑 Usunięte — można je przywrócić. Oceny zostają przy modelach (znaczek 🔍).`)) { ocSchowaj(Z, 1); toast('🧹 Wyczyszczone — są w 🗑 Usunięte'); render(); }
     return; }
+  if ((b = q('[data-ocrez]'))) { e.preventDefault(); const o = ocList().find(x => ocKey(x) === b.dataset.ocrez);   // 1.56.0: ✕ rezygnacja = „Usuń analizę”
+    if (o) { ocSet(o, 'usunieta'); toast(`✕ ${esc(o.nazwa)} — w Załatwionych (tam ↶ Przywróć do decyzji)`, 4000); render(); } return; }
   if ((b = q('[data-ocusun]'))) { e.preventDefault(); const o = ocList().find(x => ocKey(x) === b.dataset.ocusun); if (o) { ocSchowaj([o], 1); toast(`🗑 ${esc(o.nazwa)} — w Usuniętych`); render(); } return; }
   if ((b = q('[data-ocprz]'))) { e.preventDefault(); const o = ocList().find(x => ocKey(x) === b.dataset.ocprz); if (o) { ocSchowaj([o], 0); toast(`↶ ${esc(o.nazwa)} — znowu w Załatwionych`); render(); } return; }
   if ((b = q('[data-ocprzw]'))) { e.preventDefault(); const U = ocList().filter(ocSchowana); ocSchowaj(U, 0); toast(`↶ Przywrócono ${U.length} do Załatwionych`); render(); return; }

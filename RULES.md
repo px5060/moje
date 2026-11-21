@@ -366,3 +366,6 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
   po zagranym wierszu sam Nr. Wpis pamięta wiersz zakładu (`zn`); starsze wpisy — Nr z opisu albo Nr wpisu + „za N w.”.
 - Linijka „teraz:” też z Nr: „🟥 LOST · czeka na WIN (k7) · zakład **Nr 15 552** · za 2 w.”, „🟨 ZA CHWILĘ **Nr …** · za N w. · kX”, „🟧 GRAJ TERAZ **Nr …** · kX · stawka”,
   ZESZYT „🟨 gra **Nr …** · za N w. · kX”.
+- **✕ Rezygnacja w linijce (1.56.0)**: przy każdej czekającej propozycji (🔎 Najlepsze, 📥 Propozycje Claude) w prawym rogu linijki ✕ — to samo co
+  „Usuń analizę” w karcie (decyzja `usunieta`): propozycja przechodzi do Załatwionych, tam ↶ Przywróć do decyzji. Bez potwierdzenia, nie rozwija linijki.
+  Przy 🔍 Ocenach Twoich modeli ✕ nie ma (tam Zostaw / Usuń z MOJE w karcie).
