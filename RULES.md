@@ -369,3 +369,7 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - **✕ Rezygnacja w linijce (1.56.0)**: przy każdej czekającej propozycji (🔎 Najlepsze, 📥 Propozycje Claude) w prawym rogu linijki ✕ — to samo co
   „Usuń analizę” w karcie (decyzja `usunieta`): propozycja przechodzi do Załatwionych, tam ↶ Przywróć do decyzji. Bez potwierdzenia, nie rozwija linijki.
   Przy 🔍 Ocenach Twoich modeli ✕ nie ma (tam Zostaw / Usuń z MOJE w karcie).
+- **Dotknięcie modelu w OCENACH → statystyki (1.57.0)**: prośba użytkownika — każda linijka na każdej liście (🔎 Najlepsze, 📥 Propozycje Claude,
+  🔍 Oceny Twoich modeli, Załatwione, 🗑 Usunięte) po dotknięciu otwiera **statystyki modelu** (dopisek „statystyki ›”): SZUKAJ — pełne jak w TERAZ / LOST
+  (z bankiem +3 / +5), ZESZYT — z SZUKAJ W ZESZYCIE. Na górze ekranu **pełna karta oceny z decyzjami** (＋ Do MOJE / BANK / ZESZYTU, Usuń analizę,
+  Zostaw / Usuń z MOJE, sugestia, Cała ocena), więc decyzja bez wracania; „← wróć do OCEN” — listy w tym samym stanie. Przyciski w linijce (✕, 🗑, ↶) nie otwierają statystyk.
