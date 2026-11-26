@@ -209,7 +209,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.57.0';
+const APP_VER = '1.57.1';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -986,9 +986,11 @@ function rzItems(t) {   // modele z MOJE GRY appki RAZEM → wiersze MOJE (krok,
     try { if (c) soon = w.wgSoon(c, N); } catch (e) {}
     const L = c ? c.lines : [], act = L.find(l => l.p === 1) || L.find(l => l.p === 4) || L.find(l => l.p === 3) || L[0] || null;
     const tx = act ? `${act.txt || ''} · ${act.sub || ''}` : '';
-    const km = /\bk(\d{1,2})\b/i.exec(tx) || /krok(?: gry)? (\d{1,2})/i.exec(tx), zm = /(\d[\d  ]*)\s?zł/.exec(act ? act.txt || '' : ''), nm = /Nr\s?([\d  ]+)/.exec(act ? act.txt || '' : '');
-    const lab0 = M.lab(g.k), L0 = km ? null : rzLast(w, g.k, g.id, N, lab0);   // 1.47.1: karta bez kroku (czeka na STEP / T1 / TRIGGER) → krok z tabeli RAZEM
-    const step = km ? Math.min(8, Math.max(1, +km[1])) : L0.step, stake = km && zm ? +zm[1].replace(/\D/g, '') : km ? ST[step - 1] : L0.stake;   // 1.41.1: też „krok 4” (TRÓJKA)
+    const kRe = x => /\bk(\d{1,2})\b/i.exec(x) || /krok(?: gry)? (\d{1,2})/i.exec(x), nm = /Nr\s?([\d  ]+)/.exec(act ? act.txt || '' : '');
+    // 1.57.1: krok z linijki karty, która go podaje — nie tylko z wybranej (np. TRÓJKA COMBO: „★ START za 1 cykl” bez kroku, a „gra w toku … (krok 7)” obok)
+    let km = kRe(tx), kl = act; if (!km) for (const l of L.slice().sort((a, b) => (a.p || 9) - (b.p || 9))) { const m = kRe(`${l.txt || ''} · ${l.sub || ''}`); if (m) { km = m; kl = l; break; } }
+    const zm = /(\d[\d  ]*)\s?zł/.exec(kl ? kl.txt || '' : ''), lab0 = M.lab(g.k), L0 = km ? null : rzLast(w, g.k, g.id, N, lab0);   // 1.47.1: karta bez kroku (czeka na STEP / T1 / TRIGGER) → krok z tabeli RAZEM
+    const step = km ? Math.min(8, Math.max(1, +km[1])) : L0.step, stake = km && zm ? +zm[1].replace(/\D/g, '') : km ? rzProg(lab0)(step) : L0.stake;   // 1.41.1: też „krok 4” (TRÓJKA); stawka bez „zł” w tekście — progresja tabeli (TRÓJKA 8 · 16 · 32 …)
     const tgm = /\b(x1x|xx1|1xx)\b/.exec(tx) || /\b(x1x|xx1|1xx)\b/.exec(c && c.rule || '') || /\b(x1x|xx1|1xx)\b/.exec((w.document.getElementById('fr_' + g.k) || {}).title || '');   // cel: z tekstu GRA, reguły albo nazwy tabeli RAZEM (np. „TRÓJKA xx1 V1.3”), nie zawsze x1x
     let d = soon.lvl === 2 ? 1 : nm && act && act.p !== 6 ? +nm[1].replace(/\D/g, '') - N : soon.lvl === 1 ? 2 : 0;
     if (!(d >= 1)) d = 0;
@@ -1004,14 +1006,17 @@ function rzItems(t) {   // modele z MOJE GRY appki RAZEM → wiersze MOJE (krok,
 // 1.47.1 (zgłoszenie użytkownika: 200 M4 po przegranym k5 pokazywał „teraz k1”): gdy karta RAZEM nie pisze kroku (czeka na STEP / T1 / TRIGGER),
 // krok bierzemy z tabeli modelu w RAZEM — ostatni rozstrzygnięty zakład: przegrany kN → k(N+1) (stawka: ta sama progresja co postawiona),
 // WIN / BUST / LOST albo przegrany k8 → k1. Wcześniej w takiej chwili zawsze k1 (8 zł), np. też TOP7 M2 po przegranym k6.
-const _rzL = new Map();
+const _rzL = new Map(), rzProg = lab => /TRÓJKA/i.test(lab) ? s => 8 * Math.pow(2, s - 1) : s => ST[s - 1];   // stawki: TRÓJKA 8 · 16 · 32 … 1024, reszta 8 · 8 · 16 … 512
 function rzLast(w, k, id, N, lab) {
   const key = [k, id, N].join('~'); if (_rzL.has(key)) return _rzL.get(key);
-  const prog = /TRÓJKA/i.test(lab) ? s => 8 * Math.pow(2, s - 1) : s => ST[s - 1], LS = /LOSS|✗|pudło|przegr/;
+  const prog = rzProg(lab), LS = /LOSS|✗|pudło|przegr/;
   let o = { step: 1, stake: prog(1) };
   try {
     const f = w.document.getElementById('fr_' + k), A = f && f.contentWindow.UT && f.contentWindow.UT.A, mi = A ? A.models().findIndex(m => m.id === id) : -1;
     const gt = i => { try { const c = A.cell(mi, i); return c && c.gra ? `${c.gra.t || ''} ${c.gra.sub || ''}` : ''; } catch (e) { return ''; } };
+    // 1.57.1: TRÓJKA gra krokiem bazy (cykle par xx1 / x1x od ostatniego WIN bazy) — „Baza teraz: cykl otwarty K=7” ze statystyk tabeli RAZEM
+    if (mi >= 0 && /TRÓJKA/i.test(lab)) { let S = []; try { S = A.stats(mi) || []; } catch (e) {} const r = S.find(x => /Baza teraz/.test(x[0])), z = r && /K=(\d{1,2})/.exec(String(r[1]));
+      if (z && +z[1] >= 1) { const s = Math.min(8, +z[1]); o = { step: s, stake: prog(s), od: 'baza' }; if (_rzL.size > 300) _rzL.clear(); _rzL.set(key, o); return o; } }
     if (mi >= 0) for (let i = N - 1; i >= Math.max(0, N - 3000); i--) {
       const t = gt(i); if (!t.trim()) continue;
       if (/BUST|LOST/.test(t) || (/WIN|✓|✔/.test(t) && !LS.test(t))) break;   // cykl zamknięty → k1
