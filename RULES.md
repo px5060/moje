@@ -214,6 +214,28 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
   progresją co postawiona (TRÓJKA 8 · 16 · 32…, reszta 8 · 8 · 16…); WIN / BUST / LOST albo przegrany k8 → k1. Sprawdzone na wszystkich modelach
   RAZEM T50 (1T / 200 / 2T — z krokiem silnika) i T60 TOP5 / TOP7 (`live.nextK`): 0 różnic.
 
+## Karty RAZEM: krok wprost z tabeli — PIKOFF, MIX3, 2-SLOT (1.58.0)
+- Prośba użytkownika: PIKOFF, MIX3 i 2-SLOT mają dawać krok jak 1T / TOP / BUST. Tabele RAZEM (T60 RAZEM 2.20.0: PIKOFF 1.2.7, MIX3 1.1.1;
+  T50 RAZEM 1.24.0: 2-SLOT) podają na karcie modelu pola **`krok` / `stawka` / `okno`**, a w statystykach wiersz „Stan teraz”
+  (okno w grze · krok gry n/8 · stawka albo „bez okna — następne okno od k1”). Okno w grze: PIKOFF krok_gry + 1, MIX3 armed n / wait n+1,
+  2-SLOT K bazy + pozycja slotu (jak prognoza tabeli); bez okna → k1 (każde okno od k1).
+- MOJE (`rzItems`): pole `krok` na karcie ma pierwszeństwo przed napisami i `rzLast`. Tabela bez pola — jak dotąd (napis, TRÓJKA baza, wiersze GRA).
+  Przy okazji: „krok n/offset” na karcie 2-SLOT przed START to odliczanie WIN-ów — z polem `krok` MOJE już go nie myli z krokiem gry.
+- Sprawdzone: 65 modeli RAZEM w MOJE (stan z telefonu) — 53 z krokiem w RAZEM zgodne (TOP5 / TOP7 osobno przez `live.nextK`, 12 zgodnych);
+  okna PIKOFF / 2-SLOT w grze na cofniętych kodach — pole `krok` = napis „krok n/8” na karcie (3 z 3).
+
+## Karty RAZEM: krok z każdej linijki karty, TRÓJKA — krok bazy i jej stawki (1.57.1)
+- Zgłoszenie użytkownika: R60 · TRÓJKA **COMBO +8&+9** — postawiony k6 (256 zł) na Nr 13 217 przegrany, a MOJE „teraz k1 (8 zł)”; RAZEM: „gra w toku ·
+  zakład dopiero po SPRAWDŹ (krok 7)”, „Baza teraz: cykl otwarty K=7”. MOJE czytało krok tylko z wybranej linijki („★ START za 1 cykl”, bez kroku),
+  a `rzLast` szukał wierszy GRA modelu (ostatni: WIN K2 na Nr 13 153) → k1.
+- Teraz: krok z pierwszej linijki karty, która go podaje (najpierw wybrana, potem wg priorytetu p); TRÓJKA bez kroku na karcie → „Baza teraz … K=N”
+  ze statystyk tabeli (`A.stats`, ok. 0,1 s — tylko wtedy, raz na kod), bo TRÓJKA gra krokiem bazy. Stawka bez „zł” w tekście — progresją tabeli
+  (`rzProg`: TRÓJKA 8 · 16 · 32 … 1024, reszta 8 · 8 · 16 … 512) — wcześniej TRÓJKA k7 dostawała 256 zł zamiast 512.
+- „off +7 · K8” na karcie (TRÓJKA T50, model bez otwartego okna) to **limit**, nie krok — pomijany (wcześniej TRÓJKA T50 T2 pokazywała k8 · 1024 zł przy bazie K=2).
+- Sprawdzone na wszystkich 65 modelach RAZEM (T50 31, T60 34 — w teście wszystkie dodane do MOJE GRY) z krokiem RAZEM: 1T / 200 / 2T (Stan teraz, 19),
+  TRÓJKA T50 i T60 (Baza teraz, 5), BUST (Stan teraz, 3), TOP5 / TOP7 (`live.nextK`, 12) — 39 zgodnych, 0 różnic. MIX3 / 2-SLOT / PIKOFF nie podają
+  kroku do porównania („Baza teraz … K=” to licznik bazy / slotów): w otwartym oknie krok z karty („krok gry 3/8 · 16 zł”), poza oknem k1 (każde okno od k1).
+
 ## Modele RAZEM w MOJE: wszystkie gry, słupki i kwadraciki (1.42.0)
 - Ekran modelu RAZEM (R50 / R60) w MOJE, pod „Statystyki modelu (RAZEM …)”: ramka **Wszystkie gry modelu** — cykle / WIN / LOST,
   słupki „na którym kroku przychodził WIN” (k1–k8 i LOST), ostatnie 24 cykle jako kwadraciki (dotknij — powiększ; jeszcze raz — co było po takim wyniku)
