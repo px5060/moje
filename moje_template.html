@@ -209,7 +209,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.57.1';
+const APP_VER = '1.58.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -990,8 +990,9 @@ function rzItems(t) {   // modele z MOJE GRY appki RAZEM → wiersze MOJE (krok,
     // 1.57.1: krok z linijki karty, która go podaje — nie tylko z wybranej (np. TRÓJKA COMBO: „★ START za 1 cykl” bez kroku, a „gra w toku … (krok 7)” obok)
     // „off +7 · K8” (TRÓJKA T50, model bez otwartego okna) to limit kroków, nie krok — pomijam (wcześniej T2 pokazywał k8 · 1024 zł przy bazie K=2)
     let km = kRe(tx), kl = act; if (!km) for (const l of L.slice().sort((a, b) => (a.p || 9) - (b.p || 9))) { const m = kRe(`${l.txt || ''} · ${l.sub || ''}`); if (m) { km = m; kl = l; break; } }
-    const zm = /(\d[\d  ]*)\s?zł/.exec(kl ? kl.txt || '' : ''), lab0 = M.lab(g.k), L0 = km ? null : rzLast(w, g.k, g.id, N, lab0);   // 1.47.1: karta bez kroku (czeka na STEP / T1 / TRIGGER) → krok z tabeli RAZEM
-    const step = km ? Math.min(8, Math.max(1, +km[1])) : L0.step, stake = km && zm ? +zm[1].replace(/\D/g, '') : km ? rzProg(lab0)(step) : L0.stake;   // 1.41.1: też „krok 4” (TRÓJKA); stawka bez „zł” w tekście — progresja tabeli (TRÓJKA 8 · 16 · 32 …)
+    const kc = c && Number.isFinite(c.krok) && c.krok >= 1 ? c : null;   // 1.58.0: tabela RAZEM podaje krok wprost (PIKOFF, MIX3 — T60 RAZEM 2.20.0, 2-SLOT — T50 RAZEM 1.24.0): bez zgadywania z napisów
+    const zm = /(\d[\d  ]*)\s?zł/.exec(kl ? kl.txt || '' : ''), lab0 = M.lab(g.k), L0 = kc || km ? null : rzLast(w, g.k, g.id, N, lab0);   // 1.47.1: karta bez kroku (czeka na STEP / T1 / TRIGGER) → krok z tabeli RAZEM
+    const step = kc ? Math.min(8, kc.krok) : km ? Math.min(8, Math.max(1, +km[1])) : L0.step, stake = kc ? +kc.stawka || rzProg(lab0)(step) : km && zm ? +zm[1].replace(/\D/g, '') : km ? rzProg(lab0)(step) : L0.stake;   // 1.41.1: też „krok 4” (TRÓJKA); stawka bez „zł” w tekście — progresja tabeli (TRÓJKA 8 · 16 · 32 …)
     const tgm = /\b(x1x|xx1|1xx)\b/.exec(tx) || /\b(x1x|xx1|1xx)\b/.exec(c && c.rule || '') || /\b(x1x|xx1|1xx)\b/.exec((w.document.getElementById('fr_' + g.k) || {}).title || '');   // cel: z tekstu GRA, reguły albo nazwy tabeli RAZEM (np. „TRÓJKA xx1 V1.3”), nie zawsze x1x
     let d = soon.lvl === 2 ? 1 : nm && act && act.p !== 6 ? +nm[1].replace(/\D/g, '') - N : soon.lvl === 1 ? 2 : 0;
     if (!(d >= 1)) d = 0;
