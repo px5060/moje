@@ -221,8 +221,10 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Teraz: krok z pierwszej linijki karty, która go podaje (najpierw wybrana, potem wg priorytetu p); TRÓJKA bez kroku na karcie → „Baza teraz … K=N”
   ze statystyk tabeli (`A.stats`, ok. 0,1 s — tylko wtedy, raz na kod), bo TRÓJKA gra krokiem bazy. Stawka bez „zł” w tekście — progresją tabeli
   (`rzProg`: TRÓJKA 8 · 16 · 32 … 1024, reszta 8 · 8 · 16 … 512) — wcześniej TRÓJKA k7 dostawała 256 zł zamiast 512.
-- Sprawdzone na wszystkich modelach RAZEM T50 / T60 ze stanem kroku w RAZEM (Stan teraz / Baza teraz / live.nextK): TRÓJKA T1 +8, T1 +9, COMBO → k7 · 512 zł
-  (jak baza), 1T / 200 / 2T / TOP5 / TOP7 bez zmian. PIKOFF („Baza teraz: SLOT2 · K=0” to licznik slotów, nie krok) — bez zmian.
+- „off +7 · K8” na karcie (TRÓJKA T50, model bez otwartego okna) to **limit**, nie krok — pomijany (wcześniej TRÓJKA T50 T2 pokazywała k8 · 1024 zł przy bazie K=2).
+- Sprawdzone na wszystkich 65 modelach RAZEM (T50 31, T60 34 — w teście wszystkie dodane do MOJE GRY) z krokiem RAZEM: 1T / 200 / 2T (Stan teraz, 19),
+  TRÓJKA T50 i T60 (Baza teraz, 5), BUST (Stan teraz, 3), TOP5 / TOP7 (`live.nextK`, 12) — 39 zgodnych, 0 różnic. MIX3 / 2-SLOT / PIKOFF nie podają
+  kroku do porównania („Baza teraz … K=” to licznik bazy / slotów): w otwartym oknie krok z karty („krok gry 3/8 · 16 zł”), poza oknem k1 (każde okno od k1).
 
 ## Modele RAZEM w MOJE: wszystkie gry, słupki i kwadraciki (1.42.0)
 - Ekran modelu RAZEM (R50 / R60) w MOJE, pod „Statystyki modelu (RAZEM …)”: ramka **Wszystkie gry modelu** — cykle / WIN / LOST,

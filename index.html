@@ -986,8 +986,9 @@ function rzItems(t) {   // modele z MOJE GRY appki RAZEM → wiersze MOJE (krok,
     try { if (c) soon = w.wgSoon(c, N); } catch (e) {}
     const L = c ? c.lines : [], act = L.find(l => l.p === 1) || L.find(l => l.p === 4) || L.find(l => l.p === 3) || L[0] || null;
     const tx = act ? `${act.txt || ''} · ${act.sub || ''}` : '';
-    const kRe = x => /\bk(\d{1,2})\b/i.exec(x) || /krok(?: gry)? (\d{1,2})/i.exec(x), nm = /Nr\s?([\d  ]+)/.exec(act ? act.txt || '' : '');
+    const kRe = x0 => { const x = x0.replace(/off\s*\+\d+\s*·\s*K\d{1,2}\b/gi, ''); return /\bk(\d{1,2})\b/i.exec(x) || /krok(?: gry)? (\d{1,2})/i.exec(x); }, nm = /Nr\s?([\d  ]+)/.exec(act ? act.txt || '' : '');
     // 1.57.1: krok z linijki karty, która go podaje — nie tylko z wybranej (np. TRÓJKA COMBO: „★ START za 1 cykl” bez kroku, a „gra w toku … (krok 7)” obok)
+    // „off +7 · K8” (TRÓJKA T50, model bez otwartego okna) to limit kroków, nie krok — pomijam (wcześniej T2 pokazywał k8 · 1024 zł przy bazie K=2)
     let km = kRe(tx), kl = act; if (!km) for (const l of L.slice().sort((a, b) => (a.p || 9) - (b.p || 9))) { const m = kRe(`${l.txt || ''} · ${l.sub || ''}`); if (m) { km = m; kl = l; break; } }
     const zm = /(\d[\d  ]*)\s?zł/.exec(kl ? kl.txt || '' : ''), lab0 = M.lab(g.k), L0 = km ? null : rzLast(w, g.k, g.id, N, lab0);   // 1.47.1: karta bez kroku (czeka na STEP / T1 / TRIGGER) → krok z tabeli RAZEM
     const step = km ? Math.min(8, Math.max(1, +km[1])) : L0.step, stake = km && zm ? +zm[1].replace(/\D/g, '') : km ? rzProg(lab0)(step) : L0.stake;   // 1.41.1: też „krok 4” (TRÓJKA); stawka bez „zł” w tekście — progresja tabeli (TRÓJKA 8 · 16 · 32 …)
