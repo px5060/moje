@@ -209,7 +209,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.59.0';
+const APP_VER = '1.60.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -474,7 +474,7 @@ async function ghSend(manual, raz) {   // synchronizacja: sprawdź GitHub (mały
       const j = await g.json(); rsha = j.sha;
       d = j.content ? ghB64d(j.content) : await (await fetch(url, { headers: { ...H, Accept: 'application/vnd.github.raw+json' }, cache: 'no-store' })).json();
       if (d && d.storage && j.sha !== c.sha) {
-        const loc = ghSnap().storage, n0 = { t50: D.t50.n, t60: D.t60.n }, M = ghMerge((jobj(GHB) || {}).storage || {}, loc, d.storage);
+        const loc = ghSnap().storage, n0 = { t50: D.t50.n, t60: D.t60.n }, B0 = c.plik ? Object.fromEntries(Object.entries(d.storage).filter(([k]) => !ghCodeK(k))) : (jobj(GHB) || {}).storage || {}, M = ghMerge(B0, loc, d.storage);   // 1.60.0: po „📂 Przywróć z pliku” wygrywa stan z pliku
         let ile = 0; for (const [k, v] of Object.entries(M.out)) if (!GH_SKIP(k) && loc[k] !== v) { lsSet(k, v); ile++; }
         konf = M.konf;
         if (ile) {
@@ -497,7 +497,7 @@ async function ghSend(manual, raz) {   // synchronizacja: sprawdź GitHub (mały
     const c2 = ghCfg(); if (top) c2.commit = top;
     if (same || (!manual && c.last && c.last.h === h && top === c.commit)) {   // GitHub = tutaj
       if (d && d.storage) { c2.sha = rsha; c2.base = ghBase(d); c2.last = { t: Date.now(), h, n50: snap.t50.n, n60: snap.t60.n }; lsSet(GHB, JSON.stringify({ storage: d.storage })); }
-      c2.err = ''; ghPut(c2);
+      c2.err = ''; delete c2.plik; ghPut(c2);
       if (zt.length) toast(`☁ Z ${esc((d.urzadzenie && d.urzadzenie.nazwa) || 'innego urządzenia')}: ${zt.join(' · ')}`, 6000); else if (manual) toast('☁ Wszystko zgodne z GitHub');
       return;
     }
@@ -507,7 +507,7 @@ async function ghSend(manual, raz) {   // synchronizacja: sprawdź GitHub (mały
     if ((r.status === 409 || r.status === 422) && !raz) { again = true; return; }   // ktoś zapisał w międzyczasie → jeszcze raz (pobierz, połącz)
     if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 140)}`);
     const j = await r.json(), c3 = ghCfg();
-    c3.sha = j.content && j.content.sha; c3.commit = j.commit && j.commit.sha; c3.last = { t: Date.now(), h, n50: snap.t50.n, n60: snap.t60.n }; c3.base = ghBase(snap); c3.err = ''; ghPut(c3);
+    c3.sha = j.content && j.content.sha; c3.commit = j.commit && j.commit.sha; c3.last = { t: Date.now(), h, n50: snap.t50.n, n60: snap.t60.n }; c3.base = ghBase(snap); c3.err = ''; delete c3.plik; ghPut(c3);
     if (!lsSet(GHB, JSON.stringify({ storage: snap.storage }))) lsSet(GHB, 'null');   // brak miejsca → bez bazy (następne łączenie = suma list)
     if (Z.length) lsSet(GHZK, snap.storage[GHZK]);
     const zz = zt.length ? `<br>z ${esc((d.urzadzenie && d.urzadzenie.nazwa) || 'innego urządzenia')}: ${zt.join(' · ')}` : '';
@@ -531,6 +531,65 @@ async function ghRestore() {   // ręcznie: stan z GitHub zastępuje kody i list
     const c2 = ghCfg(); c2.last = null; c2.sha = sha; c2.commit = null; c2.base = ghBase(d); c2.err = ''; ghPut(c2); lsSet(GHB, JSON.stringify({ storage: d.storage }));   // baza = stan z GitHub
     reload(); toast(`☁ Przywrócono z GitHub: T50 Nr ${fmtN(D.t50.n)} · T60 Nr ${fmtN(D.t60.n)}`, 5000);
   } catch (e) { toast(`☁ Nie przywrócono: ${esc(String(e.message || e))}`, 6000); }
+}
+// ===== 💾 PEŁNA KOPIA DO PLIKU · 📂 PRZYWRÓĆ Z PLIKU (1.60.0, prośba użytkownika: kopia zapasowa niezależna od GitHuba) =====
+// Plik = ten sam format co stan.json w GitHub (kody T50 / T60 od Nr 1, modele, cała pamięć appek z px5060.github.io: MOJE GRY, BANK, ZAKŁADY,
+// RAZEM, ZESZYT, decyzje OCEN…) + oceny Claude (oceny, najlepsze). Bez klucza GitHub. Przywracanie działa bez GitHuba i na każdym adresie
+// (pamięć appek jest przypisana do adresu — po przenosinach, np. nowe konto, telefon zaczyna od pustej pamięci). Przyjmuje też stan.json
+// z repo z kodami / z paczki kopii zapasowej i sam oceny.json. Kody: zostaje dłuższy ciąg, gdy krótszy jest jego początkiem (starsza kopia
+// nie skasuje nowszych kodów z tego urządzenia). ☁ Kopia w GitHub włączona → przy następnej synchronizacji wygrywa przywrócony stan
+// (flaga plik: baza = stan z GitHub, kody — dłuższy ciąg). Przypomnienie na TERAZ, gdy ostatnia kopia do pliku ma ponad 7 dni.
+const PLK = 'moje_v1_ghplik';   // {t: ostatnia kopia do pliku, f: nazwa, odl: przypomnienie odłożone do} — tylko to urządzenie (moje_v1_gh… nie jedzie w stan.json)
+const ocFiltr = A => (Array.isArray(A) ? A : []).filter(o => o && typeof o.id === 'string' && o.id.length <= 120 && typeof o.nazwa === 'string' && Array.isArray(o.sekcje)).slice(-100);
+function plikZapisz() {
+  const snap = ghSnap(), x = jobj(OCK) || {};
+  snap.zapisano = new Date().toISOString(); snap.urzadzenie = ghDev(); snap.kopia = 'plik'; snap.oceny = Array.isArray(x.O) ? x.O : []; if (x.N) snap.najlepsze = x.N;
+  const name = `moje_kopia_${stamp()}_T50-${snap.t50.n}_T60-${snap.t60.n}.json`, a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(snap)], { type: 'application/json' })); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  lsSet(PLK, JSON.stringify({ t: Date.now(), f: name }));
+  toast(`💾 Zapisano pełną kopię: <b>${esc(name)}</b> (w Pobranych). Trzymaj ją też poza telefonem — Dysk Google, komputer.`, 7000); render();
+}
+function plikWczytaj(text, fname) {
+  let d = null; try { d = JSON.parse(text); } catch (e) {}
+  if (!d || typeof d !== 'object') { alert(`${fname}: to nie jest plik JSON z kopią.`); return; }
+  const ocN = d.najlepsze && typeof d.najlepsze === 'object' ? d.najlepsze : null;
+  if (!d.storage && Array.isArray(d.oceny)) {   // sam oceny.json (np. z paczki kopii zapasowej) → OCENY
+    const O = ocFiltr(d.oceny); if (!O.length) { alert(`${fname}: brak ocen w pliku.`); return; }
+    if (!confirm(`Wczytać oceny Claude z pliku ${fname}?\n${O.length} ${pl(O.length, ['ocena', 'oceny', 'ocen'])} zastąpi listę w OCENY (decyzje zostają).`)) return;
+    lsSet(OCK, JSON.stringify({ t: Date.now(), O, N: ocN, err: '' })); _ocC = null; reload(); toast(`🔍 Wczytano ${O.length} ocen z pliku`); return;
+  }
+  if (!d.storage || typeof d.storage !== 'object' || !d.t50 || !d.t60 || typeof d.t50.kody !== 'string' || typeof d.t60.kody !== 'string') {
+    alert(`${fname}: to nie jest kopia stanu MOJE (moje_kopia_….json albo stan.json). Nic nie zmieniono.`); return; }
+  const tu = ghSnap(), R = ghRoznice(d, tu), loc0 = {}, K = {}, info = [];
+  for (const t of ['t50', 't60']) {
+    const T = TABS[t], f = d[t].kody, h = tu[t].kody; loc0[t] = readAdded(t);
+    if (!/^(\d{3})*$/.test(f) || !f.startsWith(T.seed)) { alert(`${fname}: kody ${T.name} w pliku nie zaczynają się od bazy tej appki — nic nie zmieniono.`); return; }
+    if (h.length > f.length && h.startsWith(f)) { K[t] = loc0[t]; info.push(`${T.name}: zostają kody z tego urządzenia (do Nr ${fmtN(h.length / 3)}, w pliku do Nr ${fmtN(f.length / 3)})`); }
+    else { K[t] = f.slice(T.seed.length); info.push(`${T.name}: kody z pliku do Nr ${fmtN(f.length / 3)} (tu do Nr ${fmtN(h.length / 3)})`); }
+  }
+  const S = d.storage, cnt = k => { const v = ghJp(S[k]); return Array.isArray(v) ? v.length : 0; };
+  const nM = Array.isArray(d.modele) ? d.modele.length : 0, nB = cnt('moje_v1_bank'), nZ = cnt('zeszyt_v1_modele') + cnt('zeszyt_v1_modele60'), nO = ocFiltr(d.oceny).length;
+  const gh = ghCfg(), ghon = !!(gh.repo && gh.tok);
+  if (!confirm(`Przywrócić stan z pliku ${fname}?\nZapisany ${d.zapisano ? when(Date.parse(d.zapisano)) : '?'}${d.urzadzenie && d.urzadzenie.nazwa ? ' (' + d.urzadzenie.nazwa + ')' : ''} · modeli w MOJE ${nM} · BANK ${nB} · ZESZYT ${nZ}${nO ? ` · ocen ${nO}` : ''}\n\n${info.join('\n')}\n\nListy z pliku (MOJE GRY, BANK, ZAKŁADY, RAZEM, ZESZYT, decyzje OCEN) zastąpią te na tym urządzeniu.${R.dif.length ? '\n\nUWAGA — inne kody w tych samych Nr (zostaną z pliku):\n' + R.dif.join('\n') : ''}${ghon ? '\n\n☁ Kopia w GitHub jest włączona: ten stan pójdzie do GitHub jako aktualny (kody — zostaje dłuższy ciąg).' : ''}`)) return;
+  Object.entries(S).forEach(([k, v]) => { if (!GH_SKIP(k) && typeof v === 'string') lsSet(k, v); });
+  for (const t of ['t50', 't60']) { lsSet(TABS[t].key, K[t]); lsSet(MAXK(t), String((TABS[t].seed.length + K[t].length) / 3)); }
+  if (Array.isArray(d.oceny)) lsSet(OCK, JSON.stringify({ t: Date.now(), O: ocFiltr(d.oceny), N: ocN, err: '' }));
+  if (ghon) { const c = ghCfg(); c.plik = 1; ghPut(c); ghSchedule(2000); }
+  _ocC = null; reload(); toast(`📂 Przywrócono z pliku: T50 Nr ${fmtN(D.t50.n)} · T60 Nr ${fmtN(D.t60.n)} · modeli ${items.length}`, 6000);
+}
+function plikBox() {   // KODY: pełna kopia do pliku i przywracanie z pliku
+  const p = jobj(PLK) || {}, st = p.t ? `ostatnia: <b>${ago(p.t)}</b> (${when(p.t)}) · ${esc(p.f || '')}` : '<b style="color:var(--ye)">jeszcze nie było kopii do pliku z tego urządzenia</b>';
+  return `<div class="box"><h4>💾 Kopia całego stanu — plik (bez GitHuba)</h4>
+    <div class="hint" style="margin:0 0 6px">Wszystko z telefonu w jednym pliku: kody T50 / T60, modele w MOJE (z krokiem — gry w toku), BANK, ZAKŁADY, RAZEM, ZESZYT, oceny i decyzje w OCENACH. Zapisuje się w Pobranych — <b>trzymaj kopię też poza telefonem</b> (Dysk Google, komputer). „Przywróć z pliku” działa bez GitHuba i pod każdym adresem (np. po przenosinach na nowe konto pamięć appek jest pusta). Przyjmuje też stan.json i oceny.json z paczki kopii zapasowej.</div>
+    <button class="btn pri wide" data-plikexp="1">💾 Zapisz pełną kopię do pliku</button>
+    <div class="hint">${st}</div>
+    <label class="btn wide" style="cursor:pointer;margin-top:8px">📂 Przywróć z pliku (moje_kopia_….json / stan.json / oceny.json)<input type="file" data-plikimp="1" accept=".json,application/json" style="display:none"></label></div>`;
+}
+function plikBanner() {   // TERAZ: przypomnienie, gdy ostatnia kopia do pliku ma ponad 7 dni (albo nie było żadnej), „później” — za 24 h
+  const p = jobj(PLK) || {}; if ((p.t && Date.now() - p.t < 7 * 864e5) || (p.odl && Date.now() < p.odl) || !(items.length || bets.length || zbets.length)) return '';
+  return `<div class="box" style="border-color:#4d7fb3"><b>💾 Kopia całego stanu do pliku</b>: ${p.t ? `ostatnia ${ago(p.t)}` : 'jeszcze nie było'} — modele, zakłady i gry w toku, gdyby zniknął GitHub albo telefon.
+    <div style="margin-top:6px"><button class="btn sm pri" data-plikexp="1">💾 Zapisz teraz</button> <button class="btn sm" data-plikodl="1">później</button> <button class="btn sm" data-go="dane">więcej › KODY</button></div></div>`;
 }
 // ===== 🔍 OCENY (1.36.0): oceny modeli od Claude — oceny.json w tym samym repo (ocena.py w all50/analiza). Dwa rodzaje (prośba użytkownika):
 // • propozycja Claude (model z pul / ZESZYTU wybrany wg kryteriów i oceniony) → „＋ Dodaj do MOJE” albo „Usuń analizę”;
@@ -829,7 +888,7 @@ function daneBox(t) {
       <div class="hint">${x ? `ostatni: ${ago(x.t)} (${when(x.t)}) · ${fmtN(x.n)} kodów${D[t].n > x.n ? ` · <b style="color:var(--ye)">od tego czasu +${D[t].n - x.n} kodów</b>` : ' · aktualny'}` : 'jeszcze nie eksportowano z MOJE'}</div>`; }).join('')}
   </div>`;
 }
-function dane() { return ghBox() + daneBox('t50') + daneBox('t60') + '<div class="hint">Kody są wspólne z RAZEM i SZUKAJ: to, co tu dopiszesz, zaimportujesz albo cofniesz, od razu widać we wszystkich aplikacjach.</div>'; }
+function dane() { return plikBox() + ghBox() + daneBox('t50') + daneBox('t60') + '<div class="hint">Kody są wspólne z RAZEM i SZUKAJ: to, co tu dopiszesz, zaimportujesz albo cofniesz, od razu widać we wszystkich aplikacjach.</div>'; }
 function undoCode(t) {
   const a = readAdded(t); if (!a.length) { toast('Brak dopisanych kodów do cofnięcia'); return; }
   if (!confirm(`Cofnąć ostatni kod ${a.slice(-3)} (Nr ${fmtN(D[t].n)}) w ${TABS[t].name}?\nZniknie we wszystkich aplikacjach (RAZEM, SZUKAJ…).`)) return;
@@ -1393,7 +1452,7 @@ function rpFlash() {
 function rpBar(it) { return RPF && RPF.uid === it.uid ? `<div class="rpb ${({ w: 'rw-w', l: 'rw-l', k: 'rw-k', n: 'rw-n', s: 'rw-s' })[RPF.c] || ''}">📰 Z raportu · Nr ${fmtN(RPF.nr)}: <b>${esc(RPF.txt)}</b></div>` : ''; }
 function teraz() {
   const t = only, n = D[t].n;
-  let h = tabSwitch(null, 1) + ocBanner() + kodBox(t);
+  let h = tabSwitch(null, 1) + ocBanner() + plikBanner() + kodBox(t);
   if (rzSt[t] === 'wczytuję') h += `<div class="hint" style="margin:-2px 0 8px">⏳ Wczytuję modele z RAZEM ${TABS[t].name}…</div>`;
   if (rzSt[t] === 'błąd') h += `<div class="hint neg" style="margin:-2px 0 8px">Nie udało się wczytać RAZEM ${TABS[t].name} — otwórz MOJE ponownie.</div>`;
   const L = vitems.filter(it => it.t === t);
@@ -2407,6 +2466,7 @@ function pomoc() {
     <div class="box"><h4>Znaczki na TERAZ</h4><b style="background:#c97a45;color:#fff;border-radius:8px;padding:0 5px">2</b> pomarańczowy = ile modeli gra na następnym wierszu.<br><b style="background:#FFD700;color:#000;border-radius:8px;padding:0 5px">2,3</b> żółty = za ile wierszy grają kolejne.</div>
     <div class="box"><h4>Kody</h4>Kody są wspólne z RAZEM i SZUKAJ — wpisany tu kod jest od razu we wszystkich aplikacjach (i odwrotnie). Przy każdej tabeli widać ostatni kod i <b>kiedy</b> go wpisano. Gdy kod wpisano w innej aplikacji, MOJE pokazuje, kiedy go tu zauważyło (przy otwarciu).<br>Zakładka <b>KODY</b>: kilka kodów naraz, import pliku (z cofnięciem całego importu) i eksport z nazwami jak w RAZEM — T50: TRÓJKA <b>v13_…kod.json</b>, T60: <b>xx1_pikoff_…json</b> i <b>trojka_xx1_v13_…kod.json</b>, żeby appki na PC je wychwyciły.</div>
     <div class="box"><h4>Kopia kodów</h4>Co 10 nowych kodów (licząc od ostatniego eksportu) MOJE samo zapisuje plik kopii (T50 TRÓJKA, T60 PIKOFF) do Pobranych — przy wpisaniu kodu tutaj. Gdy telefon wyczyści pamięć, wczytaj go w KODY → Import pliku. Wyłączysz to w KODY.</div>
+    <div class="box"><h4>💾 Kopia całego stanu do pliku</h4>KODY → <b>💾 Zapisz pełną kopię do pliku</b>: kody, modele w MOJE (gry w toku z krokiem), BANK, ZAKŁADY, RAZEM, ZESZYT, oceny i decyzje — jeden plik w Pobranych. Trzymaj go też poza telefonem (Dysk Google, komputer). <b>📂 Przywróć z pliku</b> wczytuje go bez GitHuba i pod każdym adresem (np. po przenosinach appek na nowe konto). Starsza kopia nie kasuje nowszych kodów z tego urządzenia. Na TERAZ przypomnienie, gdy ostatnia kopia ma ponad 7 dni.</div>
     <div class="box"><h4>☁ Kopia w GitHub</h4>W KODY możesz podać swoje <b>prywatne</b> repo GitHub i klucz do niego. Wtedy MOJE samo wysyła kody T50 / T60 i listy (MOJE, BANK, ZAKŁADY, RAZEM, ZESZYT) do pliku <b>stan.json</b> — Claude czyta go w nowej rozmowie bez eksportów, a „Przywróć z GitHub” wczytuje ten sam stan na komputerze. Poprawiony kod (cofnięty i wpisany na nowo albo zmieniony w ZESZYCIE) też idzie sam — dymek „☁ Poprawka kodu wysłana”, a urządzenie ze starszymi kodami nie nadpisze jej bez pytania. <b>Kilka urządzeń</b> (telefon, tablet, komputer): na każdym MOJE z tym samym kluczem — modele i kody dodane gdziekolwiek trafią na pozostałe (łączenie przy otwarciu MOJE i co 3 min; usunięty model znika wszędzie). Klucz zostaje tylko na urządzeniu, na którym go wpiszesz.</div>
     <div class="box"><h4>🔍 OCENY — propozycje i oceny od Claude</h4>Dwa rodzaje, oba z pełną oceną (stan teraz, historia — wygrana do k8 / limitu i w 3 krokach, uczciwa szansa po sprawdzeniu na późniejszych kodach, symulacja — LOST, koszt, czas, nakładanie z Twoimi modelami, werdykt GRAĆ / OBSERWUJ / NIE GRAĆ):<br>• <b>Propozycje Claude</b> — Claude wybiera modele z pul SZUKAJ / SZUKAJ+ / LOST i z ZESZYTU wg kryteriów, ocenia je i wysyła najlepsze: <b>＋ Dodaj do MOJE</b> albo <b>Usuń analizę</b>.<br>• <b>Oceny Twoich modeli</b> — sam dodajesz model do MOJE i prosisz Claude o ocenę: <b>Zostaw w MOJE</b> albo <b>Usuń z MOJE</b>.<br>Gdy coś czeka na decyzję, na TERAZ jest pasek „📥 Od Claude”, a na przycisku OCENY liczba. Załatwione zostają na dole listy. Każdy model oceniany jest raz (nowa ocena tylko na prośbę). Oceniony model ma przy karcie znaczek <b>🔍 GRAĆ / OBSERWUJ / NIE GRAĆ</b> (TERAZ, LOST, BANK, a w ZESZYCIE przy modelu — tam tylko do odczytu). Decyzje podejmujesz tylko tutaj. Przy modelach z SZUKAJ ocena podpowiada też <b>sposób gry</b>: prosta progresja (TERAZ, a model po LOST — zakładka LOST) albo <b>BANK +3 / +5</b> — i daje wybór: <b>＋ Do MOJE (TERAZ)</b> / <b>＋ Do LOST</b> (tylko model po LOST) / <b>＋ Do BANK</b> (podświetlona sugestia); przy Twoim modelu — <b>Zostaw</b> tam, gdzie jest, albo <b>Do BANK</b> / <b>Do MOJE (TERAZ)</b>, też z podświetloną sugestią. <b>Dotknij karty</b> modelu z SZUKAJ — otworzą się jego statystyki jak w BANK (z rozpisaniem banku +3 / +5); <b>„🔍 Cała ocena Claude”</b> — pełna ocena. Jeśli proponowany model dodasz w SZUKAJ / ZESZYCIE albo swój model usuniesz gdzie indziej, ocena sama przechodzi do Załatwionych. Decyzje widzi Claude i każde Twoje urządzenie. Nic nie dodaje się ani nie usuwa samo, a zakładów Claude nie ustawia.</div>
     <div class="box"><h4>Zakładka BANK</h4>Bank +3 / +5 (bez limitu) dla modeli z SZUKAJ, SZUKAJ+ i SZUKAJ LOST. Bank gra w każdym cyklu modelu tylko pierwsze 3 (5) zakłady; model trafi → WIN banku (przeniesione kroki + krok modelu) i bank od k1; nie trafi → bank przegrywa 3 (5) kroki, czeka i w następnym cyklu gra dalej. Stawki 8 · 8 · 16 · 32 · 64 · 128 · 256 · 512, dalej ×2.<br>Model jest <b>albo na TERAZ</b> (prosta progresja k1–k8), <b>albo w BANK</b> (+3 / +5) — nigdy w obu. Przełącznik przy modelu (ekran modelu i <b>🔎 wyszukiwarka</b>): <b>🏦 Przenieś do BANK</b> / <b>🟧 Przenieś do TERAZ</b>. „✕ usuń z BANK” usuwa model całkiem (też z MOJE). Na TERAZ grupy <b>🟥 PO BUST</b> i <b>🏦 BANK</b> (zwijane jak pozostałe) pokazują to, co gra na następnym wierszu; <b>przytrzymanie</b> nagłówka przenosi do zakładki LOST / BANK. Przełącznik <b>BANK +3 / BANK +5</b> wybiera, który bank prowadzi listę. Droga modelu jak na TERAZ: 🟦 CZEKAJĄ (okno banku trwa, czeka na STEP / TRIGGER) → 🟨 ZA CHWILĘ → 🟧 GRAJ TERAZ. WIN → bank od k1 i znowu CZEKAJĄ. Bank przegrał swoje 3 (5) kroki → <b>⏸ CZEKAJĄ NA BANK</b>, aż model skończy cykl (WIN albo LOST) — potem znowu CZEKAJĄ, już na kolejnym oknie (np. k4–k6). Znaczki przy BANK, T50 / T60 i +3 / +5: żółty = za ile wierszy zakład banku, pomarańczowy = ile gra na następnym. Dotknięcie modelu → szanse zamknięcia banku na kolejnych krokach, stawki, gdzie bank się zamykał (% dla okien) i usunięcie z listy.</div>
@@ -2603,6 +2663,8 @@ document.addEventListener('click', e => {
   if ((b = q('[data-ocusm]'))) { const o = ocList().find(x => ocKey(x) === b.dataset.ocusm); if (o && confirm(`Usunąć ${o.nazwa} z ${o.gdzie === 'ZESZYT' ? 'ZESZYTU' : 'MOJE'}?`) && ocUsun(o)) { ocSet(o, 'usuniety'); toast(`Usunięto ${esc(o.nazwa)}`); reload(); } return; }
   if ((b = q('[data-ocm]'))) { const w = e.target.closest('details, button, a, input'); if (!(w && b.contains(w))) return go('ocm', b.dataset.ocm); }   // karta oceny → statystyki (nie: Cała ocena, przyciski)
   if ((b = q('[data-ghrest]'))) return ghRestore();
+  if ((b = q('[data-plikexp]'))) return plikZapisz();   // 1.60.0: 💾 pełna kopia do pliku
+  if ((b = q('[data-plikodl]'))) { const p = jobj(PLK) || {}; p.odl = Date.now() + 864e5; lsSet(PLK, JSON.stringify(p)); toast('Przypomnę jutro'); return render(); }
   if ((b = q('[data-ghoff]'))) { if (!confirm('Usunąć klucz GitHub z tego urządzenia? Kopia przestanie się wysyłać (plik w repo zostaje).')) return; lsSet(GHK, JSON.stringify({ repo: ghCfg().repo })); return render(); }
   if ((b = q('[data-bkw]'))) { bkw = +b.dataset.bkw === 5 ? 5 : 3; lsSet('moje_v1_bkw', String(bkw)); return render(); }
   if ((b = q('[data-only]'))) { only = b.dataset.only; lsSet('moje_v1_only', only); return render(); }
@@ -2669,6 +2731,7 @@ document.addEventListener('input', e => {   // 3 cyfry → od razu dodaj
 });
 document.addEventListener('change', e => {
   if (e.target && e.target.id === 'famSel') { famSelV = e.target.value; return; }
+  if (e.target.dataset && e.target.dataset.plikimp && e.target.files && e.target.files[0]) { const f = e.target.files[0], fr = new FileReader(); fr.onload = () => { e.target.value = ''; plikWczytaj(String(fr.result), f.name); }; fr.readAsText(f); return; }   // 1.60.0: 📂 przywróć z pliku
   const t = e.target.dataset && e.target.dataset.imp, f = t && e.target.files && e.target.files[0]; if (!f) return;
   const fr = new FileReader(); fr.onload = () => { e.target.value = ''; importFile(t, String(fr.result), f.name); }; fr.readAsText(f);
 });
