@@ -404,3 +404,19 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
 - Załatwione i 🗑 Usunięte: kolejność TERAZ → za 2–3 → za N w. (od najbliższego) → czeka; w nagłówku listy „N TERAZ · N za chwilę”.
 - `ocTeraz` zapamiętany do następnego kodu (klucz: ocena + liczba kodów + koniec ciągu + stan silnika ZESZYTU) — 71 ocen liczy się ok. 20 ms.
 
+## 💾 Kopia całego stanu do pliku · 📂 Przywróć z pliku (1.60.0)
+- Prośba użytkownika: kopia zapasowa niezależna od GitHuba — gdyby zniknęło konto, ma się dać odbudować appki i dalej grać modele w toku.
+- KODY → **💾 Zapisz pełną kopię do pliku**: `moje_kopia_<data>_T50-<Nr>_T60-<Nr>.json` w Pobranych. Format = `stan.json` (`ghSnap`: kody od Nr 1,
+  modele z krokiem, cała pamięć appek z px5060.github.io bez kluczy GitHub i ustawień ekranu) + `oceny` / `najlepsze` (oceny Claude, które
+  w `stan.json` nie jadą). Ostatni zapis `moje_v1_ghplik` (tylko to urządzenie).
+- **📂 Przywróć z pliku**: przyjmuje kopię MOJE, `stan.json` (repo z kodami, paczka kopii zapasowej) albo sam `oceny.json`. Potwierdzenie z opisem
+  (data, urządzenie, modele, BANK, ZESZYT, oceny, kody, inne kody w tych samych Nr). Listy z pliku zastępują tutejsze (jak „Przywróć z GitHub”).
+  Kody: zostaje dłuższy ciąg, gdy krótszy jest jego początkiem — starsza kopia nie kasuje nowszych kodów; kody z pliku muszą zaczynać się od bazy appki.
+- Działa bez GitHuba i pod każdym adresem: pamięć appek jest przypisana do adresu, więc po przenosinach (np. nowe konto `<konto>.github.io`) telefon
+  startuje pusty — wtedy „Przywróć z pliku”. Sprawdzone: zapis → pusta pamięć → przywrócenie = ten sam stan (23 modele z krokami, BANK, 14 zakładów,
+  ZESZYT, 75 ocen, 71 usuniętych, 164 decyzje).
+- ☁ Kopia w GitHub włączona → flaga `plik` w `moje_v1_gh`: przy następnej synchronizacji baza = stan z GitHub (bez kluczy kodów), więc wygrywa
+  przywrócony stan; kody — dłuższy ciąg. Flaga znika po udanej synchronizacji.
+- Przypomnienie na TERAZ, gdy ostatnia kopia do pliku ma ponad 7 dni (albo nie było żadnej): 💾 Zapisz teraz · później (24 h) · KODY.
+- Pełna kopia appek (13 repo z historią) — osobno: paczka `px5060_kopia_<data>.zip` z `ODBUDOWA.md` (Claude: „zrób kopię zapasową”).
+
