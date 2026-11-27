@@ -395,3 +395,12 @@ Zapisuje reguły i ustalenia z rozmów, żeby przetrwały streszczenie (kompakcj
   🔍 Oceny Twoich modeli, Załatwione, 🗑 Usunięte) po dotknięciu otwiera **statystyki modelu** (dopisek „statystyki ›”): SZUKAJ — pełne jak w TERAZ / LOST
   (z bankiem +3 / +5), ZESZYT — z SZUKAJ W ZESZYCIE. Na górze ekranu **pełna karta oceny z decyzjami** (＋ Do MOJE / BANK / ZESZYTU, Usuń analizę,
   Zostaw / Usuń z MOJE, sugestia, Cała ocena), więc decyzja bez wracania; „← wróć do OCEN” — listy w tym samym stanie. Przyciski w linijce (✕, 🗑, ↶) nie otwierają statystyk.
+
+## OCENY: stan gry także w Załatwionych i 🗑 Usuniętych (1.59.0)
+- Prośba użytkownika: oceny usunięte (71) i załatwione też mają pokazywać, czy model gra teraz, za chwilę, czy czeka — żeby wrócić do dobrze
+  ocenionego modelu i zagrać go, gdy jest w grze.
+- Każda linijka oceny (wszystkie listy) ma znaczek stanu liczony na bieżących kodach (`ocTeraz`, jak w Propozycjach): **TERAZ** (gra na następnym
+  wierszu) · **za 2 / za 3** · **za N w.** (Nr zakładu znany, np. TRIGGER był albo ZESZYT w grze) · **czeka na grę**; obok krok, stawka i Nr zakładu.
+- Załatwione i 🗑 Usunięte: kolejność TERAZ → za 2–3 → za N w. (od najbliższego) → czeka; w nagłówku listy „N TERAZ · N za chwilę”.
+- `ocTeraz` zapamiętany do następnego kodu (klucz: ocena + liczba kodów + koniec ciągu + stan silnika ZESZYTU) — 71 ocen liczy się ok. 20 ms.
+

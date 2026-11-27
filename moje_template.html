@@ -106,7 +106,7 @@ details.sec>summary{list-style:none}[data-lp]{-webkit-user-select:none;user-sele
 .clt{font-size:11px;font-weight:800;padding:1px 5px;border-radius:7px;border:1px solid currentColor;white-space:nowrap;margin-left:3px}
 .ocg{font-size:12px;font-weight:800;padding:1px 6px;border-radius:7px;background:var(--pan);border:1px solid var(--bd);white-space:nowrap;color:var(--mu)}.ocg i{font-style:normal}.ocg .g{color:var(--gr)}.ocg .o{color:var(--ye)}.ocg .x{color:var(--rd)}
 .empty{background:var(--pan);border:1px dashed var(--bd);border-radius:10px;padding:14px;color:var(--mu);text-align:center}
-details{margin-top:10px}summary{cursor:pointer;font-weight:700;color:var(--mu);padding:6px 0}details.szl{margin-top:12px}.btn.mini{font-size:12px;padding:3px 8px;margin:4px 4px 0 0}details.szl .dd{display:inline-block;white-space:nowrap;font-size:11px;font-weight:800;border-radius:5px;padding:2px 5px;margin-right:4px;background:#FFD700;color:#000}details.szl .dd.n{background:var(--or);color:#fff}details.szl>summary{color:var(--tx);font-weight:800}.szw{margin:4px 0;border:1px solid var(--bd);border-radius:10px;padding:7px 8px;position:relative;cursor:pointer;font-size:13px;line-height:1.35;color:var(--tx)}.szw.zx{padding-right:44px}.szgo{color:var(--bl);font-size:12px;white-space:nowrap}.ocx{position:absolute;right:6px;top:6px;width:30px;height:30px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--mu);font-size:15px;line-height:1;cursor:pointer}
+details{margin-top:10px}summary{cursor:pointer;font-weight:700;color:var(--mu);padding:6px 0}details.szl{margin-top:12px}.btn.mini{font-size:12px;padding:3px 8px;margin:4px 4px 0 0}details.szl .dd{display:inline-block;white-space:nowrap;font-size:11px;font-weight:800;border-radius:5px;padding:2px 5px;margin-right:4px;background:#FFD700;color:#000}details.szl .dd.n{background:var(--or);color:#fff}details.szl .dd.w{background:#2e75b6;color:#fff}details.szl .dd.c{background:transparent;border:1px solid var(--bd);color:var(--mu);font-weight:700}details.szl>summary{color:var(--tx);font-weight:800}.szw{margin:4px 0;border:1px solid var(--bd);border-radius:10px;padding:7px 8px;position:relative;cursor:pointer;font-size:13px;line-height:1.35;color:var(--tx)}.szw.zx{padding-right:44px}.szgo{color:var(--bl);font-size:12px;white-space:nowrap}.ocx{position:absolute;right:6px;top:6px;width:30px;height:30px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--mu);font-size:15px;line-height:1;cursor:pointer}
 /* zakłady */
 .sum{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
 .sum div{background:var(--pan);border:1px solid var(--bd);border-radius:9px;padding:7px;text-align:center;font-size:11.5px;color:var(--mu)}
@@ -209,7 +209,7 @@ table.rows td.c{text-align:center}table.rows tr.hd td{color:var(--mu);font-size:
 </nav>
 <script>
 "use strict";
-const APP_VER = '1.58.0';
+const APP_VER = '1.59.0';
 const TABS = __TABS__;   // {t50:{name, seed, key, alph, targets}, t60:{…}} — kody wspólne z RAZEM i SZUKAJ (ten sam klucz pamięci)
 // aplikacje źródłowe: ich MOJE (modele, które gram) i MOJE ZAKŁADY czytane ze wspólnej pamięci telefonu (ten sam adres px5060.github.io)
 const SRC = [
@@ -588,7 +588,12 @@ async function szNaj() {
 // Nr · wygrana do k3 / k6 · werdykt), dotknięcie → statystyki z kartą oceny (1.57.0). Stan rozwinięcia listy zapamiętany (data-fold: ocnaj).
 const SZGR = ['SZUKAJ T50', 'SZUKAJ T60', 'ZESZYT T50', 'ZESZYT T60'], SZZAK = [['k1–k3', 3], ['k4–k6', 6]];
 const szGr = o => (o.gdzie === 'ZESZYT' ? 'ZESZYT ' : 'SZUKAJ ') + String(o.tabela || '').toUpperCase();
-function ocTeraz(o) {   // stan modelu z oceny na bieżących kodach: {kr: krok i stawka, nr: Nr zakładu (0 = czeka), d: za ile wierszy (1 = następny)}
+const _ocT = new Map();
+function ocTeraz(o) {   // stan modelu z oceny na bieżących kodach — zapamiętany do następnego kodu (1.59.0: listy Załatwione / Usunięte to dziesiątki modeli)
+  const t = o.tabela, k = D[t] ? `${ocKey(o)}|${D[t].n}|${D[t].s.slice(-30)}|${zzSt[t] || ''}` : ''; if (k && _ocT.has(k)) return _ocT.get(k);
+  const T = ocTeraz0(o); if (k) { if (_ocT.size > 600) _ocT.clear(); _ocT.set(k, T); } return T;
+}
+function ocTeraz0(o) {   // stan modelu z oceny na bieżących kodach: {kr: krok i stawka, nr: Nr zakładu (0 = czeka), d: za ile wierszy (1 = następny)}
   const op = inOpis(ocP(o)), t = o.tabela; if (op.err || !D[t]) return {};
   if (op.it) { const r = op.it.r; return r && r.bs >= 0 ? { kr: `k${r.bs + 1} ${ST[r.bs]} zł`, nr: r.ph === 2 ? r.wz + 1 : 0, d: r.ph === 2 ? r.wz + 1 - D[t].n : 0 } : {}; }
   const M = op.z && zzE[t] ? zzModel(t, op.z) : null, T = M && M.teraz; if (!M) return {};
@@ -606,11 +611,13 @@ function ocSchowaj(L, tak) {
 }
 function ocCofnij(o) { const d = ocDec(); delete d[ocKey(o)]; lsSet(OCD, JSON.stringify(d)); _ocC = null; ghSchedule(1000); }
 const ocMoznaCofnac = (o, z) => !!(z && !z.auto && (o.rodzaj === 'moj' ? ocJest(o) : !ocJest(o)));
-const ocPilne = T => T.d === 1 ? 0 : T.d >= 2 && T.d <= 3 ? 1 : 2;   // 🟧 gra na następnym wierszu · 🟨 za 2–3 wiersze · reszta
+const ocPilne = T => T.d === 1 ? 0 : T.d >= 2 && T.d <= 3 ? 1 : T.d >= 4 ? 2 : 3;   // 🟧 gra na następnym wierszu · 🟨 za 2–3 wiersze · za N w. (Nr znany, 1.59.0) · czeka
 const ocDD = T => T.d === 1 ? '<span class="dd n">TERAZ</span>' : T.d >= 2 && T.d <= 3 ? `<span class="dd">za ${T.d}</span>` : '';
+// 1.59.0 (prośba użytkownika): znaczek stanu przy każdej ocenie, także w Załatwionych i 🗑 Usuniętych — TERAZ · za 2–3 · za N w. (Nr zakładu znany) · czeka na grę
+const ocSt = T => T.d === 1 || (T.d >= 2 && T.d <= 3) ? ocDD(T) : T.d >= 4 ? `<span class="dd w">za ${T.d} w.</span>` : T.kr ? '<span class="dd c">czeka na grę</span>' : '';
 function ocRzedy(L, kol) {   // [{o, T}] — najpierw grające teraz, potem za chwilę (jak w MOJE), dalej w kolejności listy / grup
   const R = L.map((o, i) => ({ o, T: ocTeraz(o), i }));
-  return R.sort((a, b) => ocPilne(a.T) - ocPilne(b.T) || (kol ? kol(a.o) - kol(b.o) : 0) || a.i - b.i);
+  return R.sort((a, b) => ocPilne(a.T) - ocPilne(b.T) || (ocPilne(a.T) === 2 ? a.T.d - b.T.d : 0) || (kol ? kol(a.o) - kol(b.o) : 0) || a.i - b.i);
 }
 const ocDDsum = R => { const a = R.filter(x => x.T.d === 1).length, b = R.filter(x => ocPilne(x.T) === 1).length;
   return (a ? ` <span class="dd n">${a} TERAZ</span>` : '') + (b ? ` <span class="dd">${b} za chwilę</span>` : ''); };
@@ -619,7 +626,7 @@ function ocWiersz(o, T, dec, akcje) {   // akcje: przyciski w linijce (Załatwio
   const kr = T.kr || (o.krok ? `k${o.krok} ${o.stawka} zł` : ''), L = o.liczby || {}, lim = o.gdzie === 'ZESZYT' ? o.limit || 9 : 8;
   const hist = h ? ` · do k${h[1]} <b>${h[4]}%</b> <span class="hint">(${h[2]}/${h[3]})</span>` : L.r8 ? ` · do k${lim} <b>${Math.round(100 * L.w8 / L.r8)}%</b> <span class="hint">(${L.w8}/${L.r8})</span>` : '';
   const rez = !dec && o.rodzaj !== 'moj' ? `<button class="ocx" data-ocrez="${esc(ocKey(o))}" title="Rezygnuję — do Załatwionych">✕</button>` : '';   // 1.56.0
-  return `<div class="szw${rez ? ' zx' : ''}" data-ocm="${esc(ocKey(o))}">${rez}${dec ? '' : ocDD(T)}<span class="hint">${esc(szGr(o))}</span> <b>${esc(String(o.nazwa).replace(/^ZESZYT T\d0 /, ''))}</b>`
+  return `<div class="szw${rez ? ' zx' : ''}" data-ocm="${esc(ocKey(o))}">${rez}${ocSt(T)}<span class="hint">${esc(szGr(o))}</span> <b>${esc(String(o.nazwa).replace(/^ZESZYT T\d0 /, ''))}</b>`
     + `${kr ? ' · ' + esc(kr) : ''}${T.nr ? ` · Nr ${fmtN(T.nr)}` : ''}${hist} <b style="color:${OCW[o.werdykt] || 'var(--tx)'}">${esc(o.werdykt || '')}</b>`
     + `${dec ? ` <span class="hint">· ${OCDT[dec.d] || esc(dec.d)}</span>` : ''} <span class="szgo">statystyki ›</span>${akcje ? `<div>${akcje}</div>` : ''}</div>`;   // 1.57.0: dotknięcie → statystyki (karta oceny z przyciskami na górze)
 }
@@ -777,9 +784,9 @@ function oceny() {
   return szBox(NJ) + `<div class="hint" style="margin:0 0 8px">🔍 Oceny Claude: stan, historia (do k8 / limitu i w 3 krokach), uczciwa szansa, symulacja, nakładanie z MOJE, werdykt. „teraz” liczy MOJE na bieżących kodach.</div>
     ${ocLista('ocprop', '📥 Propozycje Claude', P, NJ.length ? 'poza najlepszymi z szukania (wyżej) — brak' : 'brak nowych — poproś Claude „zaproponuj modele” albo 🔎 Wyszukaj najlepsze')}
     ${ocLista('ocmoj', '🔍 Oceny Twoich modeli', M, 'brak — dodaj model do MOJE i poproś Claude „oceń mój model”')}
-    ${Z.length ? `<details class="szl" ${foldAt('oczal', 0)}><summary>Załatwione (${Z.length}) <button class="btn mini" data-oczal="1">🧹 Wyczyść</button></summary>${Z.map(o => { const z = ocStan(o), k = esc(ocKey(o));
-      return ocWiersz(o, {}, z, (ocMoznaCofnac(o, z) ? `<button class="btn mini" data-occof="${k}">↶ Przywróć do decyzji</button>` : '') + `<button class="btn mini" data-ocusun="${k}">🗑 Usuń</button>`); }).join('')}</details>` : ''}
-    ${U.length ? `<details class="szl" ${foldAt('ocusun', 0)}><summary>🗑 Usunięte (${U.length}) <button class="btn mini" data-ocprzw="1">↶ Przywróć wszystkie</button></summary>${U.map(o => ocWiersz(o, {}, ocStan(o), `<button class="btn mini" data-ocprz="${esc(ocKey(o))}">↶ Przywróć</button>`)).join('')}</details>` : ''}`;
+    ${Z.length ? (RZ => `<details class="szl" ${foldAt('oczal', 0)}><summary>Załatwione (${Z.length})${ocDDsum(RZ)} <button class="btn mini" data-oczal="1">🧹 Wyczyść</button></summary>${RZ.map(({ o, T }) => { const z = ocStan(o), k = esc(ocKey(o));
+      return ocWiersz(o, T, z, (ocMoznaCofnac(o, z) ? `<button class="btn mini" data-occof="${k}">↶ Przywróć do decyzji</button>` : '') + `<button class="btn mini" data-ocusun="${k}">🗑 Usuń</button>`); }).join('')}</details>`)(ocRzedy(Z)) : ''}
+    ${U.length ? (RU => `<details class="szl" ${foldAt('ocusun', 0)}><summary>🗑 Usunięte (${U.length})${ocDDsum(RU)} <button class="btn mini" data-ocprzw="1">↶ Przywróć wszystkie</button></summary><div class="hint" style="margin:2px 0 4px">Stan każdego modelu liczony na bieżących kodach — grające teraz i za chwilę na górze. Dotknij — statystyki i ocena.</div>${RU.map(({ o, T }) => ocWiersz(o, T, ocStan(o), `<button class="btn mini" data-ocprz="${esc(ocKey(o))}">↶ Przywróć</button>`)).join('')}</details>`)(ocRzedy(U)) : ''}`;
 }
 function ocBanner() {   // TERAZ: krótki pasek, gdy coś czeka na Twoją decyzję
   const L = ocPending(); if (!L.length) return '';
